@@ -64,51 +64,49 @@ updated: "2026-11-05"
 
 ## Q1. (!) Как создать CompletableFuture?
 
-Способ создания зависит от того, кто завершает Future: пул потоков (фабрики `supplyAsync`/`runAsync`), вы сами вручную (конструктор + `complete`) или он уже готов (`completedFuture`).
+Для каждого независимого случая выберите способ получить `CompletableFuture`. Укажите, кто завершит его и будет ли у него значение.
 
-- `supplyAsync` / `runAsync` — запустить задачу в пуле потоков; `supplyAsync` возвращает результат, `runAsync` — нет (`Void`).
-- `completedFuture` — Future, уже завершённый заданным значением; удобен как заглушка в тестах и в ветках, где результат известен сразу.
-- `new CompletableFuture<>()` — пустой Future, который вы завершаете сами позже через `complete(...)` или `completeExceptionally(...)`. Так оборачивают колбэки чужих API в Future-стиль (см. Q12).
-- Любую фабрику с суффиксом `Async` можно вызвать со своим `Executor` — иначе задача уйдёт в общий `ForkJoinPool.commonPool()`.
+```text
+A. Строка уже есть в кеше.
+B. Строку нужно вычислить на заданном Executor.
+C. На заданном Executor нужно выполнить действие без возвращаемого значения.
+D. Внешнее API позже вызовет один из двух колбэков: со строкой или с ошибкой.
+```
+
+- **A.** `completedFuture(cachedValue)` сразу возвращает успешно завершённый future со строкой.
+- **B.** `supplyAsync(loadValue, executor)` передаёт вычисление исполнителю. Успешное завершение содержит значение, возвращённое `Supplier`.
+- **C.** `runAsync(recordMetric, executor)` передаёт исполнителю `Runnable`. При успехе `CompletableFuture<Void>` завершается со значением `null`.
+- **D.** Конструктор создаёт незавершённый future. Колбэки вызывают `complete(value)` или `completeExceptionally(error)`. Сам конструктор работу не запускает. Гонка нескольких завершений разобрана в Q12.
 
 ```java
-// 1. supplyAsync — асинхронная задача, возвращает результат
-CompletableFuture<String> f1 = CompletableFuture.supplyAsync(() -> "Hello");
+// loadValue — Supplier<String>, recordMetric — Runnable.
+CompletableFuture<String> cached = CompletableFuture.completedFuture(cachedValue);
+CompletableFuture<String> loaded = CompletableFuture.supplyAsync(loadValue, executor);
+CompletableFuture<Void> recorded = CompletableFuture.runAsync(recordMetric, executor);
 
-// 2. runAsync — асинхронная задача без результата
-CompletableFuture<Void> f2 = CompletableFuture.runAsync(() -> System.out.println("done"));
-
-// 3. completedFuture — уже завершённый Future (удобен в тестах)
-CompletableFuture<String> f3 = CompletableFuture.completedFuture("result");
-
-// 4. new CompletableFuture — ручное управление
-CompletableFuture<String> f4 = new CompletableFuture<>();
-// где-то позже: f4.complete("value") или f4.completeExceptionally(ex)
-
-// 5. С кастомным Executor:
-ExecutorService executor = Executors.newFixedThreadPool(4);
-CompletableFuture<String> f5 = CompletableFuture.supplyAsync(
-    () -> fetchFromApi(), executor
-);
+CompletableFuture<String> callbackResult = new CompletableFuture<>();
+externalApi.request(callbackResult::complete, callbackResult::completeExceptionally);
 ```
+
+В Java 25 и 26 перегрузки `supplyAsync` и `runAsync` без `Executor` используют `ForkJoinPool.commonPool()`. Различия с Java 24 и влияние выбранного исполнителя разобраны в Q2 и Q5. [Java SE 26 — CompletableFuture](https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/util/concurrent/CompletableFuture.html)
 
 ---
 
 ## Q2. В каком потоке выполняется задача?
 
-У этапов **без** суффикса `Async` нет гарантированного потока: продолжение может выполнить поток, завершивший предыдущий этап, либо другой поток, вызвавший метод завершения. Если предыдущий этап уже завершён, продолжение может выполниться прямо при регистрации в вызывающем потоке. Вариант **с** `Async` планируется через исполнитель: без явного `Executor` обычный `CompletableFuture` использует `ForkJoinPool.commonPool()` при параллелизме больше одного, иначе исполнитель с отдельным потоком для каждой async-задачи; с явным `Executor` используется переданный исполнитель. Суффикс задаёт способ планирования, а не обещает отдельный поток для каждой задачи.
+У этапов **без** суффикса `Async` нет гарантированного потока: продолжение может выполнить поток, завершивший предыдущий этап, либо другой поток, вызвавший метод завершения. Если предыдущий этап уже завершён, продолжение может выполниться прямо при регистрации в вызывающем потоке. Вариант **с** `Async` планируется через исполнитель: в Java 25 и 26 обычный `CompletableFuture` без явного `Executor` использует `ForkJoinPool.commonPool()`. Подкласс может переопределить `defaultExecutor()` для нестатических методов. При явном аргументе применяется переданный исполнитель. Суффикс задаёт способ планирования, а не обещает отдельный поток для каждой задачи.
 
 | Вариант | Поток выполнения |
 |---|---|
 | Без `Async` (`thenApply`, `thenAccept`, ...) | Поток завершения или другой поток, вызвавший завершение; если этап уже готов, возможен поток регистрации |
-| `*Async` без `Executor` | Исполнитель по умолчанию; обычно `ForkJoinPool.commonPool()`, при его параллелизме меньше двух — отдельный поток для задачи |
+| `*Async` без `Executor` | В Java 25 и 26 — `ForkJoinPool.commonPool()` для обычного `CompletableFuture` |
 | `*Async` с `Executor` | Указанный исполнитель |
 
 ```java
-CompletableFuture.supplyAsync(() -> "data")  // commonPool
-    .thenApply(s -> s.toUpperCase())          // поток не гарантирован
-    .thenApplyAsync(s -> s + "!", executor)   // указанный executor
-    .thenAccept(System.out::println);         // поток не гарантирован
+CompletableFuture.supplyAsync(() -> "data")
+    .thenApply(s -> s.toUpperCase())
+    .thenApplyAsync(s -> s + "!", executor)
+    .thenAccept(System.out::println);
 ```
 
 **Подводный камень:** `ForkJoinPool.commonPool()` разделяется между задачами приложения, в том числе параллельными стримами. Его параллелизм настраивается и не равен универсально числу процессоров минус один. Долгая блокирующая операция (HTTP, JDBC) может задержать другие задачи общего пула. Для такого ввода-вывода используйте подходящий управляемый исполнитель, размер и жизненный цикл которого контролирует приложение:
@@ -117,6 +115,8 @@ CompletableFuture.supplyAsync(() -> "data")  // commonPool
 CompletableFuture.supplyAsync(() -> httpClient.get(url), ioExecutor);
 ```
 
+В Java 24 документация ещё описывала создание отдельного потока на задачу, если общий пул не поддерживал параллелизм хотя бы два. При миграции сверяйте правило с версией JDK. [Java 24](https://docs.oracle.com/en/java/javase/24/docs/api/java.base/java/util/concurrent/CompletableFuture.html).
+
 См. [`CompletableFuture` в Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html) и [`ForkJoinPool`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ForkJoinPool.html).
 
 ---
@@ -124,22 +124,33 @@ CompletableFuture.supplyAsync(() -> httpClient.get(url), ioExecutor);
 <a id="q3"></a>
 ## Q3. (!) Какое утверждение о thenApply, thenCompose и thenCombine верно?
 
+Выберите метод для каждого независимого сценария и определите тип итогового этапа.
+
+```text
+A. Этап вернёт строку. Нужна её длина.
+B. Этап вернёт пользователя. Только после получения его ID
+   можно вызвать сервис заказов, который вернёт этап со списком заказов.
+C. Загрузка пользователя и загрузка заказов уже запущены по известному ID.
+   Для построения профиля нужны оба результата.
+```
+
+
 Методы различаются типом функции и числом входных этапов. `thenApply` преобразует значение функцией `T → U`. `thenCompose` принимает функцию `T → CompletionStage<U>` и разворачивает возвращённый этап; для функции, возвращающей `CompletableFuture`, это убирает вложенность `CF<CF<U>>`. `thenCombine` объединяет значения двух этапов после их нормального завершения. Пара `thenApply`/`thenCompose` похожа на `map`/`flatMap`.
 
-| Метод | Аналог в Stream | Назначение |
+| Метод | Аналогия | Назначение |
 |---|---|---|
 | `thenApply(T→U)` | `map` | Преобразовать результат |
 | `thenCompose(T→CompletionStage<U>)` | `flatMap` | Цепочка зависимых этапов |
-| `thenCombine(CompletionStage<U>, BiFunction)` | `zip` | Объединить два этапа |
+| `thenCombine(CompletionStage<U>, BiFunction)` | Объединение пары результатов | Объединить два этапа |
 
-**thenApply — трансформация:**
+**A. thenApply — трансформация:**
 ```java
 CompletableFuture<Integer> length = CompletableFuture
     .supplyAsync(() -> "hello")
     .thenApply(String::length);  // "hello" → 5
 ```
 
-**thenCompose — цепочка зависимых вызовов (аналог flatMap):**
+**B. thenCompose — цепочка зависимых вызовов (аналог flatMap):**
 ```java
 // Сначала найти user по email, потом загрузить его заказы
 CompletableFuture<List<Order>> orders = userService
@@ -150,9 +161,9 @@ CompletableFuture<List<Order>> orders = userService
 // Без thenCompose получили бы CF<CF<List<Order>>> — вложенный Future
 ```
 
-**thenCombine — результаты двух уже созданных задач:**
+**C. thenCombine — результаты двух уже созданных задач:**
 ```java
-CompletableFuture<String> userFuture = userService.fetchUser(id);
+CompletableFuture<User> userFuture = userService.fetchUser(id);
 CompletableFuture<List<Order>> orderFuture = orderService.fetchOrders(id);
 
 CompletableFuture<UserProfile> profile = userFuture
@@ -162,27 +173,25 @@ CompletableFuture<UserProfile> profile = userFuture
 // при независимом запуске задачи могут выполняться параллельно
 ```
 
-`thenCombine` не запускает задачи и не гарантирует их параллельного выполнения: он ждёт нормального завершения обоих этапов и применяет функцию к двум результатам. Если один этап завершится с ошибкой, объединяющая функция не будет вызвана. См. [`CompletionStage` в Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletionStage.html).
+`thenCombine` не запускает задачи и не гарантирует их параллельного выполнения: он ждёт нормального завершения обоих этапов и применяет функцию к двум результатам. Если один этап завершится с ошибкой, объединяющая функция не будет вызвана. [Java SE 26 — CompletionStage](https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/util/concurrent/CompletionStage.html)
 
 ---
 
 ## Q4. Чем thenAccept отличается от thenRun?
 
-Оба создают следующий этап типа `CompletableFuture<Void>` после нормального завершения предыдущего: `thenAccept` передаёт его результат в `Consumer<T>`, а `thenRun` вызывает `Runnable` без этого результата. После любого из них можно строить следующую цепочку, но прежнего значения в её типе уже нет. См. [`CompletionStage` в Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletionStage.html).
-
-| | `thenAccept(Consumer<T>)` | `thenRun(Runnable)` |
-|---|---|---|
-| Получает результат предыдущего этапа | Да | Нет |
-| Возвращает | `CompletableFuture<Void>` | `CompletableFuture<Void>` |
-| Применение | Потребить результат (save, log) | Выполнить действие без доступа к результату |
+Какие аргументы получают обработчики и что возвращают зависимые этапы? Рассмотрите два независимых запуска: загрузка пользователя завершилась успешно, оба обработчика отработали без ошибок, либо сама загрузка завершилась исключением.
 
 ```java
-CompletableFuture.supplyAsync(() -> fetchUser())
-    .thenAccept(user -> userCache.put(user.getId(), user));  // получает user
-
-CompletableFuture.supplyAsync(() -> processData())
-    .thenRun(() -> log.info("Processing complete"));  // не знает результат
+CompletableFuture<User> loaded = loadUserAsync();
+var cached = loaded.thenAccept(user -> userCache.put(user.getId(), user));
+var reported = loaded.thenRun(() -> log.info("User loaded"));
 ```
+
+`thenAccept` передаёт загруженного пользователя в `Consumer`. Лямбда вызывает `put` ради обновления кеша, а возвращённое самим `put` значение отбрасывается. `thenRun` вызывает `Runnable` без аргументов. Для сообщения достаточно знать, что загрузка завершилась успешно.
+
+Оба метода возвращают `CompletableFuture<Void>`. При успешной загрузке и нормальном завершении соответствующего действия результат зависимого этапа — `null`. Если загрузка завершилась исключением, оба действия пропускаются и оба зависимых этапа завершаются исключением. Этапы в примере независимо подписаны на `loaded`, поэтому сообщение о загрузке может появиться до записи в кеш. Если сообщение должно следовать за успешной записью, следующий этап нужно присоединить к `cached`.
+
+Для дальнейшего преобразования пользователя с возвращаемым значением подходит `thenApply` (Q3). [Java SE 26 — CompletionStage](https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/util/concurrent/CompletionStage.html)
 
 ---
 
@@ -198,50 +207,60 @@ CompletableFuture.supplyAsync(() -> processData())
 - **С `Async`** — этап планируется через исполнитель по умолчанию или переданный `Executor`. Это не обещает новый поток для каждого этапа.
 
 ```java
-// thenApply: продолжение без отдельной гарантии потока
-future.thenApply(s -> transform(s));
-
-// thenApplyAsync: планируется через исполнитель
-future.thenApplyAsync(s -> transform(s));
-future.thenApplyAsync(s -> transform(s), myExecutor);
+CompletableFuture<String> source = CompletableFuture.completedFuture("report");
+Executor inline = Runnable::run;
+CompletableFuture<String> result = source.thenApplyAsync(String::toUpperCase, inline);
 ```
 
-**Когда брать `Async`:** когда продолжение не должно занимать поток завершения предыдущего этапа или нужен конкретный `Executor`. Для короткого продолжения обычная версия может быть проще, если допустимо его выполнение в потоке завершения или регистрации. Планирование через исполнитель имеет стоимость.
+**Что происходит в примере.** Исходный этап уже готов, а `inline.execute(...)` вызывает `Runnable.run()` прямо в потоке регистрации. Поэтому даже продолжение с `Async` здесь выполняется в этом потоке. [Контракт Executor](https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/util/concurrent/Executor.html).
+
+**Когда брать `Async`.** Если продолжение должно выполняться отдельно от потока завершения, выберите исполнитель, который передаёт задачу рабочему потоку, и проверьте его политику при перегрузке. Для короткого продолжения обычная версия может быть проще, если допустимо его выполнение в потоке завершения или регистрации. Планирование через исполнитель имеет стоимость.
 
 ---
 
 ## Q6. (!) Чем allOf отличается от anyOf?
 
-Оба объединяют массив Future, но по разной логике завершения. `allOf` ждёт, пока завершатся **все** (логика «И» — нужны все результаты), `anyOf` завершается, как только готов **любой** (логика «ИЛИ», гонка — берём первый ответ). Отличаются и типы: `allOf` отдаёт `CompletableFuture<Void>` (результаты надо доставать отдельно, см. Q7), `anyOf` — `CompletableFuture<Object>` с результатом победителя.
+В Java 26 два запроса представлены futures. Оба агрегата создаются до их завершения. Каким будет состояние каждого агрегата в точках A и B?
+
+```java
+CompletableFuture<String> primary = new CompletableFuture<>();
+CompletableFuture<String> replica = new CompletableFuture<>();
+
+CompletableFuture<Void> all = CompletableFuture.allOf(primary, replica);
+CompletableFuture<Object> any = CompletableFuture.anyOf(primary, replica);
+
+primary.completeExceptionally(new IllegalStateException("primary failed"));
+// A
+replica.complete("report");
+// B
+```
+
+**Разбор.** В точке A `any` уже завершился исключением от `primary`, а `all` ещё ждёт `replica`. В точке B `all` тоже завершается исключением, поскольку один из входов завершился с ошибкой. Успех `replica` не меняет исход `any`. Наблюдать ошибку можно через `join()`, который в этом примере выбрасывает `CompletionException` с исходной причиной.
 
 | | `allOf` | `anyOf` |
 |---|---|---|
-| Завершается когда | **Все** futures завершены | **Любой** future завершён |
-| Возвращает | `CompletableFuture<Void>` | `CompletableFuture<Object>` |
-| Применение | Ждать параллельные задачи | Race: взять первый результат |
+| Условие завершения | Завершились все входы, включая завершившиеся с ошибкой | Достаточно завершения одного входа, включая ошибку |
+| Тип | `CompletableFuture<Void>` | `CompletableFuture<Object>` |
+| Результат при успехе | `null`. Значения читают из исходных futures, как в Q7 | Значение входа, завершение которого определило исход |
 
-```java
-// allOf — дождаться всех:
-CompletableFuture<String> f1 = CompletableFuture.supplyAsync(() -> fetchA());
-CompletableFuture<String> f2 = CompletableFuture.supplyAsync(() -> fetchB());
-CompletableFuture<String> f3 = CompletableFuture.supplyAsync(() -> fetchC());
+Если несколько входов уже завершены или завершаются конкурентно, контракт `anyOf` не задаёт порядок выбора между ними. Если сервису нужен **первый успешный** ответ, он должен отдельно обработать исход каждой ветки и завершить общий результат ошибкой только после исчерпания всех вариантов. Оба агрегата оставляют управление исходными задачами вызывающему коду. Для остановки проигравшей работы нужен отдельный механизм, как в Q14.
 
-CompletableFuture.allOf(f1, f2, f3).join();  // блокирует до завершения всех
+При пустом наборе `allOf()` возвращает этап, уже завершившийся с `null`, а `anyOf()` возвращает незавершённый этап. [Java 26 `allOf`](https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/util/concurrent/CompletableFuture.html#allOf(java.util.concurrent.CompletableFuture...)) и [`anyOf`](https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/util/concurrent/CompletableFuture.html#anyOf(java.util.concurrent.CompletableFuture...)).
 
-// anyOf — взять первый результат:
-CompletableFuture<Object> fastest = CompletableFuture.anyOf(f1, f2, f3);
-Object result = fastest.join();  // результат самого быстрого
-```
-
-**Подводный камень:** `anyOf` смотрит на того, кто завершился **первым**, а не на того, кто завершился успешно. Если самый быстрый Future упал с исключением — упадёт и `anyOf`, даже если остальные потом вернули бы корректный результат. Аналогично `allOf` завершится исключением, если хотя бы один из futures завершился ошибкой.
-
-`allOf` завершает свой этап после завершения **всех** переданных futures, в том числе при ошибках; он не отменяет остальные задачи автоматически. Для пустого набора `allOf` сразу возвращает завершённый этап с `null`, а `anyOf` — незавершённый. См. [`CompletableFuture` в Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html).
 
 ---
 
 ## Q7. Как получить результаты из allOf?
 
-`allOf` возвращает `CompletableFuture<Void>`, то есть сам по себе он лишь сигнал «все готовы», а не контейнер с результатами. Поэтому шаблон такой: дождаться `allOf(...).join()`, а затем вызвать `join()` у каждого исходного Future. Ключевой момент — после завершения `allOf` все исходные futures уже завершены, так что эти `join()` **не блокируют** и не запускают работу заново, а просто отдают готовый результат.
+Для панели уже запущены три запроса. Как дождаться их общего успеха и собрать результат с исходными типами? Как изменится сборка, если профиль и данные счёта обязательны, а при ошибке загрузки заказов разрешён пустой список?
+
+```java
+CompletableFuture<User> userFuture = loadUser(id);
+CompletableFuture<List<Order>> orderFuture = loadOrders(id);
+CompletableFuture<AccountInfo> accountFuture = loadAccount(id);
+```
+
+`allOf` возвращает `CompletableFuture<Void>`, то есть сам по себе он лишь сигнал «все готовы», а не контейнер с результатами. Поэтому шаблон такой: дождаться `allOf(...).join()`, а затем вызвать `join()` у каждого исходного Future. Ключевой момент — если `allOf(...).join()` вернулся нормально, все исходные futures уже завершились успешно. Последующие `join()` сразу возвращают готовые значения.
 
 ```java
 CompletableFuture<User> userFuture = CompletableFuture.supplyAsync(() -> fetchUser(id));
@@ -264,120 +283,135 @@ List<CompletableFuture<String>> futures = ids.stream()
     .map(id -> CompletableFuture.supplyAsync(() -> fetchById(id)))
     .collect(Collectors.toList());
 
-CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+CompletableFuture.allOf(futures.toArray(new CompletableFuture<?>[0])).join();
 
 List<String> results = futures.stream()
     .map(CompletableFuture::join)  // уже завершены, нет блокировки
     .collect(Collectors.toList());
 ```
 
+**Частичный результат.** Для той же панели обработайте ошибку ветки заказов до передачи её в агрегат. Профиль и данные счёта по-прежнему нужны для сборки.
+
+```java
+CompletableFuture<List<Order>> ordersOrEmpty =
+    orderFuture.exceptionally(error -> List.of());
+
+CompletableFuture<UserDashboard> dashboardWithFallback =
+    CompletableFuture.allOf(userFuture, ordersOrEmpty, accountFuture)
+        .thenApply(ignored -> new UserDashboard(
+            userFuture.join(), ordersOrEmpty.join(), accountFuture.join()));
+```
+
+`thenApply` собирает данные после успешного завершения агрегата. Внутренние `join()` в этот момент читают три готовых результата. Если профиль или данные счёта загрузились с ошибкой, агрегат завершится исключением после завершения всех входов и сборка будет пропущена. Если после восстановления прочитать исходный `orderFuture`, его `join()` по-прежнему выбросит исключение. Если клиенту важно отличить пустой результат от недоступности сервиса, сохраните признак сбоя рядом со списком. [Java SE 26 — allOf](https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/util/concurrent/CompletableFuture.html#allOf(java.util.concurrent.CompletableFuture...))
+
+
 ---
 
 <a id="q8"></a>
 ## Q8. (!) Какое утверждение об exceptionally, handle и whenComplete верно?
 
-Различать их проще по двум осям: **когда срабатывает** и **может ли подменить результат**.
-- `exceptionally` — срабатывает только при ошибке и подменяет её на запасное значение **того же типа `T`**. Это аналог `catch`: «если упало — верни дефолт».
-- `handle` — срабатывает всегда (и при успехе, и при ошибке), получает пару `(результат, исключение)` и возвращает новое значение. Универсальный преобразователь итога; может даже сменить тип результата.
-- `whenComplete` — срабатывает всегда и штатно результат с исключением **не меняет**: он их только наблюдает и прокидывает дальше как есть. Это аналог `finally` — для логирования, метрик, очистки ресурсов. Аналогия с `finally` работает и в неприятную сторону: если само действие внутри `whenComplete` бросит исключение, оно **заменит успешный результат**; а вот поверх уже упавшего Future побеждает исходное исключение, и бросок из `whenComplete` теряется.
-
-| Метод | Когда вызывается | Доступен результат | Доступно исключение | Возвращает новый тип |
-|---|---|---|---|---|
-| `exceptionally(ex → T)` | Только при ошибке | Нет | Да | Нет, остаётся `T` |
-| `handle((T, ex) → U)` | Всегда | Да | Да | Да |
-| `whenComplete((T, ex) → void)` | Всегда | Да | Да | Нет, остаётся `T` |
+В каждом независимом запуске зарегистрируйте три обработчика на одном `source`, затем выполните одно из двух завершений в конце примера. Какие обработчики вызовутся и чем завершится каждый зависимый этап?
 
 ```java
-// exceptionally — recovery при ошибке, возвращает дефолт
-CompletableFuture<String> result = fetchUser(id)
-    .exceptionally(ex -> {
-        log.error("Failed to fetch user", ex);
-        return "AnonymousUser";  // возвращаем дефолт
-    });
+CompletableFuture<String> source = new CompletableFuture<>();
 
-// handle — трансформация в любом случае
-CompletableFuture<Optional<String>> result2 = fetchUser(id)
-    .handle((user, ex) -> ex != null
-        ? Optional.empty()
-        : Optional.of(user));
+var a = source.exceptionally(error -> "guest");
+var b = source.handle((name, error) -> error == null ? name.length() : -1);
+var c = source.whenComplete((name, error) -> {
+    throw new IllegalStateException("audit failed");
+});
 
-// whenComplete — side effect (logging), не меняет результат/исключение
-CompletableFuture<String> traced = fetchUser(id)
-    .whenComplete((user, ex) -> {
-        if (ex != null) metrics.incrementError();
-        else metrics.incrementSuccess();
-    });
+// Первый запуск:
+source.complete("Nina");
+
+// Второй запуск с новым source и теми же обработчиками:
+// source.completeExceptionally(new IllegalArgumentException("lookup failed"));
 ```
 
-См. [`CompletionStage` в Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletionStage.html).
+| Метод | Успешный источник (`"Nina"`) | Ошибка источника (`"lookup failed"`) |
+|---|---|---|
+| `exceptionally` | Функция пропускается, `a` получает `"Nina"` | Функция вызывается, `a` получает `"guest"` |
+| `handle` | Функция вызывается, `b` получает `4` | Функция вызывается, `b` получает `-1` |
+| `whenComplete` | Действие вызывается, `c` завершается с ошибкой `"audit failed"` | Действие вызывается, для `c` приоритет имеет исходная ошибка `"lookup failed"` |
+
+`exceptionally` восстанавливает результат того же типа после ошибки. `handle` получает результат и исключение и может вернуть значение другого типа, здесь `Integer`. Если успешный результат может быть `null`, для различения исходов проверяйте аргумент с исключением, а для использования значения обработайте `null` отдельно.
+
+`whenComplete` подходит для логирования и метрик. Если действие завершится нормально, зависимый этап сохранит исходный результат или исходную ошибку. Если действие выбросит исключение, оно меняет успешный исход зависимого этапа. При двух ошибках контракт отводит приоритет ошибке источника. Все три продолжения зависят непосредственно от `source`, поэтому ошибка обработчика `c` не меняет `a` и `b`. [Java SE 26 — CompletionStage](https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/util/concurrent/CompletionStage.html)
 
 ---
 
 ## Q9. Как пробросить исключение в CompletableFuture?
 
-Способ зависит от того, как Future создан. Если вы управляете им вручную — завершаете через `completeExceptionally(...)`. Если задача внутри лямбды `supplyAsync` — любое unchecked-исключение перехватывается автоматически и переводит Future в ошибочное состояние. А вот checked-исключение в лямбду не пробросишь напрямую (сигнатуры `Supplier`/`Function` его не объявляют) — его нужно обернуть, обычно в `CompletionException`.
-
-Во всех случаях исключение всплывёт при попытке достать результат: `join()` бросит `CompletionException`, а `get()` — `ExecutionException` (см. Q10).
+Метод `Files.readString` может выбросить `IOException`. Скомпилируется ли прямой вызов внутри `supplyAsync` и как передать ошибку вызывающему коду через future?
 
 ```java
-// 1. Через completeExceptionally (для ручного управления):
-CompletableFuture<String> future = new CompletableFuture<>();
-future.completeExceptionally(new RuntimeException("failed"));
-// При join() или get() → CompletionException/ExecutionException
+Path path = Path.of("report.txt");
+CompletableFuture<String> report =
+    CompletableFuture.supplyAsync(() -> Files.readString(path));
+```
 
-// 2. Из лямбды supplyAsync — любое unchecked исключение автоматически:
-CompletableFuture<String> future2 = CompletableFuture.supplyAsync(() -> {
-    if (condition) throw new RuntimeException("error");  // propagates
-    return "result";
-});
+**Разбор.** Лямбда должна соответствовать `Supplier<String>`, а его метод `get()` не объявляет `IOException`. Перехватите проверяемое исключение внутри лямбды и сохраните его как причину `CompletionException`. Если задача сама выбрасывает непроверяемое исключение, например `IllegalStateException`, `supplyAsync` и без такого перехвата завершит future с ошибкой. [JLS §11.2.3](https://docs.oracle.com/javase/specs/jls/se26/html/jls-11.html#jls-11.2.3).
 
-// 3. Checked exception — нужно обернуть:
-CompletableFuture<String> future3 = CompletableFuture.supplyAsync(() -> {
+```java
+CompletableFuture<String> report = CompletableFuture.supplyAsync(() -> {
     try {
-        return readFile();
+        return Files.readString(path);
     } catch (IOException e) {
-        throw new CompletionException(e);  // wrapped
+        throw new CompletionException(e);
     }
 });
 ```
+
+Если future создаёт адаптер callback API, он может передать полученную ошибку напрямую через `report.completeExceptionally(error)`. Для ошибки чтения в примере `join()` выбросит `CompletionException`, а `get()` — `ExecutionException`. У обеих обёрток причиной будет исходный `IOException`. При прямой отмене самого future оба метода выбрасывают `CancellationException`, как указано в Q10. [Java 26 CompletableFuture](https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/util/concurrent/CompletableFuture.html).
+
 
 ---
 
 ## Q10. (!) Чем join() отличается от get()?
 
-Если результат ещё не готов, оба метода ждут его и могут блокировать текущий поток. `join()` при ошибке вычисления бросает **unchecked** `CompletionException` и не объявляет проверяемых исключений — поэтому его удобно вызывать прямо в лямбдах Stream API. `get()` — метод из интерфейса `Future`: при ошибке он бросает **checked** `ExecutionException`, а при прерывании ожидания — `InterruptedException`. У `get()` есть перегрузка с таймаутом `get(timeout, unit)`; у `join()` такой перегрузки нет. Для таймаута самого этапа в Java 9+ также есть `orTimeout` и `completeOnTimeout` — это другая операция.
+Future отчёта ещё не завершён, и до конца вызова A никто его не меняет. Поток, вызвавший A, не прерывают. Вызовы A и B рассматриваются по отдельности: между ними поставщик завершает тот же future строкой `"report"`. Что получит каждый вызывающий?
+
+```java
+static String readA(CompletableFuture<String> report)
+        throws InterruptedException, ExecutionException, TimeoutException {
+    return report.get(100, TimeUnit.MILLISECONDS);
+}
+
+static String readB(CompletableFuture<String> report) {
+    return report.join();
+}
+```
+
+**Разбор.** Вызов A завершится с `TimeoutException`. Поставщик по-прежнему может записать результат в исходный future. Вызов B, сделанный после успешного завершения, сразу вернёт `"report"`.
+
+Если результат ещё не готов, оба метода ждут его и могут блокировать текущий поток. `join()` при ошибке вычисления бросает **unchecked** `CompletionException` и не объявляет проверяемых исключений — поэтому его удобно вызывать прямо в лямбдах Stream API. `get()` — метод из интерфейса `Future`: при ошибке он бросает **checked** `ExecutionException`, а при прерывании ожидания — `InterruptedException`. У `get()` есть перегрузка с таймаутом `get(timeout, unit)`; у `join()` такой перегрузки нет. Таймаут `get(timeout, unit)` завершает только ожидание вызывающего потока. Сам future может позже завершиться своим результатом. Для таймаута самого этапа в Java 9+ также есть `orTimeout` и `completeOnTimeout` — это другая операция.
 
 | | `join()` | `get()` |
 |---|---|---|
 | Исключение | `CompletionException` (unchecked) | `ExecutionException` (checked), `InterruptedException` |
-| Использование в Stream | Удобно (нет try-catch) | Неудобно (нужен try-catch) |
-| Timeout | Нет | `get(timeout, unit)` |
+| Использование в Stream | Ссылка на метод допустима в `Stream.map` | Проверяемые исключения нужно обработать в лямбде |
+| Ограничение ожидания | Без параметра таймаута | `get(timeout, unit)` |
+| Прямая отмена этого future | `CancellationException` | `CancellationException` |
 
-```java
-// join() — проще в Stream API
-List<String> results = futures.stream()
-    .map(CompletableFuture::join)  // нет checked exceptions
-    .collect(Collectors.toList());
-
-// get() — классический Future API
-try {
-    String result = future.get(5, TimeUnit.SECONDS);
-} catch (ExecutionException e) {
-    log.error("Task failed", e.getCause());
-} catch (InterruptedException e) {
-    Thread.currentThread().interrupt();
-} catch (TimeoutException e) {
-    log.warn("Timeout");
-}
-```
-
-**Главное:** на незавершённом Future оба метода **могут блокировать** текущий поток. Вызывайте их там, где такое ожидание допустимо (на границе пайплайна, в тестах); при уже готовом результате ждать не приходится. См. [`CompletableFuture` в Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html).
+**Главное:** на незавершённом Future оба метода **могут блокировать** текущий поток. Вызывайте их там, где такое ожидание допустимо (на границе пайплайна, в тестах); при уже готовом результате ждать не приходится. См. [`CompletableFuture` в Java SE 26](https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/util/concurrent/CompletableFuture.html).
 
 ---
 
 ## Q11. Как задать timeout для CompletableFuture?
 
+```java
+// Java 9+. Источник вернёт имя через 5 секунд.
+// API ждёт до 3 секунд, а отчёт должен получить полное имя.
+// Что произойдёт с report, если дедлайн задать на shared?
+// Как задать дедлайн только для API?
+CompletableFuture<String> shared = new CompletableFuture<>();
+scheduler.schedule(() -> shared.complete("Ada"), 5, TimeUnit.SECONDS);
+CompletableFuture<String> report = shared.thenApply(name -> "User: " + name);
+```
+
 Начиная с Java 9 есть два штатных метода: `orTimeout` (завершить future с `TimeoutException`, если не успели) и `completeOnTimeout` (подставить значение по таймауту). Оба возвращают **тот же** `CompletableFuture`: если его используют и другие потребители, они тоже увидят завершение по таймауту. В Java 8 этих методов нет; исход можно собрать в отдельном `CompletableFuture` и завершить его из рабочего future либо по таймеру.
+
+Если трёхсекундный таймер сработает первым, `shared.orTimeout(3, TimeUnit.SECONDS)` завершит общий future с `TimeoutException`. Функция отчёта пропустится, и `report` тоже завершится с ошибкой. Для отдельного дедлайна API используйте `shared.copy().orTimeout(3, TimeUnit.SECONDS)`. Таймер завершит копию, а отчёт дождётся имени через исходный future. [Javadoc CompletableFuture](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html#copy()).
 
 Таймаут меняет **результат future**, но сам по себе не прерывает вычисление в пуле; оно может продолжиться, а поздний результат уже не изменит завершённый future. См. Q14 об отдельной отмене работы.
 
@@ -410,13 +444,27 @@ public static <T> CompletableFuture<T> withTimeout(
 }
 ```
 
-Планировщиком владеет вызывающий код: его нужно завершать при остановке приложения. `applyToEither` здесь не подходит: его действие запускается при **нормальном** завершении одного из этапов, а таймер завершается исключением. См. [Java 8 CompletableFuture](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html).
+Планировщиком владеет вызывающий код. При остановке приложения он завершает и планировщик.
+
+Функция в `applyToEither` получает значение при нормальном завершении. Если один вход завершился исключением, а другой успешно, контракт `CompletionStage` допускает и успешный, и исключительный итог зависимого этапа. Поэтому `applyToEither` не выражает правило «если первым завершился таймер, клиент получает `TimeoutException`». В примере обе ветки явно конкурируют за завершение `result`. Если первым сработал таймер, поздний успех источника уже не изменит итог этого этапа. [Java 8 CompletionStage](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html) · [Java 8 CompletableFuture](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html).
 
 ---
 
 ## Q12. Что такое complete() и completeExceptionally()?
 
-Это методы, которыми вы **сами** завершаете Future извне: `complete(value)` переводит его в успешное состояние, `completeExceptionally(ex)` — в ошибочное. Они отличают `CompletableFuture` от обычного `Future`, результат которого задаёт только исполняющая задача. Главный сценарий — мост между callback-API (старые клиенты, JMS, низкоуровневый NIO) и Future-стилем: создаём пустой Future, отдаём его наружу, а в колбэках `onSuccess`/`onError` завершаем нужным методом.
+Что вернут два вызова завершения и чем закончится `join()`? Во втором независимом запуске поменяйте порядок вызовов `complete` и `completeExceptionally`, сохранив `join()` последним.
+
+```java
+CompletableFuture<String> reply = new CompletableFuture<>();
+boolean response = reply.complete("payload");
+boolean failure = reply.completeExceptionally(new IOException("connection closed"));
+String result = reply.join();
+```
+
+В первом запуске `response == true`, `failure == false`, а `join()` возвращает `"payload"`. Во втором `failure == true`, `response == false`, а `join()` выбрасывает `CompletionException` с причиной `IOException`. При конкурентных вызовах итог зависит от того, какая попытка первой завершит future. [Java SE 26 — CompletableFuture](https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/util/concurrent/CompletableFuture.html)
+
+
+Это методы, которыми вы **сами** завершаете Future извне: `complete(value)` переводит его в успешное состояние, `completeExceptionally(ex)` — в ошибочное. Интерфейс `Future` предоставляет ожидание, проверку состояния и отмену. Методы ручного завершения добавляет `CompletableFuture`. Главный сценарий — мост между callback-API (старые клиенты, JMS, низкоуровневый NIO) и Future-стилем: создаём пустой Future, отдаём его наружу, а в колбэках `onSuccess`/`onError` завершаем нужным методом.
 
 ```java
 // Адаптер колбэка → CompletableFuture
@@ -439,32 +487,48 @@ public CompletableFuture<String> fetchAsync() {
 }
 ```
 
-Оба метода возвращают `boolean`: `true`, если именно этот вызов завершил Future, и `false`, если он уже был завершён раньше. Завершить можно только один раз — повторные вызовы игнорируются (это удобно при гонке: например, рабочий результат против таймаута — кто успел первым, тот и зафиксировал исход).
+Оба метода возвращают `boolean`: `true`, если именно этот вызов завершил Future, и `false`, если он уже был завершён раньше. У `obtrudeValue` и `obtrudeException` отдельный контракт: они принудительно меняют исход для последующих чтений даже у завершённого future. Продолжения, которые уже получили старый исход, могут сохранить его.
+
+**Кто владеет завершением.** Если адаптер отдаёт свой `CompletableFuture` напрямую, вызывающий код может первым завершить его вручную или отменить. Тогда обработчик клиента уже не сможет записать рабочий результат. Если владельцем завершения должен остаться адаптер, в Java 9+ можно объявить возвращаемый тип `CompletionStage<String>` и вернуть `future.minimalCompletionStage()`. Вызывающий код сможет строить продолжения. Простая смена возвращаемого типа при `return future` сохраняет доступ к тому же объекту через `toCompletableFuture()`.
+
+Если вызывающему коду нужен именно `CompletableFuture<String>`, верните `future.copy()`. Это отдельный future: вызывающий код может завершить или отменить свою копию, а исходный future по-прежнему завершит адаптер. Например, `future.copy().orTimeout(1, TimeUnit.SECONDS)` ограничивает ожидание этого клиента, сохраняя исходный результат для других продолжений. Остановка самой операции требует отдельного механизма (Q14). [Java 26: minimalCompletionStage](https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/util/concurrent/CompletableFuture.html#minimalCompletionStage()) · [Java 26: copy](https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/util/concurrent/CompletableFuture.html#copy()).
 
 ---
 
 ## Q13. Когда НЕ стоит использовать CompletableFuture?
 
-`CompletableFuture` рассчитан на **разовый** асинхронный результат с цепочкой трансформаций. Для потока значений с backpressure нужна другая абстракция. Отмену отдельного future и повторы можно организовать отдельно, но сам `CompletableFuture` не управляет остановкой источника и не даёт потокового протокола. Выбор инструмента зависит от требуемой модели работы.
+Какую абстракцию выбрать для каждой из двух операций и кто управляет темпом доставки?
 
-| Ситуация | Альтернатива |
-|---|---|
-| Поток значений с backpressure | `Flow.Publisher` или Project Reactor `Flux` |
-| Android / Kotlin | Coroutines |
-| Простой однократный фоновый вызов | `@Async` Spring |
-| Параллельные вычисления над коллекцией | `parallelStream()` |
-| Сложная потоковая обработка с повторами | Подходящая потоковая библиотека после оценки требований |
+```text
+A. API один раз возвращает собранный профиль пользователя или ошибку.
+B. API выдаёт последовательность событий. Потребитель обрабатывает их
+   порциями до 100 и запрашивает новую порцию после обработки текущей.
+```
 
-`CompletableFuture` хорош для:
-- Оркестрации нескольких независимых HTTP/DB вызовов
-- Цепочек продолжений без обязательного ожидания на каждом этапе
-- Адаптирования колбэков к Future-стилю
+В A подходит `CompletableFuture<UserProfile>`. Он представляет один итог операции. Из него можно строить цепочки, объединять результаты нескольких запросов или адаптировать API с колбэками.
 
-**Подводный камень:** асинхронные фабрики без явного `Executor` обычно используют общий `ForkJoinPool.commonPool()`. При длительном блокирующем вводе-выводе оцените отдельный исполнитель или неблокирующий клиент: занятые потоки общего пула могут задержать и другие задачи.
+В B нужен потоковый API с управлением спросом, например `Flow.Publisher<Event>` (Java 9+) или Reactor `Flux<Event>`. В `Flow` подписчик запрашивает до 100 элементов через `request(100)`, а после их обработки добавляет следующий запрос к спросу. Источник может завершить поток раньше. Отмена подписки прекращает доставку по мере обработки сигнала, поэтому несколько событий ещё могут прийти после `cancel()`. [Java SE 26 — Flow.Subscription](https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/util/concurrent/Flow.Subscription.html)
+
+`CompletableFuture<List<Event>>` выдаёт один список целиком. В цепочке таких future можно вручную запрашивать страницы по очереди, если источник предоставляет API пагинации. Управление спросом и остановку источника в этом случае реализует вызывающий код. Граница отмены самого future разобрана в Q14.
+
+Выбор абстракции для результата и выбор исполнителя решают разные задачи. Для разового запроса с длительным блокирующим вводом-выводом занятые потоки общего пула могут задержать другие задачи. Выбор между отдельным исполнителем и неблокирующим клиентом зависит от клиента и нагрузки. Правила выбора исполнителя для фабрик и продолжений см. в Q2 и Q5. [Java SE 26 — CompletableFuture](https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/util/concurrent/CompletableFuture.html)
 
 ---
 
 ## Q14. Что отменяет CompletableFuture.cancel(true) и как остановить исходную работу?
+
+В двух независимых запусках операция уже ждёт в прерываемом вызове. Какой результат получит клиент? В каком запуске рабочий поток получит запрос на прерывание?
+
+```text
+В каждом запуске ThreadPoolExecutor.submit принимает новую задачу и возвращает task.
+Задача записывает итог в отдельный CompletableFuture<Result> result.
+После вызовов отмены клиент вызывает result.join().
+
+A. Клиент вызывает только result.cancel(true).
+B. Клиент вызывает result.cancel(true), затем task.cancel(true).
+```
+
+В обоих запусках `result.join()` выбрасывает `CancellationException`. В A уже начатое ожидание задачи продолжается. В B отмена `task` запрашивает прерывание рабочего потока. Реакция задачи зависит от того, как она обрабатывает прерывание.
 
 `CompletableFuture.cancel(true)` завершает **сам future** с `CancellationException` и передаёт отмену незавершённым зависимым этапам как ошибочное завершение. Параметр `mayInterruptIfRunning` здесь **не действует**: JavaDoc прямо говорит, что прерывания не используются для управления вычислением. То же различие важно для `orTimeout` из Q11 — завершение future не означает остановку его источника.
 
@@ -486,7 +550,7 @@ if (result.cancel(false)) {
 }
 ```
 
-Этот пример предполагает, что `doInterruptibleWork()` поддерживает прерывание; для произвольного `supplyAsync` отдельный `Future` задачи обычно недоступен. См. [CompletableFuture.cancel](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html#cancel(boolean)) и [Future.cancel](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Future.html#cancel(boolean)) (Java 25).
+Этот пример предполагает, что `doInterruptibleWork()` поддерживает прерывание; для произвольного `supplyAsync` отдельный `Future` задачи обычно недоступен. См. [CompletableFuture.cancel](https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/util/concurrent/CompletableFuture.html#cancel(boolean)) и [Future.cancel](https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/util/concurrent/Future.html#cancel(boolean)) (Java 26).
 
 ## See also
 

@@ -949,6 +949,7 @@
 
 ## Полные MCQ за пределами закрытой партии
 
+- **Java CompletableFuture**. MCQ-чат передал полный JSON в ходе `01a21f3e-8f02-71d0-ba91-71bdc865d6bb`. Входной JSON: `b28a1c807`. Markdown: `9d926cebd8c433b9516c5afafda3c9e22491f3d76a05da4fd409316e7d2912da`. Результат из `work/java-completable-future-corpus-coverage-full-regeneration/java-completable-future-interview.json` перенесён в production целиком, без проверки.
 - **Python Typing**. MCQ-чат передал полный JSON в ходе `01a21f39-f140-7cc1-a80b-1b60442246a9`. Входной JSON: `b28a1c807`. Markdown: `871bac1d8235b420d43d12c3f5fd64aa8ee1cb676b1c7ddf85d881982936b2ce`. Результат из `work/python-typing-corpus-coverage-full-regeneration/python-typing-interview.json` перенесён в production целиком, без проверки.
 - **Python Core**. MCQ-чат передал полный JSON в ходе `01a21f32-ea1a-7b52-bd0d-b0e1e7627e28`. Входной JSON: `b28a1c807`. Markdown: `7988d248df0ceccdbba8371cd6e5abd2f3df93b71168e512d3c395fd00560ba1`. Результат из `work/python-corpus-coverage-full-regeneration/python-interview.json` перенесён в production целиком, без проверки.
 - **FastAPI**. MCQ-чат передал полный JSON в ходе `01a21f2d-99cd-7f21-a11d-628a49dfbff1`. Входной JSON: `b28a1c807`. Markdown: `7e0a53c1c4681efc625ec3cc661a4828a3a63c1da6913be42439202f488a4b77`. Результат из `work/fastapi-corpus-coverage-full-regeneration/fastapi-interview.json` перенесён в production целиком, без проверки.
