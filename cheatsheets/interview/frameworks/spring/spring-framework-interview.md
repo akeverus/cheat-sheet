@@ -22,6 +22,8 @@ updated: "2026-10-07"
 
 **`Spring Framework`** — базовый фреймворк для enterprise-разработки на `Java`. Вопросы по `IoC`, `DI`, бинам, жизненному циклу, `AOP` и модулям `Spring` регулярно встречаются на собеседованиях всех уровней — от junior до senior. Этот файл покрывает ключевые темы с диаграммами, примерами кода и практическими нюансами.
 
+Основные примеры рассчитаны на Spring Framework 6.2 и, где используется Boot, на Spring Boot 3.5. В Q41 отдельно разобраны Spring Framework 7.0 и Spring Boot 4.0.
+
 ## Полезные ссылки
 
 ### Официальная документация
@@ -117,6 +119,19 @@ updated: "2026-10-07"
 | `spring-test` | Поддержка тестирования Spring-приложений |
 
 ```mermaid
+flowchart TB
+    A[Java-приложение]
+    B[HTTP API]
+    C[Работа с базой данных]
+    D[Интеграционные тесты]
+    A --- B
+    A --- C
+    A --- D
+```
+
+**Схема для разбора**
+
+```mermaid
 graph TB
     subgraph "Spring Framework — модули"
         Core["Core / Beans / Context<br/>IoC / DI"]
@@ -152,7 +167,7 @@ graph TB
 
 Границу между Framework и соседними проектами сверяй по [обзору Framework](https://spring.io/projects/spring-framework/), [каталогу проектов](https://spring.io/projects/) и [руководству Boot по тестированию](https://docs.spring.io/spring-boot/reference/testing/spring-boot-applications.html).
 
-**Что ожидают на собеседовании:** не перечисление плюсов, а понимание компромиссов. Удобство `Spring` оплачивается временем старта: classpath scanning и создание прокси выполняются при запуске контекста, что заметно для serverless (холодный старт) и короткоживущих процессов. Ответ на это — встроенная в фреймворк AOT-обработка плюс сборка native image через `GraalVM`: работа переносится со старта на этап сборки. Отдельного проекта `Spring Native` больше нет, его роль забрал сам фреймворк.
+Сканирование компонентов и предварительное создание бинов могут влиять на холодный старт. Spring AOT анализирует контекст при сборке и генерирует код и подсказки для запуска. Эти артефакты можно использовать на JVM. Для нативного бинарника нужен отдельный этап сборки GraalVM Native Image. Влияние на время запуска проверяют на конкретном приложении. [Spring AOT](https://docs.spring.io/spring-framework/reference/6.2/core/aot.html).
 
 ## Q3. (!) Что такое `Inversion of Control` (`IoC`)?
 
@@ -161,7 +176,6 @@ graph TB
 **Без IoC** (прямые зависимости):
 ```java
 public class OrderService {
-    // жёсткая связь — сам создаёт зависимость
     private final OrderRepository repo = new JdbcOrderRepository();
 }
 ```
@@ -179,18 +193,7 @@ public class OrderService {
 }
 ```
 
-```mermaid
-graph LR
-    subgraph "Без IoC"
-        A1[OrderService] -->|"new"| B1[JdbcOrderRepository]
-    end
-    subgraph "С IoC-контейнером"
-        Container[Spring IoC Container]
-        Container -->|создаёт| A2[OrderService]
-        Container -->|создаёт| B2[OrderRepository]
-        Container -->|внедряет| A2
-    end
-```
+В первом примере `OrderService` сам создаёт репозиторий через `new JdbcOrderRepository()`. Во втором примере Spring создаёт оба зарегистрированных бина и передаёт `JdbcOrderRepository` как зависимость `OrderService` через конструктор.
 
 Преимущества:
 - **Слабая связанность** — зависимость от абстракций, а не реализаций (подробнее в [ООП: SOLID](../../programming-languages/java/java-oop-interview.md))
@@ -206,17 +209,15 @@ graph LR
 | Способ | Пример | Когда использовать |
 |--------|--------|-------------------|
 | **Конструктор** | `public OrderService(OrderRepository repo)` | Обязательные зависимости (рекомендуется) |
-| **Сеттер** | `@Autowired public void setRepo(OrderRepository repo)` | Необязательные зависимости |
-| **Поле** | `@Autowired private OrderRepository repo;` | Только в тестах; в production — антипаттерн |
+| **Сеттер** | `@Autowired(required = false) public void setRepo(OrderRepository repo)` | Опциональная зависимость при явно заданном `required = false` |
+| **Поле** | `@Autowired private OrderRepository repo;` | Внедрение после создания объекта. Поле в примере обязательно |
 
 ```java
-// Рекомендуемый способ — конструктор
 @Service
 public class PaymentService {
     private final PaymentGateway gateway;
     private final NotificationService notifications;
 
-    // С Spring 4.3 @Autowired на единственном конструкторе не обязателен
     public PaymentService(PaymentGateway gateway, NotificationService notifications) {
         this.gateway = gateway;
         this.notifications = notifications;
@@ -225,13 +226,24 @@ public class PaymentService {
 ```
 
 **Почему конструктор лучше:**
-- Поля можно сделать `final` — гарантия неизменяемости
-- Невозможно создать объект в невалидном состоянии (все зависимости обязательны)
+- Поля можно сделать `final`: ссылку нельзя переназначить после конструктора. Состояние самого объекта может меняться.
+- Конструктор явно принимает обязательные зависимости. При ручном создании проверку на `null` и другие инварианты определяет сам класс.
 - Видна сигнатура зависимостей — если их слишком много, это сигнал к рефакторингу (подробнее в [паттернах рефакторинга](../../code-quality/refactoring-patterns-interview.md))
 
 ## Q5. (!) Типы контейнеров в `Spring Framework`
 
 `Spring` предоставляет два основных контейнера: `BeanFactory` и `ApplicationContext`.
+
+```mermaid
+flowchart TB
+    A["Консольное приложение с Java-конфигурацией"]
+    B["XML-конфигурация из classpath или файловой системы"]
+    C["Веб-приложение на Servlet API"]
+```
+
+Для каждого приложения нужно выбрать подходящий способ создания контекста Spring. Для XML известно, откуда читается файл: из classpath или из файловой системы.
+
+**Иерархия контейнеров и варианты контекста**
 
 ```mermaid
 graph TB
@@ -254,19 +266,29 @@ graph TB
 | Инициализация бинов | По запросу. У `DefaultListableBeanFactory` есть явный `preInstantiateSingletons()` | При `refresh()` заранее создаются non-lazy singleton |
 | Events | Нет | `ApplicationEvent` / `@EventListener` |
 | i18n | Нет | `MessageSource` |
-| AOP | Нет | Полная поддержка |
-| `Environment` | Нет | Профили, property sources |
+| AOP | Постпроцессоры для проксирования можно подключить вручную | Постпроцессоры обнаруживаются автоматически при наличии соответствующей конфигурации |
+| `Environment` | Отсутствует в контракте `BeanFactory` | Профили и источники свойств |
 | `BeanPostProcessor` | Ручная регистрация | Автоматическая |
 
-**На практике** `BeanFactory` напрямую почти не используется — `ApplicationContext` покрывает 99% сценариев. `BeanFactory` полезен в ресурсно-ограниченных средах (embedded, IoT).
+Для прикладного кода обычно выбирают `ApplicationContext`. Прямой доступ к `BeanFactory` полезен инфраструктуре, которая явно управляет настройкой фабрики и её постпроцессорами. [Spring 6.2: BeanFactory API](https://docs.spring.io/spring-framework/reference/6.2/core/beans/beanfactory.html).
 
 ## Q6. (!) Какой жизненный цикл у `Context`?
 
-Жизненный цикл `ApplicationContext` включает создание, refresh, работу и закрытие:
+На примере `ConfigurableApplicationContext` жизненный цикл включает создание, `refresh()`, работу и закрытие. Конструктор `new AnnotationConfigApplicationContext(AppConfig.class)` сам вызывает `refresh()`. Для пошаговой настройки используют конструктор без аргументов, затем `register(...)` и `refresh()`. Такой контекст допускает один вызов `refresh()`.
+
+```mermaid
+flowchart LR
+    A[Приложение с конфигурацией AppConfig]
+    B[Первый запрос к бину]
+    C[Завершение работы приложения]
+    A --- B --- C
+```
+
+**Схема для разбора**
 
 ```mermaid
 graph LR
-    A["1. Создание<br/>new AnnotationConfig..."] --> B["2. Refresh<br/>context.refresh()"]
+    A["1. Создание<br/>new AnnotationConfigApplicationContext()"] --> B["2. register(...) и refresh()"]
     B --> C["3. Работа<br/>getBean(), events"]
     C --> D["4. Закрытие<br/>context.close()"]
 
@@ -280,16 +302,16 @@ graph LR
 **Детализация фазы `refresh()`:**
 
 1. **`prepareRefresh()`** — инициализация property sources, валидация required properties
-2. **`obtainFreshBeanFactory()`** — создание `BeanFactory`, загрузка `BeanDefinition` из XML/аннотаций/Java-конфига
-3. **`prepareBeanFactory()`** — настройка classloader, регистрация системных бинов (`Environment`, `SystemProperties`)
-4. **`invokeBeanFactoryPostProcessors()`** — вызов `BeanFactoryPostProcessor` (например, `PropertyPlaceholderConfigurer`, `ConfigurationClassPostProcessor`)
+2. `obtainFreshBeanFactory()` получает внутреннюю фабрику. XML-контекст загружает определения при подготовке фабрики. `AnnotationConfigApplicationContext` использует существующую фабрику, а производные определения из конфигурационных классов добавляет постпроцессор на шаге 4.
+3. `prepareBeanFactory()` настраивает classloader и регистрирует стандартные объекты, например бины `environment` и `systemProperties`.
+4. `invokeBeanFactoryPostProcessors()` вызывает фабричные постпроцессоры, например `ConfigurationClassPostProcessor` и объявленный в Q11 `PropertySourcesPlaceholderConfigurer`.
 5. **`registerBeanPostProcessors()`** — регистрация `BeanPostProcessor` (`AutowiredAnnotationBeanPostProcessor`, `CommonAnnotationBeanPostProcessor`)
 6. **`initMessageSource()`** — инициализация i18n
 7. **`initApplicationEventMulticaster()`** — настройка механизма событий
-8. **`onRefresh()`** — хук для подклассов (например, `ServletWebServerApplicationContext` запускает Tomcat)
+8. `onRefresh()` даёт подклассу выполнить свою настройку. В Boot 3.5 `ServletWebServerApplicationContext` здесь создаёт встроенный сервер и регистрирует его lifecycle-компоненты.
 9. **`registerListeners()`** — регистрация `ApplicationListener`
 10. **`finishBeanFactoryInitialization()`** — предварительное создание non-lazy singleton. При разрешении их зависимостей могут быть запрошены также lazy-бины и prototype.
-11. **`finishRefresh()`** — публикация `ContextRefreshedEvent`, запуск lifecycle-процессоров
+11. `finishRefresh()` вызывает `LifecycleProcessor.onRefresh()` и затем публикует `ContextRefreshedEvent`. В примере с Boot сервер запускает зарегистрированный lifecycle-компонент. [Spring 6.2: AbstractApplicationContext](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/context/support/AbstractApplicationContext.html) · [Spring Boot 3.5: ServletWebServerApplicationContext](https://github.com/spring-projects/spring-boot/blob/v3.5.0/spring-boot-project/spring-boot/src/main/java/org/springframework/boot/web/servlet/context/ServletWebServerApplicationContext.java).
 
 ## Q7. (!) В чем разница между `BeanFactory` и `ApplicationContext`?
 
@@ -300,19 +322,15 @@ graph LR
 - **Механизм событий** — `ApplicationEvent` / `@EventListener`
 - **Интернационализацию** — `MessageSource`
 - **Доступ к ресурсам** — `ResourceLoader` (classpath, filesystem, URL)
-- **Интеграцию с AOP** — автоматическая регистрация `BeanPostProcessor` для проксирования
+- **Обнаружение постпроцессоров**, включая инфраструктуру AOP, если она подключена
 - **Профили и Environment** — `@Profile`, `@PropertySource`
 
 ```java
-// BeanFactory — ленивая загрузка
-// (XmlBeanFactory из старых примеров удалён; читатель определений подключают явно)
 DefaultListableBeanFactory factory = new DefaultListableBeanFactory();
 new XmlBeanDefinitionReader(factory).loadBeanDefinitions(new ClassPathResource("beans.xml"));
-MyService service = factory.getBean(MyService.class); // бин создаётся здесь
+MyService service = factory.getBean(MyService.class);
 
-// ApplicationContext — жадная загрузка
 ApplicationContext ctx = new AnnotationConfigApplicationContext(AppConfig.class);
-// non-lazy singleton уже созданы
 MyService contextService = ctx.getBean(MyService.class);
 ```
 
@@ -320,11 +338,15 @@ MyService contextService = ctx.getBean(MyService.class);
 
 ## Q8. (!) Как завершить работу `Context`?
 
-Для корректного завершения работы контекста нужно вызвать `close()`, который:
-1. Публикует `ContextClosedEvent`
-2. Вызывает `@PreDestroy`-методы на бинах
-3. Вызывает `destroy()`-методы `DisposableBean`
-4. Освобождает ресурсы
+При `close()` стандартный контекст публикует `ContextClosedEvent`, даёт `LifecycleProcessor` остановить lifecycle-компоненты и запускает разрушение управляемых singleton-бинов. Для одного бина с разными callbacks порядок такой: `@PreDestroy`, `DisposableBean.destroy()`, пользовательский destroy-метод. Для prototype действует правило из Q14. [Spring 6.2: Bean lifecycle callbacks](https://docs.spring.io/spring-framework/reference/6.2/core/beans/factory-nature.html).
+
+```text
+В консольном приложении вручную создан AnnotationConfigApplicationContext.
+При завершении нужно освободить ресурсы управляемых singleton-бинов.
+Какие варианты подходят для выхода из блока кода и для завершения JVM?
+```
+
+**Пример для разбора**
 
 ```java
 // Способ 1: явный close() через ConfigurableApplicationContext
@@ -335,7 +357,7 @@ try {
     ctx.close();
 }
 
-// Способ 2: try-with-resources (ApplicationContext implements Closeable)
+// Способ 2: try-with-resources (ConfigurableApplicationContext extends Closeable)
 try (var ctx = new AnnotationConfigApplicationContext(AppConfig.class)) {
     // работа с контекстом
 }
@@ -345,11 +367,11 @@ var ctx = new AnnotationConfigApplicationContext(AppConfig.class);
 ctx.registerShutdownHook(); // close() будет вызван при завершении JVM
 ```
 
-**Важно:** `registerShutdownHook()` — это то, что [Spring Boot](spring-boot-interview.md) делает автоматически. В standalone-приложениях без `Spring Boot` нужно вызывать явно.
+Spring Boot по умолчанию регистрирует shutdown hook. Для самостоятельно созданного контекста выберите явное закрытие или shutdown hook, если освобождение ресурсов должно происходить при завершении JVM.
 
 ## Q9. Что такое `Bean`?
 
-`Bean` — объект, управляемый IoC-контейнером `Spring`. Контейнер создаёт его, внедряет зависимости, управляет жизненным циклом и разрушает при закрытии контекста.
+`Bean` — объект, которым управляет IoC-контейнер Spring. Контейнер разрешает зависимости и запускает инициализацию. Ответственность за разрушение зависит от scope (Q14).
 
 Три способа определения бинов:
 
@@ -394,21 +416,81 @@ public class AppConfig {
 
 Жизненный цикл бина — одна из самых частых тем на собеседованиях. Важно знать не только этапы, но и порядок вызова callback-ов.
 
+```java
+// CacheWarmer зарегистрирован как компонент. Каков порядок его callback-ов
+// при успешном запуске и последующем закрытии контекста?
+//
+// Spring Framework 6.2: SearchConfig зарегистрирован в том же контексте.
+// searchIndex и searchService являются singleton без @Lazy.
+// Когда searchService получит SearchIndex? Может ли refresh() завершиться,
+// пока SearchIndex ещё создаётся?
+
+@Component
+public class CacheWarmer implements InitializingBean, DisposableBean {
+
+    @PostConstruct
+    public void postConstruct() {
+    }
+
+    @Override
+    public void afterPropertiesSet() {
+    }
+
+    @PreDestroy
+    public void preDestroy() {
+    }
+
+    @Override
+    public void destroy() {
+    }
+}
+
+@Configuration(proxyBeanMethods = false)
+class SearchConfig {
+    @Bean(destroyMethod = "shutdown")
+    ExecutorService bootstrapExecutor() {
+        return Executors.newFixedThreadPool(2);
+    }
+
+    @Bean(bootstrap = Bean.Bootstrap.BACKGROUND)
+    SearchIndex searchIndex() {
+        return new SearchIndex();
+    }
+
+    @Bean
+    SearchService searchService(SearchIndex index) {
+        return new SearchService(index);
+    }
+
+    record SearchIndex() {}
+    record SearchService(SearchIndex index) {}
+}
+```
+
+```mermaid
+flowchart TB
+    A["Контекст запускается с CacheWarmer и SearchConfig"]
+    B["Контекст работает"]
+    C["Контекст закрывается"]
+    A --> B --> C
+```
+
+**Этапы жизненного цикла бина**
+
 ```mermaid
 graph TB
     A["1. Instantiation<br/>Аргументы конструктора и создание экземпляра"] --> B["2. Populate Properties<br/>Поля и сеттеры"]
     B --> C["3. BeanNameAware<br/>.setBeanName()"]
     C --> D["4. BeanFactoryAware<br/>.setBeanFactory()"]
     D --> E["5. ApplicationContextAware<br/>.setApplicationContext()"]
-    E --> F["6. BeanPostProcessor<br/>.postProcessBeforeInitialization()"]
-    F --> G["7. @PostConstruct"]
-    G --> H["8. InitializingBean<br/>.afterPropertiesSet()"]
-    H --> I["9. custom init-method"]
-    I --> J["10. BeanPostProcessor<br/>.postProcessAfterInitialization()"]
-    J --> K["11. Bean готов к использованию"]
-    K --> L["12. @PreDestroy"]
-    L --> M["13. DisposableBean<br/>.destroy()"]
-    M --> N["14. custom destroy-method"]
+    E --> F["6. Before-initialization постпроцессоры<br/>В этой фазе вызывается @PostConstruct"]
+    F --> H["7. InitializingBean<br/>.afterPropertiesSet()"]
+    H --> I["8. custom init-method"]
+    I --> J["9. BeanPostProcessor<br/>.postProcessAfterInitialization()"]
+    J --> K["10. Bean готов к использованию"]
+    K --> L["11. @PreDestroy"]
+    L --> M["12. DisposableBean<br/>.destroy()"]
+    M --> N["13. custom destroy-method"]
 
     style A fill:#e1f5fe
     style K fill:#c8e6c9
@@ -417,41 +499,15 @@ graph TB
 
 Конструкторная инъекция происходит **при создании экземпляра**: контейнер сначала разрешает зависимости и передаёт их аргументами конструктора. Поля и сеттеры заполняются уже после создания объекта, на этапе `Populate Properties`. Поэтому схему выше нельзя читать как «любая DI происходит после конструктора». См. [Spring Framework: Dependency Injection](https://docs.spring.io/spring-framework/reference/core/beans/dependencies/factory-collaborators.html).
 
-**Ключевые callback-и в коде:**
+В примере `CacheWarmer` сначала получает вызов `postConstruct()`, затем `afterPropertiesSet()`. При закрытии контекста `preDestroy()` вызывается перед `destroy()`.
 
-```java
-@Component
-public class CacheWarmer implements InitializingBean, DisposableBean {
+`ApplicationContextAware` обрабатывает инфраструктурный постпроцессор контекста. `@PostConstruct` выполняет соответствующий постпроцессор в фазе `postProcessBeforeInitialization()`. В примере используются аннотации из `jakarta.annotation`. [Spring 6.2: Bean lifecycle callbacks](https://docs.spring.io/spring-framework/reference/6.2/core/beans/factory-nature.html).
 
-    @PostConstruct
-    public void postConstruct() {
-        // 7. Вызывается после DI, до afterPropertiesSet()
-        // Рекомендуемый способ инициализации
-    }
-
-    @Override
-    public void afterPropertiesSet() {
-        // 8. InitializingBean — альтернатива @PostConstruct
-    }
-
-    @PreDestroy
-    public void preDestroy() {
-        // 12. Вызывается перед destroy()
-        // Рекомендуемый способ очистки ресурсов
-    }
-
-    @Override
-    public void destroy() {
-        // 13. DisposableBean — альтернатива @PreDestroy
-    }
-}
-```
-
-**Важный нюанс:** `BeanPostProcessor.postProcessAfterInitialization()` (шаг 10) — именно здесь Spring создаёт **прокси** для `@Transactional`, `@Cacheable`, `@Async` и других AOP-аннотаций. Поэтому вызов `this.method()` внутри того же бина обходит прокси и не запускает аспект.
+Многие AOP-прокси создаются в `postProcessAfterInitialization()`. Это типичный путь, а порядок зависит от постпроцессоров. Например, некоторые авто-проксировщики могут предоставить раннюю ссылку в разрешимом цикле singleton-бинов. Вызов целевого метода через `this` обходит прокси (Q22).
 
 **Фоновое создание при запуске (Spring Framework 6.2+):** `@Bean(bootstrap = Bean.Bootstrap.BACKGROUND)` позволяет выполнять создание конкретного бина в фоне, если в контексте есть бин `Executor` с именем `bootstrapExecutor`. Без него маркер игнорируется. Это параллелизм этапа создания бинов, а не вызов метода через `@Async`.
 
-Для обычного singleton фоновые задачи **завершаются до конца `refresh()`**: пометка не разрешает завершить этот этап с недостроенным бином. Зависимый бин с обычной, не ленивой инъекцией ждёт его создания и может снова сделать главный поток критическим путём. Ленивая точка инъекции с `@Lazy` или `ObjectProvider` у потребителя откладывает доступ; если и сам фоновый бин помечен `@Lazy`, его завершение допускается при первом фактическом обращении. Собственные зависимости фонового бина должны быть созданы прежде него. Польза определяется измерением времени старта и графом зависимостей.
+Для обычного singleton фоновые задачи **завершаются до конца `refresh()`**: пометка не разрешает завершить этот этап с недостроенным бином. Зависимый бин с обычной, не ленивой инъекцией ждёт его создания и может снова сделать главный поток критическим путём. Ленивая точка инъекции с `@Lazy` или `ObjectProvider` у потребителя откладывает доступ; если и сам фоновый бин помечен `@Lazy`, его завершение допускается при первом фактическом обращении. Собственные зависимости фонового бина должны быть созданы прежде него. Польза определяется измерением времени старта и графом зависимостей. [Spring 6.2: фоновая инициализация](https://docs.spring.io/spring-framework/reference/6.2/core/beans/java/composing-configuration-classes.html).
 
 ## Q11. Как создать статический `Bean`?
 
@@ -461,7 +517,6 @@ public class CacheWarmer implements InitializingBean, DisposableBean {
 @Configuration
 public class InfraConfig {
 
-    // Контейнер запрашивает этот BeanFactoryPostProcessor до обычных бинов
     @Bean
     public static PropertySourcesPlaceholderConfigurer propertyConfigurer() {
         return new PropertySourcesPlaceholderConfigurer();
@@ -485,7 +540,6 @@ public class InfraConfig {
 Три способа внедрения зависимостей:
 
 ```java
-// 1. Конструктор (рекомендуется)
 @Service
 public class OrderService {
     private final OrderRepository repo;
@@ -497,7 +551,6 @@ public class OrderService {
     }
 }
 
-// 2. Сеттер (для необязательных зависимостей)
 @Service
 public class ReportService {
     private EmailSender emailSender;
@@ -508,44 +561,46 @@ public class ReportService {
     }
 }
 
-// 3. Поле (антипаттерн в production-коде)
 @Service
 public class LegacyService {
     @Autowired
-    private SomeDependency dep; // нельзя сделать final, сложно тестировать
+    private SomeDependency dep;
 }
 ```
 
-**Как выбрать:** конструктор — для всего обязательного (зависимость без неё бин не работает), сеттер — для опционального, поля — не использовать в production. Подробное сравнение и обоснование — в Q15.
+Конструктор удобен для обязательных зависимостей. В обеих формах, через поле и сеттер, обычный `@Autowired` требует зависимость. В примере сеттер опционален из-за `required = false`. Сравнение способов приведено в Q15.
 
 ## Q13. (!) Что такое `@Autowired`?
 
 `@Autowired` — аннотация `Spring` для автоматического внедрения зависимости по типу. `Spring` ищет подходящий бин в контексте и внедряет его.
 
-**Алгоритм разрешения зависимости:**
+Для одиночной зависимости Spring сначала отбирает кандидатов, совместимых с типом. Если задан `@Qualifier`, он фильтрует кандидатов даже при одном бине подходящего типа. Если после фильтрации осталось несколько, контейнер применяет правила выбора, например учитывает `@Primary` и при определённых условиях имя точки внедрения (Q28).
+
+```mermaid
+flowchart LR
+    A[NotificationService: параметр MessageSender]
+    B[Бин emailSender]
+    C[Бин smsSender]
+```
+
+**Схема для разбора**
 
 ```mermaid
 graph TD
-    A["@Autowired поле/параметр типа T"] --> B{"Сколько бинов типа T<br/>в контексте?"}
-    B -->|"0"| C{"required = true?"}
-    C -->|"Да"| D["NoSuchBeanDefinitionException"]
-    C -->|"Нет"| E["null / не внедряется"]
-    B -->|"1"| F["Внедряет единственный бин"]
-    B -->|"> 1"| I{"Есть @Qualifier?"}
-    I -->|"Да"| J["Внедряет бин из @Qualifier"]
-    I -->|"Нет"| G{"Есть @Primary?"}
-    G -->|"Да"| H["Внедряет @Primary бин"]
-    G -->|"Нет"| K{"Имя параметра<br/>совпадает с именем бина?"}
-    K -->|"Да"| L["Внедряет по имени параметра"]
-    K -->|"Нет"| M["NoUniqueBeanDefinitionException"]
+    A["Кандидаты совместимого типа"] --> B["Фильтры точки внедрения, включая @Qualifier"]
+    B --> C{"Сколько кандидатов осталось?"}
+    C -->|0| D["Ошибка для обязательной зависимости"]
+    C -->|1| E["Внедрить подходящий бин"]
+    C -->|Несколько| F["Правила выбора одного кандидата (Q28)"]
 ```
+
+Для необязательной зависимости обработка отсутствия зависит от формы внедрения. Например, `Optional<T>` получает пустое значение, а необязательный `@Autowired`-сеттер может не вызываться. [Spring: Autowiring Qualifiers](https://docs.spring.io/spring-framework/reference/core/beans/annotation-config/autowired-qualifiers.html).
 
 ```java
 @Service
 public class NotificationService {
     private final MessageSender sender;
 
-    // С Spring 4.3 @Autowired не нужен, если один конструктор
     public NotificationService(@Qualifier("emailSender") MessageSender sender) {
         this.sender = sender;
     }
@@ -556,42 +611,53 @@ public class NotificationService {
 
 ## Q14. (!) Какие есть области действия `Bean`?
 
-| Scope | Описание | Создание | Разрушение |
-|-------|----------|----------|-----------|
-| `singleton` | Один экземпляр на контекст (по умолчанию) | При старте контекста | При закрытии контекста |
-| `prototype` | Новый экземпляр при каждом запросе | При каждом `getBean()` / внедрении | **Не управляется** контейнером! |
-| `request` | Один экземпляр на HTTP-запрос | При поступлении запроса | По завершении запроса |
-| `session` | Один экземпляр на HTTP-сессию | При создании сессии | При истечении/инвалидации сессии |
-| `application` | Один экземпляр на `ServletContext` | При старте `ServletContext` | При остановке `ServletContext` |
-| `websocket` | Один экземпляр на WebSocket-сессию | При открытии WS-соединения | При закрытии WS-соединения |
+| Scope | Область экземпляра | Когда создаётся | Когда разрушается |
+|-------|---------------------|-----------------|-------------------|
+| `singleton` | Один экземпляр на определение бина в контейнере | Non-lazy singleton обычно при `refresh()`. Lazy singleton при запросе, в том числе при разрешении зависимости на старте | При закрытии контекста |
+| `prototype` | Новый экземпляр при каждом запросе этого бина | При `getBean()` или разрешении зависимости | Контейнер не управляет разрушением |
+| `request` | Один экземпляр на HTTP-запрос | При первом обращении к целевому бину в запросе | По завершении запроса |
+| `session` | Один экземпляр на HTTP-сессию | При первом обращении к целевому бину в сессии | При завершении или инвалидации сессии |
+| `application` | Один экземпляр на `ServletContext` | При первом разрешении целевого бина в этой области | При остановке `ServletContext` |
+| `websocket` | Один экземпляр на поддерживаемую Spring STOMP-сессию поверх WebSocket | При первом обращении к целевому бину в STOMP-сессии | При завершении сессии |
+
+[Spring Bean Scopes](https://docs.spring.io/spring-framework/reference/core/beans/factory-scopes.html) · [Spring STOMP WebSocket Scope](https://docs.spring.io/spring-framework/reference/web/websocket/stomp/scope.html).
 
 ```java
+// DirectCartService является singleton. Его вызывают при двух заказах.
+// Какая область у ShoppingCart и в какой момент контейнер выдаёт экземпляр?
+
 @Component
 @Scope("prototype")
 public class ShoppingCart {
     private final List<Item> items = new ArrayList<>();
 }
 
-// Проблема: prototype внутри singleton
 @Service
-public class OrderService {
-    // ОШИБКА! Один и тот же ShoppingCart на все запросы
-    @Autowired private ShoppingCart cart;
-}
+class DirectCartService {
+    private final ShoppingCart cart;
 
+    DirectCartService(ShoppingCart cart) {
+        this.cart = cart;
+    }
+}
+```
+
+**Получение отдельной корзины для каждого заказа**
+
+```java
 // Решение 1: @Lookup
 @Service
-public abstract class OrderService {
+abstract class LookupCartService {
     @Lookup
     protected abstract ShoppingCart createCart();
 }
 
 // Решение 2: ObjectProvider
 @Service
-public class OrderService {
+class ProviderCartService {
     private final ObjectProvider<ShoppingCart> cartProvider;
 
-    public OrderService(ObjectProvider<ShoppingCart> cartProvider) {
+    ProviderCartService(ObjectProvider<ShoppingCart> cartProvider) {
         this.cartProvider = cartProvider;
     }
 
@@ -601,6 +667,8 @@ public class OrderService {
 }
 ```
 
+При прямой инъекции `DirectCartService` сохраняет корзину, полученную при собственном создании. Варианты с `@Lookup` и `ObjectProvider` получают новый экземпляр на каждый запрос корзины к контейнеру.
+
 **Ловушка с `prototype`:** Spring **не вызывает** `@PreDestroy` для prototype-бинов — ответственность за очистку ресурсов лежит на клиенте.
 
 ## Q15. (!) Как лучше внедрять `Bean`?
@@ -609,15 +677,15 @@ public class OrderService {
 
 | Критерий | Конструктор | Сеттер | Поле |
 |----------|------------|--------|------|
-| Иммутабельность (`final`) | Да | Нет | Нет |
-| Обязательность зависимости | Гарантирована | Нет | Нет |
+| Заполнение `final`-поля при создании объекта | Да | Нет | Нет |
+| Обязательность зависимости | Задаётся сигнатурой и настройками | `@Autowired` по умолчанию требует зависимость | `@Autowired` по умолчанию требует зависимость |
 | Тестируемость | Легко (через `new`) | Средне | Сложно (reflection) |
-| Циклические зависимости | Ошибка при старте | Работает | Работает |
+| Циклические зависимости | Прямой цикл конструкторов неразрешим | Некоторые циклы singleton разрешимы при включённой поддержке | Некоторые циклы singleton разрешимы при включённой поддержке |
 | Читаемость | Видна сигнатура | Разбросано по классу | Скрыто |
 
 **Правило большого пальца:** если конструктор принимает больше 5-7 параметров, это сигнал к декомпозиции класса (нарушение Single Responsibility Principle — подробнее в [SOLID](../../programming-languages/java/java-oop-interview.md)).
 
-**Циклические зависимости:** `Spring Boot 2.6+` по умолчанию запрещает циклические зависимости. Если они есть — это архитектурная проблема, которую нужно решать рефакторингом, а не `@Lazy`.
+Spring Framework может разрешить некоторые циклы singleton при внедрении через поля или сеттеры, если допустима ранняя ссылка на уже созданный экземпляр. Прямой цикл конструкторов без отложенного разрешения не даёт создать первый объект. В Spring Boot 2.6+ циклические ссылки по умолчанию запрещены. `spring.main.allow-circular-references=true` позволяет контейнеру попробовать разрешить цикл, если способ создания и проксирования это допускает. [Spring: Dependency Injection](https://docs.spring.io/spring-framework/reference/core/beans/dependencies/factory-collaborators.html) · [Spring Boot 2.6 Release Notes](https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-2.6-Release-Notes).
 
 ## Q16. Является ли `Singleton Bean` потокобезопасным?
 
@@ -627,32 +695,39 @@ public class OrderService {
 ```java
 @Service
 public class CounterService {
-    private int count = 0; // Shared mutable state!
+    private int count = 0;
 
+    // Два потока одновременно вызывают increment() на одном бине.
     public void increment() {
-        count++; // Race condition в многопоточной среде
+        count++;
     }
 }
 ```
+
+При конкурентном вызове обе операции могут прочитать одно исходное значение. `count++` выполняет чтение, вычисление и запись, поэтому одно из обновлений может потеряться.
 
 **Решения:**
 1. **Stateless бины** — не хранить mutable state (рекомендуется)
 2. **Синхронизация** — `synchronized`, `Lock`, `AtomicInteger`
 3. **ThreadLocal** — изоляция данных по потоку
-4. **Prototype/request scope** — каждый поток/запрос получает свой экземпляр
+4. **Разделение состояния.** `prototype` создаётся на запрос бина к контейнеру, например через `ObjectProvider.getObject()`. При прямой инъекции prototype в singleton ссылка остаётся с этим singleton. `request` задаёт экземпляр на HTTP-запрос, а не на поток.
 
 ```java
 @Service
 public class StatelessService {
-    private final UserRepository repo; // immutable reference — безопасно
+    private final UserRepository repo;
 
-    public User findUser(Long id) {
-        return repo.findById(id); // нет shared mutable state
+    public StatelessService(UserRepository repo) {
+        this.repo = repo;
+    }
+
+    public Optional<User> findUser(Long id) {
+        return repo.findById(id);
     }
 }
 ```
 
-**На собеседовании:** покажите понимание связи scope-бинов и потокобезопасности. `Singleton` + mutable state = проблема. Подробнее о потоках в [Java Concurrency](../../programming-languages/java/java-concurrency-interview.md).
+В примере `UserRepository` следует контракту Spring Data, где `findById` возвращает `Optional<User>`. `final` запрещает переназначить ссылку `repo`. Безопасность параллельных вызовов зависит от самого репозитория и состояния, используемого сервисом. Подробнее о потоках в [Java Concurrency](../../programming-languages/java/java-concurrency-interview.md).
 
 ## Q17. Как внедрить `Properties` в `Bean`?
 
@@ -663,18 +738,20 @@ public class MailService {
     @Value("${mail.host}")
     private String host;
 
-    @Value("${mail.port:587}")  // значение по умолчанию
+    @Value("${mail.port:587}")
     private int port;
 
     @Value("${mail.enabled:true}")
     private boolean enabled;
 
-    @Value("#{${mail.headers}}")  // SpEL для Map
+    @Value("#{${mail.headers}}")
     private Map<String, String> headers;
 }
 ```
 
-**Способ 2: `@ConfigurationProperties` — типобезопасная привязка группы свойств:**
+В первом варианте `mail.headers` содержит текст карты SpEL, например `{'X-Env': 'dev'}`. Для вложенных свойств карты подходит привязка через `@ConfigurationProperties`.
+
+**Способ 2.** Spring Boot привязывает группу свойств к отдельному типу. Ниже альтернативная конфигурация. [Spring Boot 3.5: Externalized Configuration](https://docs.spring.io/spring-boot/3.5/reference/features/external-config.html).
 ```java
 @ConfigurationProperties(prefix = "mail")
 @Validated
@@ -684,7 +761,15 @@ public class MailProperties {
     private int port = 587;
     private boolean enabled = true;
     private Map<String, String> headers = new HashMap<>();
-    // getters + setters
+    // Обычные getter и setter для каждого свойства опущены.
+}
+
+class MailService {
+    private final MailProperties properties;
+
+    MailService(MailProperties properties) {
+        this.properties = properties;
+    }
 }
 
 @Configuration
@@ -722,7 +807,7 @@ public class AppConfig {
 }
 ```
 
-**Важный нюанс:** `@Configuration`-класс проксируется через CGLIB. Это значит, что вызов `dataSource()` внутри другого `@Bean`-метода **не создаст** новый объект — прокси вернёт тот же singleton:
+В полном режиме `@Configuration` контейнер создаёт подкласс конфигурации. Вызов переопределяемого `@Bean`-метода из другого фабричного метода разрешает бин через контейнер. В примере по умолчанию возвращается singleton:
 
 ```java
 @Configuration
@@ -738,20 +823,31 @@ public class AppConfig {
 }
 ```
 
-Для `@Configuration(proxyBeanMethods = false)` (lite mode) — каждый вызов создаёт новый объект. `Spring Boot` использует lite mode в автоконфигурациях для ускорения старта.
+При `@Configuration(proxyBeanMethods = false)` прямой вызов исполняет тело обычного Java-метода. Если оно создаёт объект через `new`, такой вызов создаст новый объект. Контейнер по-прежнему соблюдает scope при запросе бина. Передача зависимости параметром фабричного метода работает в обоих режимах. [Spring: Basic Concepts](https://docs.spring.io/spring-framework/reference/core/beans/java/basic-concepts.html).
 
 ## Q19. (!) Можно ли иметь несколько файлов конфигурации `Spring`?
 
 Да, и в крупных проектах это рекомендуемая практика — разделение по ответственности.
 
 **Java-конфигурация:**
+```text
+DataConfig, SecurityConfig и CacheConfig находятся в отдельных классах.
+Приложению нужен один контекст, который запускается с AppConfig.
+Все три конфигурации нужно включить в этот контекст.
+```
+
+**Пример для разбора**
+
 ```java
 @Configuration
 @Import({DataConfig.class, SecurityConfig.class, CacheConfig.class})
 public class AppConfig {
 }
+```
 
-// Или через component scanning
+Альтернатива с component scan:
+
+```java
 @Configuration
 @ComponentScan(basePackages = "com.example.config")
 public class AppConfig {
@@ -782,14 +878,14 @@ config/
 | Паттерн | Где используется | Пример |
 |---------|-----------------|--------|
 | **Singleton** | Scope бинов по умолчанию | `@Scope("singleton")` |
-| **Factory Method** | Создание бинов | `@Bean`-методы, `BeanFactory` |
+| **Фабрика** | Создание и получение бинов | `@Bean`-метод задаёт создание. `BeanFactory` выдаёт бин по контракту контейнера. Термин factory method здесь обозначает фабричный метод Spring |
 | **Proxy** | AOP, `@Transactional`, `@Cacheable` | JDK Dynamic Proxy / CGLIB |
-| **Template Method** | JDBC, JMS, REST | `JdbcTemplate`, `RestTemplate` |
+| **Шаблон с callback** | Повторяемый алгоритм JDBC | `JdbcTemplate.execute(...)` делегирует часть операции callback. Классический GoF Template Method меняет шаги через наследование |
 | **Observer** | События | `ApplicationEvent`, `@EventListener` |
 | **Strategy** | Выбор реализации | `HandlerMapping`, `ViewResolver` |
 | **Adapter** | Интеграция | `HandlerAdapter`, `MessageConverter` |
 | **Decorator** | Обёртки | `BeanPostProcessor` оборачивает бины прокси |
-| **Composite** | Цепочки | `CompositeHealthIndicator` |
+| **Composite** | Группа объектов предоставляет общий интерфейс | `CompositeHealthContributor` из Spring Boot Actuator |
 | **Front Controller** | Веб | `DispatcherServlet` в [Spring MVC](spring-mvc-interview.md) |
 
 ## Q21. (!) Что такое `AOP`?
@@ -804,8 +900,16 @@ config/
 | **Join Point** | Точка в программе, где можно подключить аспект (в Spring AOP — только вызов метода) |
 | **Pointcut** | Выражение, определяющее, к каким Join Point применяется аспект |
 | **Advice** | Действие аспекта: `@Before`, `@After`, `@Around`, `@AfterReturning`, `@AfterThrowing` |
-| **Weaving** | Процесс применения аспекта к целевому объекту |
+| **Weaving** | В AspectJ связывание аспектов с целевым кодом через преобразование байткода (Q23) |
 | **Target** | Объект, к которому применяется аспект |
+
+```text
+OrderService и PaymentService выполняют разные бизнес-операции.
+Для обоих нужно измерять время выполнения методов.
+Измерение должно работать и при исключении, а бизнес-код должен остаться прежним.
+```
+
+**Пример для разбора**
 
 ```java
 @Aspect
@@ -828,11 +932,22 @@ public class PerformanceAspect {
 }
 ```
 
-Включение: `@EnableAspectJAutoProxy` (в `Spring Boot` включено автоматически).
+В Java-конфигурации Spring Framework поддержку `@Aspect` можно включить через `@EnableAspectJAutoProxy`. В Boot 3.5 при активной AOP-автоконфигурации и наличии AspectJ в classpath Boot включает эту поддержку сам. [Spring Boot 3.5: AOP](https://docs.spring.io/spring-boot/3.5/reference/features/aop.html).
 
 ## Q22. (!) Как работает `AOP`-прокси в `Spring`?
 
 `Spring AOP` работает через прокси-объекты. При наличии аспекта `Spring` оборачивает целевой бин прокси, который перехватывает вызовы методов.
+
+```mermaid
+flowchart LR
+    C[Клиент получил бин из контейнера]
+    M[Вызов pay у PaymentService]
+    A[К вызову применимы два advice]
+    C --> M
+    A --- M
+```
+
+**Схема для разбора**
 
 ```mermaid
 graph LR
@@ -855,10 +970,9 @@ graph LR
 | Граница перехвата | Методы интерфейсов прокси, включая вызов `final` реализации | Методы, доступные для переопределения. `final` и `private` не перехватываются |
 | Выбор механизма | По умолчанию Spring AOP выбирает JDK-прокси при наличии интерфейса, если инфраструктура не требует прокси класса | Spring AOP использует подкласс для цели без интерфейса. Конкретная конфигурация может принудительно выбрать подкласс |
 
-В автоконфигурации Spring Boot AOP выбор по умолчанию может отличаться. В Boot 3.5 он управляется `spring.aop.proxy-target-class`. Производительность сравнивают на конкретной нагрузке. [Spring AOP: Proxying Mechanisms](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html) · [Spring Boot 3.5: AOP](https://docs.spring.io/spring-boot/3.5/reference/features/aop.html).
+При включённой AOP-автоконфигурации Boot 3.5 по умолчанию запрашивает прокси-подкласс. `spring.aop.proxy-target-class=false` позволяет выбрать JDK-прокси для целей с подходящими интерфейсами. Другие настройки проксирования могут повлиять на выбор. Производительность сравнивают на конкретной нагрузке. [Spring AOP: Proxying Mechanisms](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html) · [Spring Boot 3.5: AOP](https://docs.spring.io/spring-boot/3.5/reference/features/aop.html).
 
 ```java
-// JDK Proxy — проксируется интерфейс
 public interface PaymentService { void pay(Order order); }
 
 @Service
@@ -867,7 +981,6 @@ public class PaymentServiceImpl implements PaymentService {
     public void pay(Order order) { /* ... */ }
 }
 
-// CGLIB Proxy — проксируется класс
 @Service
 public class NotificationService {
     @Cacheable("notifications")
@@ -895,53 +1008,44 @@ public class UserService {
 **Как обойти:**
 - **Вынести метод в другой бин** — вызов через зависимость снова идёт через прокси (чистое решение, рекомендуется)
 - **`AopContext.currentProxy()`** — получить ссылку на собственный прокси и вызвать метод через неё (требует `exposeProxy = true`)
-- **Self-injection** — внедрить сам бин в себя через `@Autowired` и звать метод через эту ссылку (это прокси, а не `this`)
+- **Self-injection.** Контейнер рассматривает ссылку на себя как резервного кандидата. Вариант зависит от разрешимости цикла и получения прокси (Q15).
 
 ## Q23. Что такое `Weaving`?
 
-`Weaving` (плетение) — это процесс, в ходе которого код аспекта «вшивается» в целевой объект, чтобы advice реально срабатывал в нужных точках. Сам аспект — это просто класс; weaving превращает связку «целевой код + аспект» в работающий проксированный (advised) объект.
+Weaving в AspectJ связывает аспекты с целевым кодом посредством преобразования байткода.
 
-Ключевой вопрос — **когда** происходит это связывание. От этого зависит и производительность, и то, что вообще можно перехватить.
+| Режим AspectJ | Когда преобразуется байткод |
+|---------------|-----------------------------|
+| Compile-time | При компиляции исходников |
+| Post-compile | После компиляции, при обработке существующих `.class` или JAR |
+| Load-time | При загрузке классов, например с агентом AspectJ |
 
-| Тип | Когда происходит | Технология | Производительность |
-|-----|-----------------|-----------|-------------------|
-| **Compile-time** | При компиляции | AspectJ compiler (ajc) | Лучшая — нет overhead в runtime |
-| **Load-time** | При загрузке классов | AspectJ LTW + Java agent | Средняя |
-| **Runtime** | При создании бинов | Spring AOP (прокси) | Есть overhead на прокси |
-
-**Spring AOP** использует **runtime weaving**: при создании бина контейнер оборачивает его прокси (JDK Dynamic Proxy или CGLIB). Плюс — не нужны ни специальный компилятор, ни Java-агент. Минус — перехватываются только вызовы методов на бинах: всё, что прокси «не видит» (вызов через `this`, доступ к полю, конструктор), остаётся вне аспекта.
-
-**AspectJ** вшивает аспект раньше — в байткод (compile/load-time), поэтому может перехватывать конструкторы, доступ к полям и статические методы. За это платишь усложнением сборки (ajc или агент).
+Spring AOP в стандартном режиме создаёт прокси во время выполнения. Он перехватывает вызовы методов, проходящие через прокси. AspectJ после weaving может применять advice в точках, которые прокси не видит, например при доступе к полю или вызове конструктора. Advice всё равно выполняет код. Стоимость зависит от точки применения, самого advice и нагрузки. [AspectJ: Load-Time Weaving](https://eclipse.dev/aspectj/doc/latest/devguide/ltw.html) · [Spring AOP: Proxying Mechanisms](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html).
 
 ## Q24. (!) В чём разница между `Spring AOP` и `AspectJ`?
 
-Коротко: `Spring AOP` — лёгкий proxy-based AOP, работающий только с Spring-бинами и только на вызовах методов; `AspectJ` — полноценный AOP-фреймворк, который вшивается в байткод и перехватывает почти всё. Первый проще, второй мощнее. Все различия в таблице — следствие именно этого: разного момента и способа weaving (см. Q23).
+Spring AOP применяет advice через прокси. AspectJ применяет advice в точках, выбранных при weaving байткода (Q23).
 
 | Характеристика | Spring AOP | AspectJ |
 |----------------|-----------|---------|
-| Weaving | Runtime (прокси) | Compile-time / Load-time / Runtime |
-| Join Points | Только вызов метода | Метод, конструктор, поле, статический метод |
-| Цель | Spring-бины | Любые Java-объекты |
-| Производительность | Overhead от прокси | Нет overhead (compile-time) |
-| Self-invocation | Не работает | Работает |
-| Сложность | Простая настройка | Требует AspectJ compiler или agent |
-| Зависимости | Только Spring | Нужен `aspectjrt` + `aspectjweaver` |
+| Механизм | JDK-прокси или прокси-подкласс | Compile-time, post-compile или load-time weaving |
+| Точки перехвата | Выполнение метода при вызове через прокси | В том числе методы, конструкторы и доступ к полям |
+| Цель | Обычно бины под управлением Spring | Классы, включённые в weaving |
+| Self-invocation | Вызов через `this` обходит прокси | Advice может сработать при совпадении с pointcut |
+| Инструменты | Настройка проксирования Spring | Компилятор или обработка байткода, для LTW — настройка загрузки классов |
 
-**Когда использовать что:**
-- **Spring AOP** — 95% случаев: `@Transactional`, `@Cacheable`, `@Async`, логирование, security
-- **AspectJ** — когда нужно перехватывать конструкторы, field access, или self-invocation критично
+Прокси подходит для транзакций, кеширования и других сценариев на границе Spring-бина. AspectJ выбирают, когда нужна точка перехвата внутри класса или вне этой границы. В обоих случаях advice стоит измерять на реальной нагрузке. [Spring AOP: Proxying Mechanisms](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html) · [AspectJ: Load-Time Weaving](https://eclipse.dev/aspectj/doc/latest/devguide/ltw.html).
 
 ## Q25. Что такое `CommandLineRunner` и `ApplicationRunner`?
 
-Интерфейсы для выполнения кода **после полного запуска** `Spring Boot`-приложения (после `ContextRefreshedEvent`, после `@PostConstruct`).
+Spring Boot вызывает `CommandLineRunner` и `ApplicationRunner` после refresh и публикации `ApplicationStartedEvent`, до `ApplicationReadyEvent`. Они подходят для работы, которую приложение должно выполнить до объявления готовности. [Spring Boot 3.5: Application Events and Listeners](https://docs.spring.io/spring-boot/3.5/reference/features/spring-application.html#features.spring-application.application-events-and-listeners).
 
 ```java
 @Component
-@Order(1) // порядок выполнения
+@Order(1)
 public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) {
-        // args — аргументы командной строки как массив строк
         log.info("Инициализация данных...");
     }
 }
@@ -951,11 +1055,10 @@ public class DataInitializer implements CommandLineRunner {
 public class HealthChecker implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
-        // ApplicationArguments — структурированный доступ к аргументам
         if (args.containsOption("check-db")) {
             verifyDatabaseConnection();
         }
-        List<String> profiles = args.getNonOptionArgs();
+        List<String> positionalArgs = args.getNonOptionArgs();
     }
 }
 ```
@@ -975,18 +1078,18 @@ public class HealthChecker implements ApplicationRunner {
 **Основные стереотипы:**
 - `@Component` — базовый компонент
 - `@Service` — бизнес-логика
-- `@Repository` — доступ к данным + автоматическая трансляция исключений
+- `@Repository` помечает слой доступа к данным и делает бин кандидатом на трансляцию исключений (Q27)
 - `@Controller` / `@RestController` — обработка HTTP-запросов
 
 **Конфигурация:**
-- `@Configuration` — класс конфигурации (CGLIB-прокси)
+- `@Configuration` объявляет класс конфигурации. В полном режиме Spring создаёт подкласс для фабричных вызовов (Q18)
 - `@Bean` — определение бина
 - `@ComponentScan` — сканирование пакетов
 - `@Import` — импорт конфигураций
 
 **DI:**
 - `@Autowired` — внедрение по типу
-- `@Qualifier` — уточнение при множестве кандидатов
+- `@Qualifier` фильтрует кандидатов даже при одном совместимом бине (Q13)
 - `@Primary` — приоритетный бин по умолчанию
 - `@Value` — внедрение свойств/SpEL
 
@@ -1010,7 +1113,18 @@ public class HealthChecker implements ApplicationRunner {
 
 ## Q27. (!) В чём разница между `@Component`, `@Service`, `@Repository` и `@Controller`?
 
-Все четыре аннотации — **стереотипы**, наследующие от `@Component`. Функционально они эквивалентны с точки зрения регистрации бинов, но отличаются **семантикой** и **дополнительным поведением**:
+`@Component` служит базовым стереотипом. `@Service`, `@Repository` и `@Controller` метааннотированы `@Component`, поэтому подходят для стандартного component scan. Каждый обозначает роль класса и может учитываться инфраструктурой Spring.
+
+```mermaid
+flowchart TB
+    B[Компонент форматирования]
+    S[Сервис расчёта стоимости заказа]
+    R[Класс доступа к таблице заказов]
+    C[Класс обработки HTTP-запросов]
+    J[Контроллер JSON API]
+```
+
+**Схема для разбора**
 
 ```mermaid
 graph TB
@@ -1030,18 +1144,18 @@ graph TB
 |-----------|------|------------------------|
 | `@Component` | Любой | Базовое — только регистрация бина |
 | `@Service` | Business | Семантическое — нет доп. поведения |
-| `@Repository` | Persistence | **Трансляция исключений** — `PersistenceExceptionTranslationPostProcessor` оборачивает JDBC/JPA исключения в `DataAccessException` |
-| `@Controller` | Presentation | Обработка HTTP-запросов, разрешение view |
-| `@RestController` | Presentation | `@Controller` + `@ResponseBody` на всех методах |
+| `@Repository` | Persistence | При наличии `PersistenceExceptionTranslationPostProcessor` и подходящего переводчика поддерживаемые исключения доступа к данным преобразуются в `DataAccessException` |
+| `@Controller` | Presentation | MVC обнаруживает методы-обработчики. Контроллер может вернуть представление или тело ответа |
+| `@RestController` | Presentation | Сочетает `@Controller` и `@ResponseBody` для методов-обработчиков |
 
 **Зачем различать, если поведение почти одинаковое?**
 1. **Читаемость** — видно назначение класса по аннотации
 2. **AOP pointcuts** — можно писать срезы по типу аннотации: `@within(org.springframework.stereotype.Service)`
-3. **Специальная обработка** — `@Repository` транслирует исключения, `@Controller` интегрируется с `DispatcherServlet`
+3. **Специальная обработка.** Инфраструктура учитывает стереотип при обнаружении MVC-обработчиков или подключении трансляции исключений. [Spring 6.2: Stereotypes](https://docs.spring.io/spring-framework/reference/6.2/core/beans/classpath-scanning.html) · [PersistenceExceptionTranslationPostProcessor](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/dao/annotation/PersistenceExceptionTranslationPostProcessor.html).
 
 ## Q28. Что такое `@Qualifier` и `@Primary`?
 
-`@Qualifier` и `@Primary` решают проблему **неоднозначности** при наличии нескольких бинов одного типа.
+`@Qualifier` фильтрует кандидатов по признаку. `@Primary` помогает выбрать бин для одиночной зависимости после фильтрации. При внедрении списка в него попадают все подходящие бины.
 
 ```java
 public interface NotificationSender {
@@ -1049,7 +1163,7 @@ public interface NotificationSender {
 }
 
 @Service("emailSender")
-@Primary  // будет выбран по умолчанию
+@Primary
 public class EmailSender implements NotificationSender {
     public void send(String message) { /* email */ }
 }
@@ -1061,10 +1175,8 @@ public class SmsSender implements NotificationSender {
 
 @Service
 public class AlertService {
-    // Внедрится EmailSender (помечен @Primary)
     private final NotificationSender defaultSender;
 
-    // Явно указываем smsSender через @Qualifier
     private final NotificationSender smsSender;
 
     public AlertService(
@@ -1077,6 +1189,8 @@ public class AlertService {
 ```
 
 Сначала контейнер ищет кандидатов, совместимых с типом зависимости. `@Qualifier` сужает множество по признаку, которым может быть и имя совместимого бина. При одиночной зависимости единственный подходящий `@Primary` помогает выбрать один бин. Если выбор остаётся неоднозначным, Spring может сопоставить имя точки внедрения с именем или alias бина при отсутствии более сильного указания. Для имени параметра с Spring Framework 6.1 требуется компиляция с `-parameters`. С 6.2 для подходящего совпадения имени возможен быстрый путь, когда выбор не меняют условия по типу, квалификатору, primary или fallback. При нерешённой неоднозначности возникает ошибка. [Spring: Autowiring Qualifiers](https://docs.spring.io/spring-framework/reference/core/beans/annotation-config/autowired-qualifiers.html).
+
+В примере для `defaultSender` выбирается `EmailSender` благодаря `@Primary`. Для второго параметра `@Qualifier("smsSender")` оставляет `SmsSender` единственным кандидатом.
 
 **Кастомные квалификаторы:** можно создать собственную аннотацию вместо строковых имён:
 ```java
@@ -1099,7 +1213,7 @@ public class AlertService {
 
 ```java
 @Configuration
-@Profile("dev")
+@Profile("dev & !prod")
 public class DevDataSourceConfig {
     @Bean
     public DataSource dataSource() {
@@ -1124,14 +1238,16 @@ public class ProdDataSourceConfig {
 }
 ```
 
-**Способы активации профиля:**
+При `dev,prod` в этом примере регистрируется только конфигурация `prod` (Q40). Без обоих профилей ни одна из этих конфигураций не регистрируется.
+
+Способы активации профиля:
 
 | Способ | Пример |
 |--------|--------|
-| `application.properties` | `spring.profiles.active=dev,metrics` |
+| `application.properties` в Spring Boot | `spring.profiles.active=dev,metrics` |
 | JVM аргумент | `-Dspring.profiles.active=prod` |
 | Переменная окружения | `SPRING_PROFILES_ACTIVE=prod` |
-| Программно | `ctx.getEnvironment().setActiveProfiles("prod")` |
+| Программно | `ctx.getEnvironment().setActiveProfiles("prod")` до регистрации профильной конфигурации и `refresh()` |
 | В тестах | `@ActiveProfiles("test")` |
 
 **Продвинутые возможности:**
@@ -1142,11 +1258,10 @@ public class ProdDataSourceConfig {
 @Profile("dev | staging")        // OR
 
 // Профиль по умолчанию
-@Profile("default")  // активен, если НИ ОДИН профиль не задан
+@Profile("default")  // подходит без активных профилей, если набор default profiles не изменён
 
-// profile-specific properties files
-// application-dev.properties, application-prod.properties
-// Загружаются ПОВЕРХ application.properties
+// Spring Boot Config Data в одной локации
+// application-dev.properties перекрывает application.properties при активном dev
 ```
 
 **На собеседовании:** часто спрашивают, как организовать конфигурацию для `dev`/`staging`/`prod`. Рекомендация: общие свойства в `application.yml`, специфичные — в `application-{profile}.yml`. Секреты — через переменные окружения или vault, не в файлах.
@@ -1159,14 +1274,13 @@ public class ProdDataSourceConfig {
 @Service
 public abstract class OrderProcessor {
 
-    // Spring подменит этот метод — каждый вызов вернёт новый ShoppingCart
+    // ShoppingCart зарегистрирован как prototype, см. Q14
     @Lookup
     protected abstract ShoppingCart createCart();
 
-    public void processOrder(List<Item> items) {
-        ShoppingCart cart = createCart(); // каждый раз новый!
-        items.forEach(cart::add);
-        cart.checkout();
+    public void processOrder() {
+        ShoppingCart cart = createCart();
+        // Здесь заполняют и обрабатывают корзину.
     }
 }
 ```
@@ -1206,33 +1320,47 @@ public class LinuxSpecificConfig {
 |-----------|---------|
 | `@ConditionalOnClass` | Класс есть в classpath |
 | `@ConditionalOnMissingClass` | Класса нет в classpath |
-| `@ConditionalOnBean` | Бин существует в контексте |
-| `@ConditionalOnMissingBean` | Бина нет в контексте (для fallback) |
-| `@ConditionalOnProperty` | Свойство имеет определённое значение |
+| `@ConditionalOnBean` | Есть подходящий бин среди уже обработанных кандидатов |
+| `@ConditionalOnMissingBean` | Среди уже обработанных кандидатов нет подходящего бина |
+| `@ConditionalOnProperty` | Проверяет свойство в `Environment`. По умолчанию оно должно присутствовать и отличаться от `false` |
 | `@ConditionalOnResource` | Ресурс доступен |
 | `@ConditionalOnWebApplication` | Это веб-приложение |
 | `@ConditionalOnExpression` | SpEL-выражение истинно |
 
-**Пример из Spring Boot автоконфигурации:**
+**Пример пользовательской автоконфигурации для Spring Boot 3.5**
 ```java
-@Configuration
-@ConditionalOnClass(DataSource.class)  // есть JDBC в classpath?
-@ConditionalOnProperty(prefix = "spring.datasource", name = "url")
-public class DataSourceAutoConfiguration {
+@AutoConfiguration
+@ConditionalOnClass(RedisConnectionFactory.class)
+@ConditionalOnProperty(prefix = "app.catalog", name = "redis-enabled", havingValue = "true")
+@ConditionalOnSingleCandidate(RedisConnectionFactory.class)
+@AutoConfigureAfter(RedisAutoConfiguration.class)
+public class CatalogCacheAutoConfiguration {
 
     @Bean
-    @ConditionalOnMissingBean  // пользователь не определил свой DataSource?
-    public DataSource dataSource(DataSourceProperties properties) {
-        return properties.initializeDataSourceBuilder().build();
+    @ConditionalOnMissingBean(CatalogCache.class)
+    RedisCatalogCache catalogCache(RedisConnectionFactory connectionFactory) {
+        return new RedisCatalogCache(connectionFactory);
     }
 }
 ```
 
-**Принцип:** автоконфигурация `Spring Boot` = сотни `@Configuration`-классов с `@Conditional*`, которые активируются только если подходит classpath и отсутствует пользовательская конфигурация. Это позволяет подключить, например, `spring-boot-starter-data-jpa` — и получить настроенный `DataSource`, `EntityManager`, `TransactionManager` без единой строки конфигурации.
+Это пример своей автоконфигурации поверх Redis. Класс регистрируют в `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`. `RedisCatalogCache` реализует `CatalogCache`. `@ConditionalOnSingleCandidate` проверяет, что зависимость `RedisConnectionFactory` можно однозначно разрешить среди учтённых бинов, например если есть один кандидат или один `@Primary`.
+
+Условия по бинам видят определения, обработанные к моменту проверки. Boot обрабатывает пользовательские определения до автоконфигураций. Порядок между автоконфигурациями можно задать через `@AutoConfigureAfter`. Он относится к обработке определений. Порядок создания экземпляров определяется зависимостями и lifecycle. [Spring Boot 3.5: Auto-configuration](https://docs.spring.io/spring-boot/3.5/reference/features/developing-auto-configuration.html).
 
 ## Q32. (!) Как работает механизм событий (`ApplicationEvent`) в `Spring`?
 
 Механизм событий в `Spring` реализует паттерн **Observer** (подробнее в [Design Patterns](../../design-patterns/design-patterns-interview.md)). Позволяет компонентам обмениваться информацией без прямых зависимостей.
+
+```mermaid
+flowchart LR
+    O[Создан заказ]
+    E[Отправка письма]
+    A[Запись в аудит]
+    N[Обновление уведомлений]
+```
+
+**Схема для разбора**
 
 ```mermaid
 graph LR
@@ -1244,7 +1372,6 @@ graph LR
 
 **Определение события:**
 ```java
-// Способ 1: наследование от ApplicationEvent (классический)
 public class OrderCreatedEvent extends ApplicationEvent {
     private final Order order;
 
@@ -1256,7 +1383,6 @@ public class OrderCreatedEvent extends ApplicationEvent {
     public Order getOrder() { return order; }
 }
 
-// Способ 2: любой POJO (Spring 4.2+, рекомендуется)
 public record OrderCreated(Long orderId, BigDecimal total) {}
 ```
 
@@ -1266,6 +1392,7 @@ public record OrderCreated(Long orderId, BigDecimal total) {}
 @RequiredArgsConstructor
 public class OrderService {
     private final ApplicationEventPublisher eventPublisher;
+    private final OrderRepository orderRepository;
 
     @Transactional
     public Order createOrder(OrderRequest request) {
@@ -1287,24 +1414,23 @@ public class OrderEventHandler {
         log.info("Заказ {} создан на сумму {}", event.orderId(), event.total());
     }
 
-    // Асинхронный обработчик
+    // Асинхронная отправка после успешной фиксации заказа
     @Async
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void sendNotification(OrderCreated event) {
         emailService.sendOrderConfirmation(event.orderId());
     }
 
     // Условный обработчик
-    @EventListener(condition = "#event.total() > 10000")
+    @EventListener(condition = "#a0.total().compareTo(T(java.math.BigDecimal).valueOf(10000)) > 0")
     public void onLargeOrder(OrderCreated event) {
         fraudCheckService.verify(event.orderId());
     }
 
     // Цепочка событий — обработчик возвращает новое событие
     @EventListener
-    public OrderProcessed handleAndChain(OrderCreated event) {
-        processPayment(event.orderId());
-        return new OrderProcessed(event.orderId());
+    public OrderObserved handleAndChain(OrderCreated event) {
+        return new OrderObserved(event.orderId());
     }
 }
 ```
@@ -1317,16 +1443,13 @@ public class OrderEventHandler {
 | `ContextStartedEvent` | `context.start()` |
 | `ContextStoppedEvent` | `context.stop()` |
 | `ContextClosedEvent` | `context.close()` |
-| `ServletRequestHandledEvent` | HTTP-запрос обработан |
+| `ServletRequestHandledEvent` | `FrameworkServlet` завершил обработку запроса при включённой публикации события |
 
-**@TransactionalEventListener** — обработчик привязан к фазе транзакции:
-```java
-@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-public void afterOrderCommitted(OrderCreated event) {
-    // Гарантированно выполняется ПОСЛЕ коммита транзакции
-    notificationService.send(event);
-}
-```
+С синхронным multicaster по умолчанию обычный `@EventListener` выполняется в потоке публикации. `#a0` указывает на первый аргумент метода. Для POJO-события `#root.event` указывает на обёртку `PayloadApplicationEvent`. Выражение по имени аргумента требует метаданных, например компиляции с `-parameters`. В примере метод сервиса вызывается через транзакционный прокси, а обработка `@Async` включена через `@EnableAsync`. [Spring 6.2: EventListener](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/context/event/EventListener.html).
+
+Если добавить к обычному слушателю только `@Async`, задача может начаться до commit, а последующий rollback не отменит отправленное письмо. `@TransactionalEventListener(AFTER_COMMIT)` привязывает обработку к успешной фиксации транзакции. При публикации вне транзакции обработчик по умолчанию пропускается, если не включён `fallbackExecution`.
+
+После commit почтовый сервис всё ещё может отказать, а процесс может завершиться до отправки. Если уведомление нужно доставлять с повторами после сбоя, сохраните событие в транзакционном outbox и сделайте потребитель идемпотентным. [Spring Transaction-bound Events](https://docs.spring.io/spring-framework/reference/data-access/transaction/event.html).
 
 ## Q33. (!) Иерархия `ApplicationContext`: parent-child контексты
 
@@ -1359,42 +1482,45 @@ child.setParent(root);
 child.register(ChildConfig.class);
 child.refresh();
 
-// child.getBean(ServiceFromRoot.class) — работает
-// root.getBean(ControllerFromChild.class) — NoSuchBeanDefinitionException
+// ServiceFromRoot зарегистрирован только в RootConfig.
+// ControllerFromChild зарегистрирован только в ChildConfig.
+// Оцените вызовы по отдельности.
+child.getBean(ServiceFromRoot.class);
+root.getBean(ControllerFromChild.class);
 ```
+
+Первый вызов находит сервис в родительском контексте. Второй завершается `NoSuchBeanDefinitionException`, поскольку поиск из родительского контекста не захватывает дочерний.
 
 **Правила видимости:**
 - Дочерний контекст **видит** бины родительского
 - Родительский контекст **не видит** бины дочернего
-- При поиске бина Spring сначала ищет в текущем контексте, затем поднимается по иерархии
+- При `getBean("name")` локальный бин с таким именем перекрывает одноимённый бин родителя. При внедрении по типу действуют правила отбора подходящих кандидатов (Q13, Q28).
 - `@Autowired` в дочернем контексте может внедрить бин из родительского
 
 **Практическое применение:**
 - Разделение API и Admin-контроллеров в разные `DispatcherServlet` с общим слоем сервисов
 - Мультитенантные приложения с общей инфраструктурой и tenant-специфичной конфигурацией
-- В [Spring Boot](spring-boot-interview.md) иерархия упрощена — обычно один контекст, но в `Spring Cloud` `bootstrap` context — родитель основного контекста
+- В Spring Boot возможен один контекст. В Spring Cloud Config родительский bootstrap-контекст относится к явно включённому legacy bootstrap. Стандартный импорт через `spring.config.import` его не требует. [Spring Cloud Config Client](https://docs.spring.io/spring-cloud-config/reference/client.html).
 
 ## Q34. (!) В чём разница между `@Bean` и `@Component`?
 
-Обе аннотации регистрируют бин, но различаются тем, **кто и как** его создаёт. `@Component` вешается на класс, и Spring создаёт объект сам через component scan — подходит для классов, которые ты пишешь и можешь аннотировать. `@Bean` вешается на метод в `@Configuration`-классе, и объект создаёшь ты руками внутри метода — это единственный способ зарегистрировать бин из чужого класса (стороннюю библиотеку аннотировать нельзя) или прогнать нетривиальную инициализацию.
+`@Component` помечает класс для component scan. `@Bean` помечает фабричный метод, результат которого становится бином. Такой метод удобен для объектов сторонних библиотек и явной настройки создания. Сторонний тип можно зарегистрировать и программно, например через `GenericApplicationContext.registerBean`.
 
 | Характеристика | `@Component` | `@Bean` |
 |---------------|-------------|---------|
-| Место | На классе | На методе в `@Configuration`-классе |
+| Место | На классе | На методе в `@Configuration` или другом компоненте. В обычном `@Component` действует lite-режим |
 | Управление | Spring сканирует и создаёт автоматически | Разработчик явно контролирует создание |
-| Сторонние классы | Нельзя (нет доступа к исходникам) | Можно — создаёт бин из любого объекта |
-| Дополнительная логика | Ограничена | Произвольная логика инициализации |
-| Proxy | Нет (кроме `@Scope`) | `@Configuration`-методы проксируются CGLIB |
+| Сторонние классы | Сканирование опирается на аннотации класса или настроенные фильтры | Фабричный метод может вернуть объект стороннего типа |
+| Создание экземпляра | Контейнер вызывает выбранный конструктор | Контейнер вызывает фабричный метод |
+| AOP-прокси результирующего бина | Возможен при подходящей AOP-конфигурации | Возможен при подходящей AOP-конфигурации |
 
 ```java
-// @Component — класс под нашим контролем
 @Component
 public class EmailService {
     private final JavaMailSender mailer;
     public EmailService(JavaMailSender mailer) { this.mailer = mailer; }
 }
 
-// @Bean — сторонняя библиотека или нестандартная инициализация
 @Configuration
 public class InfraConfig {
 
@@ -1416,7 +1542,7 @@ public class InfraConfig {
 }
 ```
 
-**Ключевая ловушка `@Configuration`:** методы `@Bean` вызываются через CGLIB-прокси, поэтому повторные вызовы `objectMapper()` внутри конфигурации возвращают один и тот же singleton-бин. При `@Configuration(proxyBeanMethods = false)` (`Lite mode`) — каждый вызов создаёт новый объект.
+В полном режиме Spring создаёт подкласс конфигурационного класса, чтобы вызов одного переопределяемого `@Bean`-метода из другого разрешал зависимость через контейнер. В lite-режиме прямой вызов исполняет тело обычного метода. Проксирование конфигурации обслуживает фабричные вызовы. AOP-прокси самого бина, например для транзакций, создаётся отдельно и возможен при обоих способах регистрации. [Spring: Basic Concepts](https://docs.spring.io/spring-framework/reference/core/beans/java/basic-concepts.html).
 
 ```java
 @Configuration
@@ -1435,7 +1561,7 @@ public class Config {
 
 ## Q35. (!) Что такое `Pointcut` и как писать `Pointcut`-выражения в `Spring AOP`?
 
-**Pointcut** — предикат, определяющий набор join points, к которым применяется advice. В `Spring AOP` join points — это только **вызовы методов** на Spring-бинах.
+**Pointcut** определяет набор join points, к которым применяется advice. В Spring AOP поддерживается join point выполнения метода, доступный через AOP-прокси Spring-бина.
 
 **Синтаксис `execution`:**
 ```
@@ -1452,7 +1578,7 @@ public class LoggingAspect {
     public void serviceLayer() {}
 
     // Только методы, возвращающие String, с одним аргументом типа Long
-    @Pointcut("execution(String com.example..*.find*(Long))")
+    @Pointcut("execution(java.lang.String com.example..*.find*(java.lang.Long))")
     public void findMethods() {}
 
     // По аннотации на методе
@@ -1468,7 +1594,7 @@ public class LoggingAspect {
     public void serviceExcludeToString() {}
 
     // Получение аргументов в advice
-    @Before("execution(* com.example.service.*.*(..)) && args(id,..)")
+    @Before(value = "execution(* com.example.service.*.*(..)) && args(id,..)", argNames = "id")
     public void logWithId(JoinPoint jp, Long id) {
         log.info("Calling {} with id={}", jp.getSignature().getName(), id);
     }
@@ -1484,14 +1610,22 @@ public class LoggingAspect {
 | `@annotation` | Методы с указанной аннотацией |
 | `@within` | Классы с указанной аннотацией |
 | `bean` | По имени бина в Spring-контексте |
-| `args` | По типам аргументов |
+| `args` | По фактическим аргументам. Именованный аргумент можно связать с параметром advice |
 | `target` | По типу целевого объекта |
 
 ## Q36. (!) Как работает `@Around` advice и чем он отличается от `@Before` / `@After`?
 
-`@Around` — самый мощный тип advice: он оборачивает вызов целевого метода целиком и сам решает, когда (и вызывать ли вообще) его запустить через `pjp.proceed()`. Поэтому только `@Around` может изменить аргументы, подменить или подавить результат, поймать исключение и не пробросить его, повторить вызов. Остальные advice пассивны — они лишь «присутствуют» в определённый момент, но не управляют ходом выполнения: `@Before` ставится до метода, `@After` — после (как `finally`), `@AfterReturning` / `@AfterThrowing` — после успешного возврата или исключения, и ни один из них не может отменить или изменить сам вызов.
+`@Around` управляет продолжением цепочки через `proceed()`. Он может вызвать её с изменёнными аргументами, вернуть другой результат, повторить вызов или сразу вернуть своё значение. `@Before` выполняется до продолжения цепочки и может остановить вызов, выбросив исключение. `@AfterReturning` и `@AfterThrowing` реагируют на соответствующий исход, а `@After` выполняется при выходе по аналогии с `finally`.
 
-**Типы advice и их порядок:**
+Следующий разбор показывает порядок, когда все перечисленные виды advice одного аспекта совпадают с методом и `@Around` вызывает `proceed()`. Если совпадают несколько advice одного типа в том же аспекте, порядок между ними не определён. Между аспектами учитывается их приоритет.
+
+```text
+Один аспект содержит @Around, @Before, @AfterReturning, @AfterThrowing и @After.
+Все advice применимы к одному методу. @Around вызывает proceed() один раз.
+Рассмотрите два запуска: метод возвращает значение и метод бросает исключение.
+```
+
+**Пример для разбора**
 
 ```
 @Around → @Before → метод → @AfterReturning / @AfterThrowing → @After → @Around (продолжение)
@@ -1502,20 +1636,20 @@ public class LoggingAspect {
 @Component
 public class RetryAspect {
 
-    // @Before — выполняется ДО метода, не может изменить возвращаемое значение
+    // @Before выполняется до метода и может прервать вызов исключением
     @Before("execution(* com.example.service.*.*(..))")
     public void logBefore(JoinPoint jp) {
         log.info("Before: {}", jp.getSignature().toShortString());
     }
 
-    // @AfterReturning — ДО возврата результата (результат доступен, но не изменяемый)
-    @AfterReturning(pointcut = "execution(* com.example.service.*.*(..))", returning = "result")
+    // @AfterReturning получает результат успешного вызова
+    @AfterReturning(pointcut = "execution(* com.example.service.*.*(..))", returning = "result", argNames = "result")
     public void logReturn(Object result) {
         log.info("Returned: {}", result);
     }
 
     // @AfterThrowing — при выбросе исключения
-    @AfterThrowing(pointcut = "execution(* com.example.service.*.*(..))", throwing = "ex")
+    @AfterThrowing(pointcut = "execution(* com.example.service.*.*(..))", throwing = "ex", argNames = "ex")
     public void logException(Exception ex) {
         log.error("Exception: {}", ex.getMessage());
     }
@@ -1533,7 +1667,7 @@ public class RetryAspect {
         Throwable lastEx = null;
         for (int i = 0; i < attempts; i++) {
             try {
-                return pjp.proceed();          // вызвать оригинальный метод
+                return pjp.proceed();          // продолжить цепочку
             } catch (TransientException ex) {
                 lastEx = ex;
                 log.warn("Attempt {} failed, retrying...", i + 1);
@@ -1543,7 +1677,7 @@ public class RetryAspect {
     }
 
     // @Around: изменение аргументов и результата
-    @Around("execution(* com.example.service.PricingService.calculate(..))")
+    @Around("execution(java.math.BigDecimal com.example.service.PricingService.calculate(java.math.BigDecimal))")
     public Object applyDiscount(ProceedingJoinPoint pjp) throws Throwable {
         Object[] args = pjp.getArgs();
         args[0] = ((BigDecimal) args[0]).multiply(BigDecimal.valueOf(0.9)); // скидка 10%
@@ -1553,7 +1687,9 @@ public class RetryAspect {
 }
 ```
 
-**Главное отличие `@Around`:** он **обязан** вызвать `pjp.proceed()`, иначе оригинальный метод не будет выполнен. Это и гибкость, и ответственность.
+`@AfterReturning` может изменить состояние полученного mutable-объекта. Для подмены ссылки, возвращаемой вызывающему коду, используют `@Around`.
+
+`@Around` может вызвать `proceed()` один раз, несколько раз или пропустить его. Без `proceed()` цепочка ниже этого advice не выполняется. Например, advice может вернуть кешированный результат. [Spring AOP: Advice](https://docs.spring.io/spring-framework/reference/core/aop/ataspectj/advice.html).
 
 ## Q37. (!) Что такое `SpEL` (`Spring Expression Language`) и где он применяется?
 
@@ -1562,52 +1698,54 @@ public class RetryAspect {
 **Где встречается чаще всего** (по этим местам его и спрашивают): `@Value`, ключи и условия в `@Cacheable`/`@CacheEvict`, проверки доступа в `@PreAuthorize`, условия в `@ConditionalOnExpression` и `@EventListener`.
 
 ```java
-// Внедрение значений через @Value
 @Component
 public class AppConfig {
 
-    @Value("${server.port:8080}")                    // свойство с дефолтом
+    @Value("${server.port:8080}")
     private int port;
 
-    @Value("#{systemProperties['user.home']}")        // системное свойство
+    @Value("#{systemProperties['user.home']}")
     private String userHome;
 
-    @Value("#{T(Math).random() * 100}")               // вызов статического метода
+    @Value("#{T(Math).random() * 100}")
     private double randomValue;
 
-    @Value("#{userService.findAll().size()}")          // вызов метода бина
+    @Value("#{userService.findAll().size()}")
     private int userCount;
 
     @Value("#{environment.getProperty('app.env') == 'prod' ? 'prod-db' : 'dev-db'}")
     private String dbName;
 
-    @Value("#{'${app.tags}'.split(',')}")              // строку в List
+    @Value("#{'${app.tags}'.split(',')}")
     private List<String> tags;
 }
 ```
 
-**В `@Cacheable` и `@CacheEvict`:**
+**В `@Cacheable`, `@CachePut` и `@CacheEvict`:**
 ```java
 @Service
 public class ProductService {
 
-    // Ключ кэша — из аргумента метода
-    @Cacheable(value = "products", key = "#id")
+    // Для положительного ID проверяем кеш, null не сохраняем.
+    @Cacheable(value = "products", key = "#p0",
+               condition = "#p0 != null && #p0 > 0",
+               unless = "#result == null")
     public Product findById(Long id) { /* ... */ }
 
-    // Условный кэш — только для активных продуктов
-    @Cacheable(value = "products", key = "#product.id",
-               condition = "#product.active",
-               unless = "#result == null")
+    // Метод записи выполняется и обновляет запись кеша по ID результата.
+    @CachePut(value = "products", key = "#result.id",
+              unless = "#result == null")
     public Product save(Product product) { /* ... */ }
 
     // Сброс по вычисленному ключу
-    @CacheEvict(value = "products", key = "#product.id")
+    @CacheEvict(value = "products", key = "#p0.id")
     public void delete(Product product) { /* ... */ }
 }
 ```
 
-**В `@PreAuthorize` (Spring Security):**
+В `@Cacheable` условие `condition` определяет, применяется ли кеширование. При попадании в кеш тело метода может не выполниться, а `unless` проверяет фактический результат после вызова. При вызове через кеширующий прокси `@CachePut` выполняет метод даже при наличии записи в кеше и использует результат для обновления. [Spring Cache Annotations](https://docs.spring.io/spring-framework/reference/integration/cache/annotations.html).
+
+В следующем примере предполагается доступность имён параметров, например после компиляции с `-parameters`, и principal с полем `id`. Проверка выполняется при включённой method security.
 ```java
 @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
 public UserDto getUser(Long userId) { /* ... */ }
@@ -1629,20 +1767,28 @@ public AlgorithmV2 algorithmV2() { return new AlgorithmV2(); }
 
 **Необходимая конфигурация:**
 
+```text
+Обычный Spring Framework 6.2, два Spring-бина.
+ReportController вызывает метод ReportService, формирующий отчёт.
+Нужно передать работу отдельному пулу и вернуть вызывающему коду результат в CompletableFuture.
+```
+
+**Пример для разбора**
+
 ```java
 @Configuration
-@EnableAsync                                // обязательно включить
+@EnableAsync
 public class AsyncConfig implements AsyncConfigurer {
 
+    @Bean
     @Override
-    public Executor getAsyncExecutor() {
+    public ThreadPoolTaskExecutor getAsyncExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(5);
         executor.setMaxPoolSize(20);
         executor.setQueueCapacity(100);
         executor.setThreadNamePrefix("async-");
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
-        executor.initialize();
         return executor;
     }
 
@@ -1659,7 +1805,7 @@ public class AsyncConfig implements AsyncConfigurer {
 @Service
 public class NotificationService {
 
-    // Void — fire-and-forget
+    // Вызывающий код не получает Future с результатом задачи
     @Async
     public void sendEmail(String to, String body) {
         emailClient.send(to, body);
@@ -1677,6 +1823,12 @@ public class NotificationService {
 @Service
 public class OrderService {
     private final NotificationService notifications;
+    private final OrderRepository orderRepo;
+
+    public OrderService(NotificationService notifications, OrderRepository orderRepo) {
+        this.notifications = notifications;
+        this.orderRepo = orderRepo;
+    }
 
     public void placeOrder(Order order) {
         orderRepo.save(order);
@@ -1689,6 +1841,8 @@ public class OrderService {
     }
 }
 ```
+
+Пул объявлен как `@Bean`, поэтому Spring управляет его инициализацией и закрытием. Если метод с `CompletableFuture` выбрасывает исключение, возвращённый прокси future завершается с ошибкой. Исключение `void`-метода направляется обработчику необработанных асинхронных исключений. [Spring 6.2: EnableAsync](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/scheduling/annotation/EnableAsync.html).
 
 **Ловушки:**
 - Прокси-подкласс не перехватывает `final` и `private` методы. JDK-прокси перехватывает вызов через интерфейс даже при `final` у реализации соответствующего метода.
@@ -1703,44 +1857,45 @@ public class OrderService {
 `@EventListener` — декларативная альтернатива `ApplicationListener<E>`. Позволяет обрабатывать события без явной реализации интерфейса.
 
 ```java
-// Пользовательское событие (record в Java 16+)
+// Включён @EnableAsync с отдельным исполнителем задач.
+// Используется стандартный синхронный SimpleApplicationEventMulticaster.
+// register() вызывается через транзакционный прокси.
+// Сравните, где и когда выполняются обработчики при commit и rollback.
+
 public record UserRegistered(Long userId, String email, Instant occurredAt) {}
 
-// Публикация события
 @Service
+@RequiredArgsConstructor
 public class RegistrationService {
     private final ApplicationEventPublisher publisher;
+    private final UserRepository userRepo;
 
+    @Transactional
     public void register(RegistrationRequest req) {
         User user = userRepo.save(new User(req.email()));
         publisher.publishEvent(new UserRegistered(user.getId(), user.getEmail(), Instant.now()));
     }
 }
 
-// Обработчики — в любых Spring-бинах
 @Component
 public class WelcomeEmailHandler {
 
-    // Синхронный обработчик (в том же потоке)
     @EventListener
     public void sendWelcome(UserRegistered event) {
         emailService.send(event.email(), "Welcome!");
     }
 
-    // Асинхронный обработчик — нужен @EnableAsync
     @Async
     @EventListener
     public void initUserProfile(UserRegistered event) {
-        profileService.createDefault(event.userId()); // в отдельном потоке
+        profileService.createDefault(event.userId());
     }
 
-    // Условный обработчик — condition через SpEL
-    @EventListener(condition = "#event.email.endsWith('@vip.com')")
+    @EventListener(condition = "#a0.email().endsWith('@vip.com')")
     public void handleVipUser(UserRegistered event) {
         vipService.enroll(event.userId());
     }
 
-    // Транзакционный — только после COMMIT
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void notifyAnalytics(UserRegistered event) {
         analyticsService.track("user_registered", event.userId());
@@ -1748,7 +1903,11 @@ public class WelcomeEmailHandler {
 }
 ```
 
-**Порядок обработчиков** — через `@Order` или `Ordered`:
+При стандартном multicaster метод `sendWelcome()` выполняется в потоке публикатора. `handleVipUser()` выполняется там же, если адрес удовлетворяет условию SpEL. Прокси `@Async` передаёт `initUserProfile()` исполнителю задач. Этот вызов может начаться до фиксации транзакции. `notifyAnalytics()` запускается только после успешного commit. Rollback не отменяет уже выполненную работу обычных слушателей и сам по себе не отменяет задачу, переданную исполнителю. [Spring 6.2: события контекста и асинхронные слушатели](https://docs.spring.io/spring/reference/6.2/core/beans/context-introduction.html).
+
+Обычный синхронный слушатель с возвращаемым значением может опубликовать его как следующее событие (Q32). Асинхронный слушатель для этого вызывает `ApplicationEventPublisher` явно.
+
+Порядок вызова аннотированных слушателей можно задать через `@Order`. Это не гарантирует порядок завершения асинхронных задач. [Spring 6.2: EventListener](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/context/event/EventListener.html).
 ```java
 @EventListener
 @Order(1)    // меньше = раньше
@@ -1760,12 +1919,20 @@ public void secondHandler(UserRegistered event) { /* ... */ }
 ```
 
 **@TransactionalEventListener vs @EventListener:**
-- `@EventListener` — срабатывает в момент `publishEvent()`, внутри транзакции
+- Обычный `@EventListener` с синхронным multicaster выполняется в потоке публикации. Если публикация идёт из транзакции, обработчик может сработать до commit. `@Async` меняет способ выполнения, но не привязывает его к commit (Q32).
 - `@TransactionalEventListener` — привязан к фазе транзакции (`AFTER_COMMIT`, `BEFORE_COMMIT`, `AFTER_ROLLBACK`, `AFTER_COMPLETION`); если транзакции нет — событие **не обрабатывается** (если не указать `fallbackExecution = true`)
 
 ## Q40. Как настроить несколько реализаций одного бина с разными профилями?
 
-Подход: на каждую реализацию интерфейса вешаешь `@Profile` с нужным окружением, а потребитель внедряет интерфейс и не знает, какая реализация подставлена. В контексте «активна» ровно одна реализация — её и внедрит Spring; остальные просто не зарегистрированы. Классический сценарий — реальный платёжный шлюз для `prod` и заглушка для `dev`/`test`.
+`@Profile` определяет, регистрируется ли реализация. Несколько профилей могут быть активны одновременно. Например, при условиях `prod` и `dev | test` комбинация `prod,dev` регистрирует оба бина. В этом примере приоритет отдаём `prod`, а заглушку допускаем только при его отсутствии. Если ни одно условие не выполнено, обязательная зависимость от `PaymentGateway` не разрешится. [Spring: Bean Definition Profiles](https://docs.spring.io/spring-framework/reference/core/beans/environment.html#beans-definition-profiles).
+
+```text
+Есть PaymentGateway, реализация для Stripe и заглушка.
+Для prod нужен Stripe даже при одновременно активном dev или test.
+В dev и test без prod нужна заглушка, а зависимость CheckoutService обязательна.
+```
+
+**Пример для разбора**
 
 ```java
 // Интерфейс
@@ -1779,14 +1946,18 @@ public interface PaymentGateway {
 public class StripePaymentGateway implements PaymentGateway {
     private final StripeClient stripe;
 
+    public StripePaymentGateway(StripeClient stripe) {
+        this.stripe = stripe;
+    }
+
     @Override
     public PaymentResult charge(Order order, BigDecimal amount) {
         return stripe.createCharge(order.getCustomerId(), amount);
     }
 }
 
-// Заглушка — для dev и test
-@Profile({"dev", "test"})
+// Заглушка — для dev или test при отсутствии prod
+@Profile("!prod & (dev | test)")
 @Service
 public class StubPaymentGateway implements PaymentGateway {
     @Override
@@ -1799,9 +1970,13 @@ public class StubPaymentGateway implements PaymentGateway {
 // Потребитель — не знает о конкретной реализации
 @Service
 public class CheckoutService {
-    private final PaymentGateway paymentGateway; // Spring внедрит нужную реализацию
+    private final PaymentGateway paymentGateway;
 
-    public CheckoutResult checkout(Cart cart) {
+    public CheckoutService(PaymentGateway paymentGateway) {
+        this.paymentGateway = paymentGateway;
+    }
+
+    public PaymentResult checkout(Cart cart) {
         return paymentGateway.charge(cart.toOrder(), cart.total());
     }
 }
@@ -1816,25 +1991,31 @@ spring:
 ```
 
 ```bash
-# Через JVM-аргумент
+# Через аргумент приложения
 java -jar app.jar --spring.profiles.active=prod
 
 # Через переменную окружения
 SPRING_PROFILES_ACTIVE=prod java -jar app.jar
 ```
 
-**Комбинирование с `@Conditional`** для более гибкой логики:
-```java
-@Bean
-@ConditionalOnProperty(name = "payment.provider", havingValue = "stripe", matchIfMissing = false)
-public PaymentGateway stripeGateway(StripeClient client) {
-    return new StripePaymentGateway(client);
-}
+В отдельном варианте классы шлюзов регистрируются фабричными методами, без component scan этих классов. Значения `stripe` и `stub` взаимоисключающие. При отсутствии свойства регистрируется заглушка. При другом значении ни одна фабрика не сработает. Условие по отсутствию бина проверяется для всей автоконфигурации с учётом порядка из Q31. Для варианта `stripe` предполагается доступный бин `StripeClient`.
 
-@Bean
+```java
+@AutoConfiguration
 @ConditionalOnMissingBean(PaymentGateway.class)
-public PaymentGateway stubGateway() {
-    return new StubPaymentGateway();
+class PaymentGatewayAutoConfiguration {
+
+    @Bean
+    @ConditionalOnProperty(name = "payment.provider", havingValue = "stripe")
+    StripePaymentGateway stripeGateway(StripeClient client) {
+        return new StripePaymentGateway(client);
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "payment.provider", havingValue = "stub", matchIfMissing = true)
+    StubPaymentGateway stubGateway() {
+        return new StubPaymentGateway();
+    }
 }
 ```
 
@@ -1860,14 +2041,9 @@ class MyBeanRegistrar implements BeanRegistrar {
 class AppConfig {}
 ```
 
-Чем лучше старого `BeanDefinitionRegistryPostProcessor`:
+`BeanRegistrar` подходит для добавления бинов из конкретной конфигурации. `BeanRegistry` позволяет зарегистрировать тип, задать имя, настроить определение и при необходимости передать supplier. В Kotlin доступен `BeanRegistrarDsl`.
 
-- **Лаконичнее и читаемее** — высокоуровневый API `BeanRegistry`, без ручного конструирования `BeanDefinition`.
-- **Условная регистрация** по `Environment`/профилям прямо в коде.
-- **AOT/native-friendly** — дружелюбен к native image, в отличие от низкоуровневого post-processor'а.
-- В `Kotlin` есть DSL `BeanRegistrarDsl`.
-
-**Итог:** на `Spring Framework 7+` для программной регистрации бинов берите `BeanRegistrar` (через `@Import`) — он заменяет verbose и AOT-недружелюбный `BeanDefinitionRegistryPostProcessor`.
+`BeanDefinitionRegistryPostProcessor` остаётся точкой расширения для работы с реестром определений и последующей обработки фабрики. Стадия AOT тоже учитывает определения, добавленные на этапе обработки реестра. При AOT набор бинов и условия, влияющие на этот набор, определяются во время сборки. Если профиль `cloud` меняет состав бинов, его учитывают при AOT-обработке. [Spring Framework 7.0: Programmatic Bean Registration](https://docs.spring.io/spring-framework/reference/7.0/core/beans/java/programmatic-bean-registration.html) · [Spring Framework 7.0: AOT](https://docs.spring.io/spring-framework/reference/7.0/core/aot.html).
 
 ---
 
