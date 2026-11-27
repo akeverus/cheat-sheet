@@ -1,17 +1,905 @@
-{"topic_slug":"spring-graphql-interview","questions":[
-{"q_number":1,"blocks":[{"block_idx":0,"question_text":"Что такое Spring GraphQL и в чём его преимущества перед REST?","options":[{"order":0,"label":"A","text":"Интеграция GraphQL Java со Spring, где клиент выбирает поля и вложенные связи одним запросом","correct":true,"sections":{"explanation":"Схема определяет допустимые поля, а selection set задаёт форму ответа.","example":"Клиент запрашивает номер заказа и имена его позиций одной операцией.","when_to_apply":"Когда клиенты нуждаются в разных срезах связанных данных.","edge_cases":"Один запрос клиента может вызвать несколько обращений к источникам.","related":"DataLoader помогает группировать вложенные загрузки."}},{"order":1,"label":"B","text":"Интеграция GraphQL Java со Spring, где клиент выбирает поля, а связи получает отдельными HTTP-запросами","correct":false,"sections":{"what_actually":"Вложенное поле можно выбрать в той же операции.","source_of_confusion":"Связи в REST часто имеют отдельные URL.","if_it_were_true":"Для дерева данных потребовалось бы несколько сетевых запросов.","how_it_should_be":"Указать связи в selection set."}},{"order":2,"label":"C","text":"Интеграция GraphQL Java со Spring, где клиент выбирает готовое представление, а сервер задаёт все поля","correct":false,"sections":{"what_actually":"Клиент выбирает отдельные поля в рамках схемы.","source_of_confusion":"Сервис может иметь готовые DTO.","if_it_were_true":"Каждое представление пришлось бы поддерживать отдельно.","how_it_should_be":"Выбирать поля на уровне операции."}},{"order":3,"label":"D","text":"Интеграция GraphQL Java со Spring, где клиент выбирает HTTP-ресурсы, а сервер объединяет их ответы","correct":false,"sections":{"what_actually":"GraphQL оперирует полями типизированной схемы.","source_of_confusion":"Резолверы могут обращаться к HTTP-сервисам.","if_it_were_true":"Клиент должен был бы знать адреса внутренних ресурсов.","how_it_should_be":"Скрывать источники за резолверами."}}]}]}
-,{"q_number":2,"blocks":[{"block_idx":0,"question_text":"Как настроить Spring GraphQL?","options":[{"order":0,"label":"A","text":"Подключить стартер и транспорт, описать поля в OpenAPI и связать их с резолверами","correct":false,"sections":{"what_actually":"OpenAPI описывает HTTP API.","source_of_confusion":"Оба формата описывают контракт.","if_it_were_true":"Схема строилась бы из REST-операций.","how_it_should_be":"Использовать GraphQL SDL."}},{"order":1,"label":"B","text":"Подключить стартер и транспорт, описать поля в application.yml и связать их с резолверами","correct":false,"sections":{"what_actually":"YAML содержит настройки Boot.","source_of_confusion":"Путь схемы настраивается свойством.","if_it_were_true":"Определения полей были бы свойствами приложения.","how_it_should_be":"Добавить файл SDL в resources/graphql."}},{"order":2,"label":"C","text":"Подключить стартер и транспорт, описать поля в SDL и связать их с резолверами","correct":true,"sections":{"explanation":"Boot загружает SDL из ресурсов и настраивает выполнение операций через транспорт.","example":"schema.graphqls в resources/graphql объявляет Query.","when_to_apply":"Для приложения со schema-first контрактом.","edge_cases":"GraphiQL включается отдельно от API.","related":"Аннотированный контроллер реализует поля схемы."}},{"order":3,"label":"D","text":"Подключить стартер и транспорт, описать поля в @RequestMapping и связать их с резолверами","correct":false,"sections":{"what_actually":"@RequestMapping отвечает за транспортные маршруты.","source_of_confusion":"Оба стека используют контроллеры.","if_it_were_true":"Каждое поле получило бы HTTP-путь.","how_it_should_be":"Связать SDL с @QueryMapping и аналогами."}}]}]},
-{"q_number":3,"blocks":[{"block_idx":0,"question_text":"Как реализовать Query resolver?","options":[{"order":0,"label":"A","text":"Связать метод с полем Query через @MutationMapping и принять фильтр через @Argument","correct":false,"sections":{"what_actually":"@MutationMapping относится к Mutation.","source_of_confusion":"Обе аннотации описывают корневые поля.","if_it_were_true":"Запрос искал бы обработчик в другом типе схемы.","how_it_should_be":"Использовать @QueryMapping."}},{"order":1,"label":"B","text":"Связать метод с полем Query через @QueryMapping и принять фильтр через @Argument","correct":true,"sections":{"explanation":"@QueryMapping связывает метод контроллера с полем корневого Query.","example":"Метод order(@Argument String id) загружает заказ по ID.","when_to_apply":"Для корневой операции чтения.","edge_cases":"Для вложенного поля используют отдельный маппинг, если нужен вычисляемый резолвер.","related":"Имя поля можно задать явно."}},{"order":2,"label":"C","text":"Связать метод с полем Query через @QueryMapping и принять фильтр через @RequestParam","correct":false,"sections":{"what_actually":"@Argument читает аргумент GraphQL-поля.","source_of_confusion":"@RequestParam знаком по MVC.","if_it_were_true":"Резолвер зависел бы от параметров URL.","how_it_should_be":"Привязать аргумент через @Argument."}},{"order":3,"label":"D","text":"Связать метод с полем Query через @SubscriptionMapping и принять фильтр через @Argument","correct":false,"sections":{"what_actually":"SubscriptionMapping относится к Subscription.","source_of_confusion":"Оба механизма читают данные.","if_it_were_true":"Обычная выборка стала бы подпиской.","how_it_should_be":"Объявить поле Query и @QueryMapping."}}]}]},
-{"q_number":4,"blocks":[{"block_idx":0,"question_text":"Как реализовать Mutation?","options":[{"order":0,"label":"A","text":"Объявить поле Mutation и связать с @QueryMapping, приняв input через @Argument","correct":false,"sections":{"what_actually":"QueryMapping указывает Query.","source_of_confusion":"Контроллеры чтения и записи похожи.","if_it_were_true":"Метод не был бы привязан к нужному полю.","how_it_should_be":"Указать @MutationMapping."}},{"order":1,"label":"B","text":"Объявить поле Mutation и связать с @MutationMapping, приняв input через @RequestBody","correct":false,"sections":{"what_actually":"Транспорт разбирает тело до вызова резолвера.","source_of_confusion":"REST-контроллер принимает DTO через @RequestBody.","if_it_were_true":"Метод получал бы весь HTTP-запрос как бизнес-аргумент.","how_it_should_be":"Использовать @Argument."}},{"order":2,"label":"C","text":"Объявить поле Mutation и связать с @SubscriptionMapping, приняв input через @Argument","correct":false,"sections":{"what_actually":"SubscriptionMapping принимает параметры потока событий.","source_of_confusion":"Обе операции могут работать с изменениями данных.","if_it_were_true":"Команда регистрировалась бы как подписка.","how_it_should_be":"Привязать обработчик к Mutation."}},{"order":3,"label":"D","text":"Объявить поле Mutation и связать с @MutationMapping, приняв input через @Argument","correct":true,"sections":{"explanation":"Резолвер мутации связывает вход схемы с вызовом прикладной команды.","example":"createOrder принимает входной record и возвращает заказ.","when_to_apply":"Для изменения состояния через GraphQL.","edge_cases":"Транзакционность задаёт сервис, а не наличие Mutation в SDL.","related":"Сложные аргументы удобно группировать в input-тип."}}]}]},
-{"q_number":5,"blocks":[{"block_idx":0,"question_text":"Что такое проблема N+1 в GraphQL и как её решить?","options":[{"order":0,"label":"A","text":"После загрузки списка каждый элемент вызывает отдельное чтение связи, их объединяет @BatchMapping","correct":true,"sections":{"explanation":"Пакетный резолвер получает набор родителей и загружает связи одним или несколькими общими запросами.","example":"Позиции заказов загружаются по списку orderId и группируются по заказу.","when_to_apply":"Для вложенного поля, которое запрашивается у многих родителей.","edge_cases":"Пакетная обработка не гарантирует один запрос на всё дерево.","related":"DataLoader позволяет явно задавать пакетную загрузку по ключам."}},{"order":1,"label":"B","text":"После загрузки списка каждый элемент вызывает отдельное чтение связи, их объединяет @Argument","correct":false,"sections":{"what_actually":"@Argument связывает входные данные.","source_of_confusion":"Идентификаторы можно передать списком в SDL.","if_it_were_true":"Движок группировал бы вызовы автоматически при наличии аргумента.","how_it_should_be":"Настроить пакетный резолвер."}},{"order":2,"label":"C","text":"После загрузки списка каждый элемент вызывает отдельное чтение связи, их объединяет @QueryMapping","correct":false,"sections":{"what_actually":"@QueryMapping привязывает корневое поле.","source_of_confusion":"Чтение списка начинают в Query.","if_it_were_true":"Вложенные резолверы сами становились бы пакетными.","how_it_should_be":"Применить @BatchMapping к вложенному полю."}},{"order":3,"label":"D","text":"После загрузки списка каждый элемент вызывает отдельное чтение связи, их объединяет @MutationMapping","correct":false,"sections":{"what_actually":"@MutationMapping привязывает мутацию.","source_of_confusion":"Одна операция может обработать несколько сущностей.","if_it_were_true":"Чтение связи меняло бы тип операции.","how_it_should_be":"Пакетировать чтения через DataLoader."}}]}]}
-,{"q_number":6,"blocks":[{"block_idx":0,"question_text":"Как реализовать GraphQL Subscriptions?","options":[{"order":0,"label":"A","text":"Объявить Subscription, вернуть List событий и отправлять их по WebSocket","correct":false,"sections":{"what_actually":"List представляет готовый набор.","source_of_confusion":"Список может содержать несколько событий.","if_it_were_true":"Клиент не получал бы обновления после завершения вызова.","how_it_should_be":"Возвращать Publisher."}},{"order":1,"label":"B","text":"Объявить Subscription, вернуть Publisher событий и выбрать потоковый транспорт","correct":true,"sections":{"explanation":"Резолвер подписки предоставляет поток результатов.","example":"@SubscriptionMapping возвращает Flux обновлений заказа.","when_to_apply":"Для доставки событий после начального запроса.","edge_cases":"Поток завершается или отменяется при закрытии подписки.","related":"У транспорта должны быть настроены поддержка подписок и подходящий протокол."}},{"order":2,"label":"C","text":"Объявить Query, вернуть Publisher событий и выбрать потоковый транспорт","correct":false,"sections":{"what_actually":"Тип Query задаёт операцию чтения.","source_of_confusion":"Реактивные типы поддерживаются и в Query.","if_it_were_true":"Каждая query с Flux становилась бы подпиской.","how_it_should_be":"Объявить поле Subscription."}},{"order":3,"label":"D","text":"Объявить Subscription, вернуть Mono списка и держать поток открытым для новых событий","correct":false,"sections":{"what_actually":"Mono списка выдаёт один элемент.","source_of_confusion":"Асинхронное завершение похоже на поток.","if_it_were_true":"Новые события невозможно было бы доставлять после завершения Mono.","how_it_should_be":"Использовать Flux событий."}}]}]},
-{"q_number":7,"blocks":[{"block_idx":0,"question_text":"Как обрабатывать ошибки в Spring GraphQL?","options":[{"order":0,"label":"A","text":"Преобразовывать ошибки резолверов в HTTP-статусы через WebGraphQlInterceptor","correct":false,"sections":{"what_actually":"HTTP-статус не описывает результат каждого поля.","source_of_confusion":"Ошибки транспорта действительно выражаются HTTP-статусом.","if_it_were_true":"Ошибка вложенного поля лишала бы клиента частичных данных.","how_it_should_be":"Возвращать сведения об ошибке через GraphQL errors."}},{"order":1,"label":"B","text":"Преобразовывать ошибки резолверов в возвращаемый DTO вместо результата каждой операции","correct":false,"sections":{"what_actually":"DTO может моделировать доменный исход, но не перехватывает исключения.","source_of_confusion":"Ошибки иногда включают в payload мутации.","if_it_were_true":"Для исключений пришлось бы менять типы каждого поля.","how_it_should_be":"Использовать обработчик исключений резолвера."}},{"order":2,"label":"C","text":"Преобразовывать ошибки резолверов в GraphQLError через DataFetcherExceptionResolver","correct":true,"sections":{"explanation":"Ошибки выполнения поля попадают в массив errors и могут соседствовать с частичными данными.","example":"Исключение поиска заказа можно сопоставить типу NOT_FOUND.","when_to_apply":"Для безопасной классификации ожидаемых ошибок.","edge_cases":"Ошибки разбора и валидации запроса возникают до вызова резолвера.","related":"Для аннотированных контроллеров также есть @GraphQlExceptionHandler."}},{"order":3,"label":"D","text":"Преобразовывать ошибки резолверов в ошибки компиляции схемы через RuntimeWiringConfigurer","correct":false,"sections":{"what_actually":"RuntimeWiringConfigurer настраивает схему и runtime wiring.","source_of_confusion":"Обработчик тоже подключается при конфигурации.","if_it_were_true":"Сбой отдельного запроса объявлялся бы ошибкой построения схемы.","how_it_should_be":"Настроить DataFetcherExceptionResolver."}}]}]},
-{"q_number":8,"blocks":[{"block_idx":0,"question_text":"Как тестировать Spring GraphQL?","options":[{"order":0,"label":"A","text":"Выполнить документ через GraphQlTester и проверить данные по путям и ошибки","correct":true,"sections":{"explanation":"GraphQlTester выполняет операцию и проверяет представление результата GraphQL.","example":"Тест запрашивает order.id и сравнивает его с ожидаемым значением.","when_to_apply":"Для проверки схемы, резолверов и маппинга ошибок.","edge_cases":"Используйте транспортный вариант тестера, если проверяете HTTP или WebSocket.","related":"Для тестового среза контроллеров подходит @GraphQlTest."}},{"order":1,"label":"B","text":"Выполнить документ через GraphQlTester и проверять только HTTP-статус","correct":false,"sections":{"what_actually":"Успешная доставка не означает успех каждого поля.","source_of_confusion":"В REST код ответа часто служит основным индикатором.","if_it_were_true":"Ошибки исполнения могли бы остаться незамеченными.","how_it_should_be":"Проверять data и errors."}},{"order":2,"label":"C","text":"Выполнить метод контроллера напрямую и проверить schema validation и ошибки GraphQL","correct":false,"sections":{"what_actually":"Прямой вызов проверяет Java-логику.","source_of_confusion":"Контроллер проще инстанцировать без Spring.","if_it_were_true":"Запрос не проходил бы через движок GraphQL.","how_it_should_be":"Проверять контракт документом."}},{"order":3,"label":"D","text":"Выполнить документ через тестовый репозиторий и проверить привязку полей схемы","correct":false,"sections":{"what_actually":"Репозиторий не выполняет GraphQL-операции.","source_of_confusion":"Тесты данных полезны для источника резолвера.","if_it_were_true":"Маппинг схемы не проверялся бы.","how_it_should_be":"Вызывать GraphQlTester."}}]}]},
-{"q_number":9,"blocks":[{"block_idx":0,"question_text":"Что такое GraphQL Directives и как их использовать?","options":[{"order":0,"label":"A","text":"Директивы задают типы аргументов, а @include и @skip меняют их значения","correct":false,"sections":{"what_actually":"Встроенные директивы определяют включение выборки.","source_of_confusion":"Они сами принимают аргумент if.","if_it_were_true":"Условие меняло бы значения бизнес-аргументов.","how_it_should_be":"Использовать директиву на выборе поля."}},{"order":1,"label":"B","text":"Директивы задают маршруты, а @include и @skip переключают HTTP endpoint","correct":false,"sections":{"what_actually":"Директивы не маршрутизируют HTTP.","source_of_confusion":"Поведение выборки меняется по условию.","if_it_were_true":"Запрос отправлялся бы по другому пути.","how_it_should_be":"Оставить транспорт отдельно."}},{"order":2,"label":"C","text":"Директивы задают контекст авторизации, а @include и @skip проверяют роли","correct":false,"sections":{"what_actually":"Условия включения задаются в документе.","source_of_confusion":"Кастомные директивы могут участвовать в политике доступа.","if_it_were_true":"Клиентское условие выступало бы проверкой прав.","how_it_should_be":"Авторизацию выполнять на сервере."}},{"order":3,"label":"D","text":"Директивы добавляют правила в допустимых точках схемы или операции, а @include и @skip условно выбирают поля","correct":true,"sections":{"explanation":"Место применения директивы объявляется в схеме или определено спецификацией.","example":"Поле items можно запросить с @include(if: $withItems).","when_to_apply":"Для условной выборки или подключения поведения через wiring.","edge_cases":"Объявление кастомной директивы само не реализует её эффект.","related":"Для поведения поля используется SchemaDirectiveWiring."}}]}]}
-,{"q_number":10,"blocks":[{"block_idx":0,"question_text":"Как реализовать пагинацию в GraphQL?","options":[{"order":0,"label":"A","text":"Принять first и after, вернуть nodes без курсоров и вычислять следующую страницу по HTTP Link","correct":false,"sections":{"what_actually":"В connection навигация передаётся полями GraphQL.","source_of_confusion":"HTTP Link используют некоторые REST API.","if_it_were_true":"Курсор зависел бы от HTTP-транспорта.","how_it_should_be":"Возвращать pageInfo и нужные курсоры."}},{"order":1,"label":"B","text":"Принять first и after, вернуть connection с edges, курсорами и pageInfo","correct":true,"sections":{"explanation":"Курсор указывает позицию в устойчивом порядке, а pageInfo описывает навигацию.","example":"Клиент передаёт endCursor предыдущей страницы в after.","when_to_apply":"Для последовательного чтения большого или меняющегося списка.","edge_cases":"Стабильная сортировка требует однозначного порядка при равенстве значений.","related":"Spring GraphQL умеет адаптировать Window при подходящей конфигурации."}},{"order":2,"label":"C","text":"Принять first и after, трактовать after как обязательный номер страницы и вернуть edges","correct":false,"sections":{"what_actually":"After — непрозрачный для клиента курсор.","source_of_confusion":"Курсор внутри может кодировать смещение.","if_it_were_true":"Клиент должен был бы знать формат позиции.","how_it_should_be":"Передавать курсор как получен."}},{"order":3,"label":"D","text":"Принять first и after, возвращать все данные и применять ограничение в selection set","correct":false,"sections":{"what_actually":"Selection set выбирает поля, а не число строк.","source_of_confusion":"Форма ответа задаётся клиентом.","if_it_were_true":"Сервер продолжал бы читать весь список.","how_it_should_be":"Применять лимит в резолвере и источнике."}}]}]},
-{"q_number":11,"blocks":[{"block_idx":0,"question_text":"Как Spring GraphQL интегрируется с Spring Security?","options":[{"order":0,"label":"A","text":"Аутентифицирует на транспорте и авторизует поля по имени операции в URL","correct":false,"sections":{"what_actually":"Путь не выражает все выбранные поля.","source_of_confusion":"В REST URL часто соответствует операции.","if_it_were_true":"Один путь должен был бы описать права на дерево полей.","how_it_should_be":"Проверять полномочия у резолвера или сервиса."}},{"order":1,"label":"B","text":"Аутентифицирует по переменным GraphQL и авторизует поля на уровне HTTP-пути","correct":false,"sections":{"what_actually":"Переменные GraphQL содержат данные операции.","source_of_confusion":"Аутентификация тоже получает данные от клиента.","if_it_were_true":"Любое поле запроса могло бы объявить доверенного пользователя.","how_it_should_be":"Устанавливать личность через механизм транспорта."}},{"order":2,"label":"C","text":"Аутентифицирует на транспорте и применяет method security к резолверам или сервисам","correct":true,"sections":{"explanation":"Транспорт устанавливает контекст, а прикладной уровень защищает чтение и изменение данных.","example":"После включения method security @PreAuthorize ограничивает вызов административной мутации.","when_to_apply":"Когда один endpoint обслуживает операции с разными требованиями.","edge_cases":"Контекст должен быть доступен в модели исполнения MVC или WebFlux.","related":"Отказы в резолверах могут отражаться в GraphQL errors."}},{"order":3,"label":"D","text":"Аутентифицирует на транспорте и применяет ограничения по директивам, переданным клиентом","correct":false,"sections":{"what_actually":"Клиентские директивы не дают права.","source_of_confusion":"Сервер может применять собственные правила схемы.","if_it_were_true":"Клиент управлял бы проверкой полномочий.","how_it_should_be":"Проверять доступ серверным кодом."}}]}]}
-,{"q_number":12,"blocks":[{"block_idx":0,"question_text":"Чем @SchemaMapping отличается от @QueryMapping и @MutationMapping?","options":[{"order":0,"label":"A","text":"@SchemaMapping выбирает тип и поле схемы, а сокращения фиксируют Query и Mutation","correct":true,"sections":{"explanation":"Поле связывается с методом по имени типа и поля.","example":"Order.customer можно реализовать через @SchemaMapping с аргументом Order.","when_to_apply":"Для вложенных полей с собственной логикой загрузки.","edge_cases":"Если имя метода отличается от имени поля, укажите его явно.","related":"@SubscriptionMapping аналогично фиксирует Subscription."}},{"order":1,"label":"B","text":"@SchemaMapping выбирает только вложенное поле, а сокращения допускают любой тип","correct":false,"sections":{"what_actually":"Общая аннотация работает и для корневых типов.","source_of_confusion":"На практике её часто используют для вложенных полей.","if_it_were_true":"Ею нельзя было бы заменить @QueryMapping.","how_it_should_be":"При необходимости явно указать typeName."}},{"order":2,"label":"C","text":"@SchemaMapping выбирает только корневое поле, а сокращения допускают вложенные поля","correct":false,"sections":{"what_actually":"Сокращения фиксируют корневые типы.","source_of_confusion":"В корневой и вложенной выборке одинаковый синтаксис полей.","if_it_were_true":"@QueryMapping мог бы зарегистрировать Order.customer.","how_it_should_be":"Использовать @SchemaMapping для Order.customer."}},{"order":3,"label":"D","text":"@SchemaMapping выбирает тип и поле схемы, а сокращения определяют тип по результату Java","correct":false,"sections":{"what_actually":"Тип схемы задан маппингом.","source_of_confusion":"Тип результата связан с возвращаемым значением.","if_it_were_true":"Смена DTO могла бы превратить чтение в мутацию.","how_it_should_be":"Выбирать аннотацию по полю SDL."}}]}]},
-{"q_number":13,"blocks":[{"block_idx":0,"question_text":"Как работает introspection и когда его отключать?","options":[{"order":0,"label":"A","text":"Возвращает метаданные схемы через __schema и __type, отключение убирает доступ к обычным полям по их именам","correct":false,"sections":{"what_actually":"Запрет метаполей не запрещает обычные операции.","source_of_confusion":"Клиент теряет автоматическое обнаружение полей.","if_it_were_true":"Уже известный запрос перестал бы работать.","how_it_should_be":"Проверять доступ через авторизацию."}},{"order":1,"label":"B","text":"Возвращает данные объектов через __schema и __type, отключение скрывает значения от клиентов без роли","correct":false,"sections":{"what_actually":"Интроспекция описывает структуру, а не доменные значения.","source_of_confusion":"Она возвращает данные в GraphQL-ответе.","if_it_were_true":"Метазапрос раскрыл бы записи пользователей.","how_it_should_be":"Различать данные схемы и бизнес-данные."}},{"order":2,"label":"C","text":"Возвращает метаданные схемы через __schema и __type, отключение ограничивает раскрытие схемы ценой части tooling","correct":true,"sections":{"explanation":"Интроспекция даёт программный доступ к типам, полям и аргументам схемы.","example":"Редактор использует ответ для автодополнения.","when_to_apply":"Ограничивать её можно на публичном endpoint по политике раскрытия схемы.","edge_cases":"Известные обычные операции остаются доступными по правилам авторизации.","related":"Настройку клиента и схему можно поставлять отдельно."}},{"order":3,"label":"D","text":"Возвращает метаданные схемы через __schema и __type, отключение заменяет проверку прав на полях","correct":false,"sections":{"what_actually":"Ограничение видимости не заменяет права.","source_of_confusion":"Меньше метаданных осложняет изучение API.","if_it_were_true":"Знание поля само давало бы доступ к данным.","how_it_should_be":"Защищать резолверы независимо."}}]}]},
-{"q_number":14,"blocks":[{"block_idx":0,"question_text":"Как обрабатывать файловый upload в Spring GraphQL?","options":[{"order":0,"label":"A","text":"Объявить Upload в SDL, после чего стандартный JSON-транспорт примет multipart без адаптера","correct":false,"sections":{"what_actually":"SDL не активирует транспортный обработчик.","source_of_confusion":"Upload выглядит как встроенный файловый тип.","if_it_were_true":"Файлы принимались бы стандартным JSON endpoint без изменений.","how_it_should_be":"Настроить multipart-интеграцию явно."}},{"order":1,"label":"B","text":"Объявить Upload с отдельной multipart-интеграцией или загружать файл отдельно и передавать его ID в мутацию","correct":true,"sections":{"explanation":"Двоичная загрузка требует отдельной договорённости о транспорте.","example":"REST возвращает ID документа, createOrder принимает его как обычный аргумент.","when_to_apply":"Когда файл нужно связать с доменной командой.","edge_cases":"Для multipart требуется совместимая реализация на клиенте и сервере, а также лимиты и проверка доступа.","related":"GraphQL multipart request spec является расширением."}},{"order":2,"label":"C","text":"Объявить Upload в SDL, передавать multipart в @Argument и поручить разбор частей скаляру","correct":false,"sections":{"what_actually":"Скаляр обрабатывает переданное значение, но сам не разбирает HTTP-тело.","source_of_confusion":"Преобразование аргумента связано со скаляром.","if_it_were_true":"Клиенту хватило бы добавить части в произвольном виде.","how_it_should_be":"Обработать multipart до передачи значений движку."}},{"order":3,"label":"D","text":"Объявить Upload в SDL и принимать каждую часть файла как отдельный результат Subscription","correct":false,"sections":{"what_actually":"Подписка доставляет результаты клиенту.","source_of_confusion":"Поток удобно представить как части файла.","if_it_were_true":"Subscription служила бы каналом отправки частей на сервер.","how_it_should_be":"Использовать отдельную загрузку или согласованный multipart."}}]}]},
-{"q_number":15,"blocks":[{"block_idx":0,"question_text":"Как отлаживать и мониторить GraphQL-запросы?","options":[{"order":0,"label":"A","text":"Следить за HTTP-путём и статусом, разделяя операции по endpoint","correct":false,"sections":{"what_actually":"Несколько операций обслуживаются одним endpoint.","source_of_confusion":"В REST путь часто различает операции.","if_it_were_true":"Разные запросы выглядели бы одинаково на дашборде.","how_it_should_be":"Добавить наблюдаемость GraphQL-исполнения."}},{"order":1,"label":"B","text":"Следить за именем операции и статусом HTTP, определяя ошибки только по ответам 5xx","correct":false,"sections":{"what_actually":"Ошибки полей могут сопровождать HTTP 200.","source_of_confusion":"Ответы 5xx важны для транспорта.","if_it_were_true":"Часть ошибок выполнения потерялась бы из метрик.","how_it_should_be":"Учитывать GraphQL errors."}},{"order":2,"label":"C","text":"Следить за именем операции и полным текстом документа, используя текст как тег метрики","correct":false,"sections":{"what_actually":"Текст документа может иметь множество уникальных значений.","source_of_confusion":"При локальной отладке текст помогает воспроизвести запрос.","if_it_were_true":"Число временных рядов росло бы с вариациями документов.","how_it_should_be":"Использовать ограниченные по кардинальности признаки."}},{"order":3,"label":"D","text":"Следить за выполнением операций и резолверов через instrumentation и Micrometer, сохраняя HTTP-метрики для транспорта","correct":true,"sections":{"explanation":"Наблюдения GraphQL дают контекст выполнения, который не виден из одного URL.","example":"Сравните задержку выполнения поиска и частоту ошибок вложенного поля.","when_to_apply":"Для отладки медленных резолверов и доменных ошибок.","edge_cases":"Не записывайте чувствительные аргументы и не добавляйте высококардинальные теги.","related":"HTTP-метрики остаются полезны для ошибок транспорта."}}]}]}
-]}
+{
+  "topic_slug": "spring-graphql-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Spring GraphQL и в чём его преимущества перед REST?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Spring for GraphQL добавляет к REST типизированное описание ответов. Сервер задаёт форму ответа для каждого URL, а клиент выбирает нужную форму переходом между ресурсами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Описание фиксированных ресурсов подходит для OpenAPI, а Spring for GraphQL обрабатывает документ с набором запрошенных полей. Одно поле схемы может участвовать в нескольких формах ответа.",
+                "source_of_confusion": "Оба подхода могут публиковать типизированный контракт, поэтому наличие схемы легко принять за описание уже готового JSON.",
+                "if_it_were_true": "При фиксированной форме два клиента получали бы одинаковый набор полей заказа даже при разных selection set.",
+                "how_it_should_be": "Чтобы клиент сам задал проекцию, опиши типы в SDL и дай ему выбрать поля в документе операции."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Spring for GraphQL даёт клиенту выбрать поля верхнего уровня. Связанные объекты загружаются отдельными HTTP-запросами по ссылкам из первого ответа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Выбор полей работает рекурсивно. Клиент может включить `order { id customer { name } }` в одну операцию.",
+                "source_of_confusion": "Отдельные ссылки на ресурсы хорошо знакомы по REST и часто используются для загрузки связанных объектов по требованию.",
+                "if_it_were_true": "Если бы для каждого уровня требовался отдельный запрос, получение имени клиента после чтения заказа заняло бы ещё один сетевой обмен.",
+                "how_it_should_be": "Опиши отношения полями схемы и обеспечь их разрешение на сервере. Измеряй отдельно обмен с клиентом и запросы к источникам данных."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Spring for GraphQL связывает типизированную схему с серверными резолверами. Клиент выбирает поля и вложенные связи в одной операции, получая ответ под свой сценарий.",
+              "correct": true,
+              "sections": {
+                "explanation": "Spring связывает поля SDL с функциями GraphQL Java, в том числе с методами аннотированных контроллеров. Движок обходит запрошенную часть дерева и формирует результат по структуре selection set.",
+                "example": "Вызов `{ order(id: \"42\") { id customer { name } } }` вернёт ID заказа и имя клиента одним ответом. Для карточки доставки другой клиент может запросить только `id` и `status` у того же заказа.",
+                "when_to_apply": "Подход особенно полезен, когда мобильный клиент и веб-интерфейс читают разные части связанных сущностей. Схема должна явно поддерживать нужные поля и их связи.",
+                "edge_cases": "Один HTTP-запрос может вызвать много SQL-запросов. Для списка заказов со вложенными позициями измерь обращения к БД и при необходимости добавь batching. У POST-операций также свои ограничения HTTP-кэширования.",
+                "related": "SDL даёт типизированный контракт и поддерживает постепенную эволюцию через `@deprecated`. Контроль сложности ограничивает стоимость гибкого выбора полей."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Spring for GraphQL связывает типизированную схему с серверными резолверами. Клиент выбирает шаблон ресурса, а сервер возвращает все поля описанного типа, включая вложенные связи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Схема объявляет доступные поля. Клиентская операция определяет, какие из них войдут в ответ. Пропущенное вложенное поле движок не запрашивает у его резолвера.",
+                "source_of_confusion": "Тип объекта в SDL похож на структуру DTO. Отсюда ожидание, что сериализатор выгрузит DTO целиком.",
+                "if_it_were_true": "Если бы схема определяла полный ответ, запрос только `order { id }` также возвращал бы позиции и сведения о клиенте.",
+                "how_it_should_be": "Отделяй тип поля в контракте от selection set. Для разных клиентов используй разные документы операций над одним типом."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить Spring GraphQL?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Добавить GraphQL- и web-стартеры. Контроллеры с `@QueryMapping` сгенерируют SDL, а `spring.graphql.http.path` задаст маршрут запросов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В обычной конфигурации Boot поднимает исполняемую схему из SDL. Метод контроллера регистрирует обработчик поля, объявленного в этой схеме.",
+                "source_of_confusion": "Сканирование MVC-контроллеров создаёт HTTP-маршруты из аннотаций, поэтому аналогичная генерация SDL выглядит правдоподобно.",
+                "if_it_were_true": "Если бы контроллер генерировал SDL, одного метода `Order order(String id)` хватило бы для публикации контракта с типом `Order`.",
+                "how_it_should_be": "Положи описание `Query.order` и используемых типов в ресурсы GraphQL. Аннотацией привяжи метод к уже объявленному полю."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Добавить GraphQL- и web-стартеры. Поместить SDL в `classpath:graphql/**/`, а при необходимости задать `spring.graphql.http.path` в Boot 3.5.",
+              "correct": true,
+              "sections": {
+                "explanation": "GraphQL-стартер предоставляет инфраструктуру исполнения, web-стартер даёт HTTP-транспорт, а Boot загружает файлы `.graphqls` и `.gqls` из стандартной области ресурсов. Аннотированные контроллеры или wiring подключают логику полей.",
+                "example": "Помести `type Query { ping: String! }` в `src/main/resources/graphql/schema.graphqls` и реализуй `@QueryMapping String ping() { return \"pong\"; }` в контроллере. Запрос `{ ping }` на `POST /graphql` вернёт `data.ping = \"pong\"`.",
+                "when_to_apply": "Начинай со стандартного расположения файлов, если приложение владеет своей схемой. Для реактивного HTTP используй WebFlux-транспорт.",
+                "edge_cases": "В Boot 3.3 путь настраивался через `spring.graphql.path`. В Boot 3.5 включённый schema printer публикует SDL по `GET <http.path>/schema`. GraphiQL включается отдельно и не требуется для выполнения.",
+                "related": "`RuntimeWiringConfigurer` дополняет построение схемы регистрацией скаляров, обработчиков директив и других элементов runtime wiring."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Добавить только GraphQL-стартер. Поместить SDL в `classpath:graphql/**/`, а HTTP-маршрут создастся из `spring.graphql.http.path` без web-стека.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Механизм GraphQL может работать без HTTP-сервера. Само свойство пути не добавляет MVC или WebFlux и не создаёт HTTP-транспорт из одного SDL.",
+                "source_of_confusion": "Многие Boot-стартеры поставляют весь стек для типового сценария, поэтому роль отдельного web-стартера легко пропустить.",
+                "if_it_were_true": "Если бы свойство само включало транспорт, консольное приложение могло бы начать слушать HTTP после добавления одной строки конфигурации.",
+                "how_it_should_be": "Для HTTP добавь MVC или WebFlux. Для теста без транспорта используй сервис исполнения GraphQL напрямую."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Добавить GraphQL- и web-стартеры. Положить SDL в `resources/static/`, а GraphiQL загрузит его в исполняемую схему по HTTP.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Статические ресурсы могут отдаваться клиенту, но не входят в стандартную область поиска SDL. GraphiQL использует уже действующий API для отправки запросов и изучения схемы.",
+                "source_of_confusion": "Текст SDL похож на статический документ, а GraphiQL визуализирует схему, что создаёт впечатление загрузки контракта из браузера.",
+                "if_it_were_true": "Если бы UI загружал SDL на сервер, запросы автоматизированных клиентов зависели бы от предварительного открытия страницы GraphiQL.",
+                "how_it_should_be": "Храни SDL в настроенных locations Spring GraphQL. Включай GraphiQL только там, где нужен интерактивный клиент."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать Query resolver?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Привязать корневое поле к `@QueryMapping` с аргументом `id`, а `Order.items` к `@SchemaMapping`, получающему родительский `Order`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Корневой метод превращается в DataFetcher для `Query.order`. Если клиент выбрал `items`, GraphQL Java передаёт результат корневого поля вложенному DataFetcher как source. Вложенный метод получает ID из заказа.",
+                "example": "В запросе `{ order(id: \"42\") { id items { quantity } } }` корневой метод вызовет `findById(\"42\")`, затем `items(Order)` передаст `\"42\"` в сервис позиций. При выборе только `id` этот резолвер позиций не вызывается.",
+                "when_to_apply": "Выноси связь в резолвер поля, когда её нужно вычислять по запросу и её нельзя просто прочитать из готового объекта.",
+                "edge_cases": "Если корневой резолвер вернул `null` для nullable `order`, разрешать `items` не из чего. Если вернулся список заказов, поэлементная загрузка рискует дать N+1.",
+                "related": "Обычный property fetcher читает доступное свойство объекта. `@BatchMapping` позволяет загрузить вычисляемое поле для группы таких объектов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Привязать корневое поле к `@QueryMapping` с аргументом `id`, а `Order.items` к другому `@QueryMapping`, получающему родительский `Order`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба метода с `@QueryMapping` привязаны к типу `Query`. Метод для поля `Query.items` не обработает `Order.items`.",
+                "source_of_confusion": "И корневой, и вложенный обработчики читают данные. Название Query легко принять за метку любого метода чтения.",
+                "if_it_were_true": "Если бы аннотация выбирала тип по аргументу, добавление параметра `Order` могло бы перенести поле `Query.items` в другой тип без изменения SDL.",
+                "how_it_should_be": "При регистрации проверь пару `typeName` и `field`. Для вложенного поля укажи `@SchemaMapping(typeName = \"Order\", field = \"items\")`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Привязать корневое поле к `@QueryMapping` с аргументом `id`, а `Order.items` к `@SchemaMapping`, повторно читающему `id` через `@Argument`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Argument` читает аргумент текущего поля. У `Order.items` нет аргумента `id`, а идентификатор уже доступен через родительский объект.",
+                "source_of_confusion": "Вложенный выбор находится внутри выражения `order(id: ...)`, поэтому область действия аргумента кажется общей для всей ветки.",
+                "if_it_were_true": "Если бы аргумент наследовался, резолвер `items` при списке заказов мог бы получить один и тот же внешний ID для разных родителей.",
+                "how_it_should_be": "Передай в метод `items(Order order)` и используй его ID. Объявляй отдельный аргумент на поле только для данных, которые должен задать клиент при выборе этого поля."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Привязать корневое поле к `@QueryMapping` с аргументом `id`, а `Order.items` всегда заполнять в корневом методе, поскольку движок вызывает вложенные поля заранее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Подгрузка в корневом методе возможна, но фреймворк не требует её. Явный вложенный DataFetcher вызывается при выборе соответствующего поля.",
+                "source_of_confusion": "При ORM-маппинге забытая lazy-связь может оказаться недоступна к моменту сериализации, поэтому ранняя загрузка иногда выглядит обязательной.",
+                "if_it_were_true": "Если бы все вложенные поля разрешались заранее, запрос только ID заказа всё равно запускал бы чтение позиций.",
+                "how_it_should_be": "Оставь отдельный резолвер для отложенного чтения или осознанно подготовь проекцию заранее. Выбирай стратегию с учётом транзакции и числа SQL-запросов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать Mutation?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Объявить `createOrder` в типе `Query` и принять `@Argument CreateOrderInput`. Побочный эффект сервиса автоматически превращает поле в mutation.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тип операции задаётся клиентским документом и соответствующим корнем схемы. Движок не анализирует побочные эффекты Java-метода.",
+                "source_of_confusion": "На сервере чтение и запись действительно могут различаться только одним вызовом сервиса, что скрывает отличие в GraphQL-контракте.",
+                "if_it_were_true": "Если бы тип операции выводился из побочного эффекта, изменение реализации метода поменяло бы исполняемый контракт без правок SDL и клиентского документа.",
+                "how_it_should_be": "Объяви изменяющее поле в `Mutation` и свяжи его с `@MutationMapping`. Клиент отправляет операцию `mutation`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Объявить `createOrder` в типе `Mutation` и принять `@RequestBody CreateOrderInput`. HTTP-конвертер передаст методу содержимое переменной `input`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В HTTP-теле находится GraphQL-конверт с документом и переменными. `@Argument` получает конкретный аргумент после проверки операции и приведения значений по схеме.",
+                "source_of_confusion": "MVC принимает JSON в `@RequestBody`, и GraphQL тоже часто передаёт JSON по HTTP. Похожий формат на проводе скрывает другой уровень биндинга.",
+                "if_it_were_true": "Если бы тело напрямую попадало в record, документ, имя операции и словарь переменных пришлось бы принимать как часть доменной модели.",
+                "how_it_should_be": "Свяжи параметр с именем аргумента SDL через `@Argument(\"input\")`. Используй HTTP-биндинг в отдельном MVC-контроллере."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Объявить `createOrder` в типе `Mutation` и принять `@Argument CreateOrderInput`. В SDL описать `CreateOrderInput` как обычный выходной `type`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GraphQL разрешает в аргументах только входные типы. Объектный выходной `type` в позиции аргумента делает схему невалидной.",
+                "source_of_confusion": "Record может использоваться для входа и выхода в Java, поэтому хочется переиспользовать такое же описание и в SDL.",
+                "if_it_were_true": "Если бы выходные типы работали на входе, клиент мог бы присылать значения для полей, которые схема определила только для серверного вычисления.",
+                "how_it_should_be": "Используй `input` для сложного аргумента и `type` для возвращаемого `Order`. Общие скаляры и enum можно использовать с обеих сторон."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Объявить `createOrder` в типе `Mutation`, описать `CreateOrderInput` как `input` и принять его через `@Argument` в методе с `@MutationMapping`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Метод с `@MutationMapping` обслуживает поле корневого типа `Mutation`. После приведения входных значений по SDL Spring связывает поля аргумента с Java-параметром, а GraphQL формирует результат по selection set.",
+                "example": "Клиент отправляет `mutation($input: CreateOrderInput!) { createOrder(input: $input) { id status } }`. При валидных позициях сервис создаёт заказ, а ответ содержит его ID и статус.",
+                "when_to_apply": "Используй отдельный input-тип, когда команда содержит несколько параметров или вложенные позиции. Поддерживай согласованность их имён и типов с параметрами конструктора или record.",
+                "edge_cases": "Исполнение корневых полей одной mutation идёт последовательно, но само по себе не даёт общей транзакции и не делает повторы безопасными. Эти гарантии задаются сервисом и контрактом команды.",
+                "related": "SDL-пометка `!` проверяет наличие и ненулевое значение. Проверка бизнес-правил, например положительного количества позиции, остаётся отдельной задачей."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое проблема N+1 в GraphQL и как её решить?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Выполнится 51 SQL-запрос. Достаточно включить кэш DataLoader по ID без пакетного обращения, чтобы свести загрузку всех позиций к одному SQL-запросу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кэш переиспользует результат по одному ключу, а у всех 50 заказов разные ID. Если загрузчик вызывает по одному `findByOrderId` на ключ, останутся 50 запросов за позициями.",
+                "source_of_confusion": "Caching и batching часто доступны в одном DataLoader, из-за чего их эффекты легко перепутать.",
+                "if_it_were_true": "Если бы кэш объединял разные ключи, первая загрузка позиций заказа могла бы дать результат и для другого заказа без чтения его данных.",
+                "how_it_should_be": "Для разных ID реализуй один пакетный запрос на группу ключей. Кэш в пределах запроса полезен отдельно, если один ключ встречается несколько раз."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Выполнится 51 SQL-запрос. `@BatchMapping` с одним чтением по списку ID и группировкой по заказу сократит число до двух при обработке всех 50 родителей одной пачкой.",
+              "correct": true,
+              "sections": {
+                "explanation": "Один SQL возвращает исходные заказы, затем для каждого `items` делает свой SQL. `@BatchMapping` регистрирует пакетный загрузчик и резолвер поверх DataLoader. Загрузчик получает группу родителей и возвращает позиции, привязанные к каждому из них.",
+                "example": "Пакетный метод передаёт 50 ID в `findByOrderIds`, выполняющий `SELECT ... WHERE order_id IN (...)`, группирует строки по `order_id` и сопоставляет каждому `Order` его список. Заказу без позиций соответствует `List.of()`.",
+                "when_to_apply": "Применяй batching к вложенному полю списка, если источник умеет читать значения по множеству ключей. Идентичность ключей и группировка должны сохранять принадлежность результата родителю.",
+                "edge_cases": "`maxBatchSize` или разные волны исполнения могут привести к нескольким пакетам. У map-ответа отсутствующий ключ может дать `null`, поэтому для поля `[OrderItem!]!` явно возвращай пустой список.",
+                "related": "Явный `BatchLoaderRegistry` даёт управление именем и настройками загрузчика. Кэш DataLoader в рамках запроса устраняет повторы одного ключа отдельно от объединения разных ключей."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Выполнится 51 SQL-запрос. Асинхронное исполнение каждого `findByOrderId` сократит число запросов до двух, поскольку драйвер объединит обращения из разных потоков.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Параллельность меняет расписание выполнения. Пятьдесят независимых вызовов репозитория по-прежнему выполняют пятьдесят SQL-запросов.",
+                "source_of_confusion": "На небольшом наборе параллельные вызовы могут завершиться быстрее, создавая впечатление, что уменьшилось число обращений.",
+                "if_it_were_true": "Если бы планировщик автоматически объединял чтения, SQL-трасса содержала бы один запрос по 50 ID без изменения DAO.",
+                "how_it_should_be": "Снизь число обращений явной пакетной операцией. Настраивай конкурентность отдельно по пропускной способности БД и размеру пула."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Выполнится два SQL-запроса. Один вызов `items` обслужит весь список, поскольку `@SchemaMapping` регистрирует единственный обработчик этого поля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обработчик один по зарегистрированной паре тип и поле. Вычисление поля делается для каждого родительского заказа, поэтому в условии будет ещё 50 SQL-запросов.",
+                "source_of_confusion": "В реестре схемы действительно хранится одна привязка `Order.items`. Число регистраций легко спутать с числом вызовов в конкретном дереве ответа.",
+                "if_it_were_true": "Если бы обработчик вызывался один раз, параметр `Order` представлял бы сразу весь список и нельзя было бы определить позиции остальных заказов.",
+                "how_it_should_be": "Для обработки группы родителей используй `@BatchMapping` с коллекцией заказов. Измеряй количество вызовов по SQL-трассе при запросах с реалистичным числом родителей."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать GraphQL Subscriptions?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Объявить поле в `Subscription` и вернуть первый подходящий заказ через `Mono<Order>`. WebSocket будет повторно запускать метод при каждом обновлении заказа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Резолвер создаёт источник для одной операции. `Mono` выдаёт максимум один элемент и завершает этот источник, а WebSocket не вызывает метод заново по событиям домена.",
+                "source_of_confusion": "Долгое соединение ассоциируется с периодическими вызовами. Оно может оставаться общим для других операций даже после окончания подписки.",
+                "if_it_were_true": "Если бы транспорт сам перезапускал метод, однократная подписка смогла бы получить следующее обновление после завершения её источника.",
+                "how_it_should_be": "Верни поток, который сам поставляет новые события. Если нужно получать отдельные снимки по таймеру, реализуй polling как явный механизм."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Объявить поле в `Subscription` и вернуть накопленные события через `List<Order>`. WebSocket отправит список и продолжит следить за добавлениями в него.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Список содержит данные на момент возврата. Для подписки GraphQL Java ожидает `Publisher`, от которого получит последующие элементы и сигнал завершения.",
+                "source_of_confusion": "В обычном query Spring умеет вернуть список. Название поля списка не меняет способ доставки элементов на клиент.",
+                "if_it_were_true": "Если бы сервер следил за Java-коллекцией, добавление элемента в `ArrayList` стало бы сетевым событием без явного источника и управления подписчиком.",
+                "how_it_should_be": "Для ограниченной истории используй query, а для новых событий возвращай `Flux`. Если нужен переход от истории к живому потоку, продумай позицию чтения и дедупликацию."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Объявить поле в `Subscription` и вернуть `Flux<Order>` из `@SubscriptionMapping`. Для WebSocket настроить путь и использовать на клиенте протокол `graphql-transport-ws`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Вызов резолвера создаёт поток событий для операции. Движок применяет к каждому элементу выбор полей клиента и передаёт очередной GraphQL-результат через выбранный потоковый транспорт.",
+                "example": "Клиент подписывается на `orderStatusChanged(orderId: \"42\") { id status }`. Фильтр источника пропускает `CONFIRMED` и `SHIPPED` для заказа 42, а события по другим заказам клиент не получает.",
+                "when_to_apply": "Подписка подходит для экрана отслеживания статуса, если есть реальный источник событий и определён жизненный цикл потребителя. Для Boot с MVC настрой WebSocket-инфраструктуру и `spring.graphql.websocket.path`.",
+                "edge_cases": "Отписка завершает конкретную операцию, хотя сокет может обслуживать другие операции. Переподключение без долговечного журнала или replay может пропустить события.",
+                "related": "`graphql-ws` обозначает библиотеку, а согласуемый подпротокол называется `graphql-transport-ws`. В версиях Spring for GraphQL с поддержкой HTTP SSE можно использовать и этот транспорт для подписок. [Транспорты Spring for GraphQL](https://docs.spring.io/spring-graphql/reference/transports.html)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Объявить поле в `Query` и вернуть `Flux<Order>` из `@QueryMapping`. WebSocket превратит каждый элемент результата этого запроса в событие подписки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Вид операции задаётся документом и корневым типом. Поток значений для обычного запроса списка адаптируется к одному результату запроса, без семантики GraphQL subscription.",
+                "source_of_confusion": "И подписка, и запрос могут использовать реактивный Java-тип. Это сходство скрывает разницу между способом исполнения поля и протоколом операции.",
+                "if_it_were_true": "Если бы `Flux` сам менял вид операции, перенос запроса с HTTP на WebSocket мог бы изменить JSON-контракт без изменения документа.",
+                "how_it_should_be": "Проектируй запрос истории под `Query` и поток событий под `Subscription`. Для потока выбери совместимый транспорт и протокол клиента."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обрабатывать ошибки в Spring GraphQL?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Сопоставить исключение с `GraphQLError` через resolver. Классификация `NOT_FOUND` выставит HTTP 404 для операции и удалит частично рассчитанные поля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Адаптер переводит исключение DataFetcher в запись массива `errors`. Классификация GraphQL не является статусом HTTP, а соседние поля могут остаться в `data`.",
+                "source_of_confusion": "`NOT_FOUND` напоминает HTTP 404, поэтому одинаковые названия легко принять за автоматическое преобразование статуса.",
+                "if_it_were_true": "Если бы тип первой ошибки управлял HTTP-статусом и всем `data`, ответ с успешно найденным заказом и отсутствующим вторым заказом целиком выглядел бы как 404 ресурса.",
+                "how_it_should_be": "Разбирай `errors[].path` и классификацию ошибки отдельно от HTTP-статуса. Проверку отсутствия результата по конкретному полю делай по GraphQL-ответу."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Сопоставить исключение с `GraphQLError` через resolver. Тот же resolver обработает синтаксическую ошибку документа и заполнит путь затронутого поля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ошибку синтаксиса создаёт парсер до выполнения DataFetcher. На этом этапе ещё нет исполненного поля и его `DataFetchingEnvironment`.",
+                "source_of_confusion": "Ошибки разбора и выполнения обе видны клиенту в `errors`, что скрывает разные стадии обработки.",
+                "if_it_were_true": "Если бы resolver полей получал синтаксические сбои, ему пришлось бы назначать путь к полю для документа, который движок не смог разобрать.",
+                "how_it_should_be": "Используй DataFetcher resolver для исключений выполнения. Ошибки разбора и валидации диагностируй на уровне обработки документа и HTTP-согласования."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Сопоставить исключение с `GraphQLError` через resolver. Для нераспознанного исключения вернуть `null`, чтобы подавить ошибку и сохранить успешное значение поля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В адаптере `null` означает, что этот обработчик не разрешил исключение. Цепочка может передать его дальше, а неразрешённое исключение становится обобщённой ошибкой выполнения.",
+                "source_of_confusion": "Возвращаемый Java `null` похож на намеренное пустое значение nullable поля. Здесь он относится к результату обработки исключения.",
+                "if_it_were_true": "Если бы `null` подавлял ошибку, следующий resolver не смог бы классифицировать исключение, про которое предыдущий ничего не знает.",
+                "how_it_should_be": "Возвращай `null` только для передачи по цепочке. Для ожидаемого отсутствия nullable значения верни `null` из самого резолвера данных по контракту."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Сопоставить исключение с `GraphQLError` через resolver. При штатном HTTP-ответе выполнения сохранить статус 200, а результат поля и соседних полей определить по nullable-контракту.",
+              "correct": true,
+              "sections": {
+                "explanation": "Resolver получает исключение и контекст поля. `GraphqlErrorBuilder.newError(env)` сохраняет привязку к позиции и пути. Движок возвращает `errors` и применяет правила распространения `null` по схеме отдельно от HTTP.",
+                "example": "Если `order` nullable и поиск заказа 999 бросает `OrderNotFoundException`, то запрос `{ missing: order(id: \"999\") { id } present: order(id: \"42\") { id } }` может вернуть `data.missing = null`, `data.present.id = \"42\"` и ошибку с путём `[\"missing\"]`.",
+                "when_to_apply": "Используй общий `DataFetcherExceptionResolver` для сквозной классификации. Начиная со Spring GraphQL 1.2, `@GraphQlExceptionHandler` подходит для ошибок методов контроллера и правил в `@ControllerAdvice`.",
+                "edge_cases": "Ошибка в обязательном поле поднимает `null` до ближайшего nullable предка. Ошибка разбора документа возникает раньше и при `application/graphql-response+json` может дать 4xx. Для `application/json` такие GraphQL-ошибки часто остаются в HTTP 200.",
+                "related": "Обрабатывай ожидаемые доменные исключения через стабильные коды и безопасные сообщения. Клиентский GraphQlTester помогает независимо проверять данные и ошибки. [HTTP-транспорт Spring for GraphQL](https://docs.spring.io/spring-graphql/reference/transports.html)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как тестировать Spring GraphQL?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Использовать `@GraphQlTest` с подменой сервиса и проверять документ через `GraphQlTester`. HTTP и реальную цепочку фильтров покрыть отдельным тестом транспорта.",
+              "correct": true,
+              "sections": {
+                "explanation": "Слайс Boot 3.5 поднимает схему и компоненты выполнения GraphQL. Автонастроенный tester вызывает GraphQL-сервис без HTTP, поэтому тест проверяет аргументы, резолверы, selection set и результат выполнения.",
+                "example": "`@MockitoBean` возвращает заказ 123 из `findById(\"123\")`. `tester.document(\"{ order(id: \\\"123\\\") { id } }\").execute().path(\"order.id\").entity(String.class).isEqualTo(\"123\")` проверяет ответ после применения SDL и маппинга.",
+                "when_to_apply": "Выбирай слайс, когда важно проверить исполняемый контракт контроллера при управляемых ответах сервиса. Для отсутствующего заказа добавь проверку `errors()` и ожидаемой классификации.",
+                "edge_cases": "`documentName(\"getOrder\")` читает документ из ресурсов теста, а `document(...)` использует встроенный текст. Наличие `@MockitoBean` зависит от версии Spring Test, в Boot до 3.4 использовали `@MockBean`.",
+                "related": "`HttpGraphQlTester` связывает те же проверки GraphQL-ответа с HTTP. Выбирай соответствующую конфигурацию mock transport или запущенный тестовый сервер. [Тестирование GraphQL в Spring Boot 3.5](https://docs.spring.io/spring-boot/3.5/reference/testing/spring-boot-applications.html)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Использовать `@GraphQlTest` с подменой сервиса и проверять документ через `GraphQlTester`. Этот же тест проверит HTTP-заголовки и security filter chain благодаря автонастроенному серверу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При `@GraphQlTest` сервер и транспорт не создаются. Сам GraphQlTester имеет несколько реализаций, поэтому тип интерфейса не говорит о наличии HTTP.",
+                "source_of_confusion": "В MVC-слайсе тесты вызываются по HTTP-подобному интерфейсу, и от GraphQL-слайса можно ожидать того же.",
+                "if_it_were_true": "Если бы слайс поднимал транспорт, некорректный `Content-Type` мог бы остановить тестовый вызов до выполнения запроса. Прямой tester HTTP-заголовок не обрабатывает.",
+                "how_it_should_be": "Для проверки фильтров отправь сознательно сформированный HTTP-запрос через транспортный tester и включи нужную security-конфигурацию в тестовый контекст."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Использовать `@GraphQlTest` с подменой сервиса и вызвать метод контроллера напрямую. Слайс провалидирует SDL и selection set при обычном вызове Java-метода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Прямой вызов обходит парсинг, валидацию документа и связывание аргументов с полями схемы. Он проверяет Java-логику вызванного метода.",
+                "source_of_confusion": "Слайс действительно загружает инфраструктуру GraphQL, поэтому кажется, что её проверки применяются при каждом обращении к созданному контроллеру.",
+                "if_it_were_true": "Если бы прямой вызов проходил через GraphQL, он обнаружил бы удалённое из SDL поле даже при сигнатуре Java-метода без изменений.",
+                "how_it_should_be": "Для проверки регрессии публичной схемы исполни документ через `GraphQlTester`. Прямой вызов оставь для изолированного unit-теста делегирования."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Использовать `@GraphQlTest` с подменой сервиса и проверять документ через `MockMvc`. Слайс регистрирует маршрут `POST /graphql` и контроллеры как MVC-обработчики.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GraphQL-контроллер регистрирует обработчики полей, а HTTP-обработчик обслуживает общий endpoint. В GraphQL-слайсе этого транспорта нет.",
+                "source_of_confusion": "Аннотация `@Controller` встречается и в MVC, и в GraphQL, поэтому методы с `@QueryMapping` легко принять за обработчики URL.",
+                "if_it_were_true": "Если бы слой создавал MVC-маршрут из каждого GraphQL-контроллера, можно было бы проверить `Query.order` без подключения исполнения схемы.",
+                "how_it_should_be": "Для теста JSON-конверта и маршрута подключи реальный HTTP-слой в тестовой конфигурации. Для unit-интеграции со схемой достаточно исполнения через `GraphQlTester`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое GraphQL Directives и как их использовать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Объявить `@auth` на `FIELD_DEFINITION` в SDL. Движок возьмёт имя роли из аргумента и применит правило к DataFetcher без собственной регистрации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Объявление сообщает движку, что директива с аргументом `role` допустима в этом месте. Смысл проверки ролей поставляет серверный wiring.",
+                "source_of_confusion": "У встроенных директив есть готовая семантика в реализации GraphQL. Это выглядит как общий механизм автоматического исполнения любого имени.",
+                "if_it_were_true": "Если бы роль проверялась по одному SDL, поле `adminReport` получило бы ограничение до того, как приложение определило источник и формат ролей.",
+                "how_it_should_be": "Зарегистрируй обработчик через `RuntimeWiringConfigurer` или используй method security на Spring-бине. В обоих случаях отдельно проверь запрет и разрешение."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Объявить `@auth` на `FIELD_DEFINITION` в SDL. Через `RuntimeWiringConfigurer` зарегистрировать `SchemaDirectiveWiring`, оборачивающий исходный DataFetcher проверкой роли.",
+              "correct": true,
+              "sections": {
+                "explanation": "При построении схемы wiring получает определение поля и аргументы прикладной директивы. Он подменяет DataFetcher обёрткой. При обработке запроса обёртка вызывает исходный DataFetcher только после проверки прав.",
+                "example": "Для `adminReport: Report! @auth(role: \"ADMIN\")` зарегистрируй `builder -> builder.directive(\"auth\", authWiring)`. Запрос с нужной ролью получит отчёт, а без неё получит ошибку поля до обращения к сервису отчётов.",
+                "when_to_apply": "Подход уместен для единообразного правила на нескольких полях, когда нужный контекст аутентификации доступен DataFetcher и видимые аннотации схемы помогают ревью.",
+                "edge_cases": "Во время сборки схемы нельзя проверять права конкретного запроса. В реактивном приложении проверь способ получения security context, а у ошибки поля с `!` учти распространение `null`.",
+                "related": "`@skip` и `@include` управляют выбором полей операции по спецификации. Method security защищает метод сервиса или контроллера и может использоваться независимо от SDL."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Объявить `@auth` на `FIELD_DEFINITION` в SDL. Проверить текущую роль внутри `SchemaDirectiveWiring.onField` и зарегистрировать исходный DataFetcher только для администраторов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`onField` вызывается при сборке схемы, когда запроса пользователя ещё нет. Его задача в этом подходе состоит в установке обёртки для последующих вызовов.",
+                "source_of_confusion": "Обработчик wiring имеет доступ и к директиве, и к DataFetcher. Легко выполнить проверку сразу, хотя нужный контекст появляется позже.",
+                "if_it_were_true": "Если бы проверка сработала при старте, все запросы использовали бы одно решение, принятое по контексту потока инициализации.",
+                "how_it_should_be": "Читай требуемую роль из SDL на этапе wiring. Читай текущие полномочия внутри запроса и только после проверки делегируй исходному DataFetcher."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Объявить `@auth` на `FIELD_DEFINITION` в SDL. Передать эту директиву в каждом клиентском документе рядом с `adminReport`, чтобы запустить проверку роли.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`FIELD_DEFINITION` относится к объявлению поля в SDL. Указание директивы на поле клиентской операции потребовало бы другого допустимого места, `FIELD`, и всё равно не обеспечило бы обязательную авторизацию.",
+                "source_of_confusion": "`@skip` и `@include` используются прямо в документах клиентов, и у них похожий синтаксис.",
+                "if_it_were_true": "Если бы клиент включал проверку сам, он мог бы отправить `{ adminReport { id } }` без директивы и обойти правило.",
+                "how_it_should_be": "Применяй обязательную проверку на стороне сервера к каждому исполнению поля. Запрос пользователя может управлять формой данных, но не условиями проверки прав."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать пагинацию в GraphQL?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Отдать `Window<Order>` через адаптер к `Connection`. Для следующей страницы преобразовать `after` в номер страницы и применить `OFFSET` с той же сортировкой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Адаптер оборачивает результат. В показанном контракте граница задана keyset-позицией, которую образуют значения полей сортировки последнего элемента.",
+                "source_of_confusion": "`after` можно реализовать и поверх смещения. Одинаковая форма курсора в API скрывает способ позиционирования в хранилище.",
+                "if_it_were_true": "При смещении вставка новой строки перед первой страницей могла бы привести к повтору последней строки этой страницы.",
+                "how_it_should_be": "Сохраняй одинаковую сортировку и передавай в чтение значения из курсора. Если используешь offset, не обещай устойчивость границы к сдвигу строк."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Отдать `Window<Order>` через адаптер к `Connection`. Для следующей страницы сохранить в курсоре только `created_at`, поскольку `id` нужен лишь для вывода строк с равными датами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Граница должна учитывать оба ключа сортировки. Иначе заказы с одинаковым временем невозможно разделить между страницами в том же порядке, что используется при чтении.",
+                "source_of_confusion": "Для одних наборов данных `created_at` выглядит уникальным, поэтому дополнительный ключ воспринимается как косметическая сортировка.",
+                "if_it_were_true": "Если бы курсор хранил только дату, предикат `created_at < lastTime` пропустил бы ещё не выданные заказы с `lastTime`.",
+                "how_it_should_be": "Используй уникальный дополняющий ключ и включи его в позицию. Для убывающего порядка граница эквивалентна условию `created_at < t OR (created_at = t AND id < i)`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Отдать `Window<Order>` через адаптер к `Connection`. Для следующей страницы передать `endCursor` как `after` и продолжить чтение по ключам `created_at` и `id`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Поддерживаемая стратегия преобразует курсор в `ScrollPosition`. Запрос продолжает обход после последней пары ключей, а адаптер превращает окно в `edges` и `pageInfo`. Размер окна и возможность продолжения помогают определить `hasNextPage`.",
+                "example": "При одинаковой дате и ID 15, 12, 8 первые два заказа дадут курсор после пары с ID 12. Следующий запрос `orders(first: 2, after: $cursor)` начнёт с ID 8 даже после вставки ID 18 перед этой границей.",
+                "when_to_apply": "Используй keyset для последовательного обхода большого списка. Зафиксируй фильтры и порядок, добавь уникальный дополняющий ключ и индекс под используемое чтение.",
+                "edge_cases": "Изменение сортировочного ключа между страницами может вызвать пропуск или повтор. Keyset не фиксирует единый снимок. `Slice` тоже может адаптироваться в `Connection`, но форма ответа сама по себе не гарантирует keyset.",
+                "related": "`totalCount` требует отдельного поля и расчёта при необходимости. Для прямого перехода на произвольную страницу offset может быть проще, если допустимы его стоимость и поведение при изменениях."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Отдать `Window<Order>` через адаптер к `Connection`. Для следующей страницы передать `startCursor` как `after`, поскольку он задаёт начало уже прочитанного диапазона.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`after` исключает позицию курсора и продолжает после неё. `startCursor` указывает на первое ребро страницы, поэтому остальные уже выданные ребра снова подходят под запрос.",
+                "source_of_confusion": "Оба курсора упакованы в `PageInfo` рядом с признаками продолжения. Их назначение легко перепутать при переносе кода для обратного обхода.",
+                "if_it_were_true": "Если бы для движения вперёд использовался `startCursor`, из страницы из 20 строк до 19 могли бы прийти повторно.",
+                "how_it_should_be": "Возьми `endCursor` для движения вперёд. В контракте с обратным обходом `startCursor` обычно используют с `before` и `last`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Spring GraphQL интегрируется с Spring Security?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "HTTP-цепочка пропустит вызов, а method security остановит `deleteOrder` до удаления. GraphQL resolver классифицирует отказ как `FORBIDDEN` в ошибке поля.",
+              "correct": true,
+              "sections": {
+                "explanation": "HTTP-цепочка устанавливает аутентификацию и допускает операцию к исполнению. Перехватчик `@PreAuthorize` проверяет роль непосредственно перед вызовом метода. Исключение доступа становится ошибкой DataFetcher через зарегистрированный security resolver.",
+                "example": "Запрос удаления заказа 42 от пользователя с `ROLE_USER` пройдёт входной фильтр. Для `deleteOrder` появится ошибка с путём этого поля, а вызов `orderService.delete(\"42\")` не состоится.",
+                "when_to_apply": "Используй HTTP-уровень для общих требований к доступу и method security для прав, меняющихся между полями одной схемы. Проверь, что Spring вызывает защищённый бин через настроенный перехватчик.",
+                "edge_cases": "Если отказ происходит ещё в HTTP-цепочке, ответ обрабатывается до исполнения документа. Если отказ возникает в поле, но подходящего exception resolver нет, клиент может получить обобщённый `INTERNAL_ERROR`.",
+                "related": "`hasRole('ADMIN')` со стандартным префиксом проверяет полномочие `ROLE_ADMIN`. Для доступа к конкретному заказу дополнительно проверяй соответствие владельцу или разрешение на объект."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "HTTP-цепочка пропустит вызов, а `deleteOrder` выполнит удаление. GraphQL resolver примет аутентификацию на маршруте за разрешение на все поля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пропуск на уровне транспорта допускает документ к исполнению. Включённый `@PreAuthorize` отдельно запрещает вызов метода пользователю без требуемой роли.",
+                "source_of_confusion": "В REST маршрут часто соответствует одному действию. У GraphQL один маршрут может обслуживать операции с разными правами.",
+                "if_it_were_true": "Если бы HTTP-допуск разрешал все поля, пользователь с правом читать свои заказы получил бы возможность их удалять через тот же endpoint.",
+                "how_it_should_be": "Разнеси правила допуска к транспорту и разрешения на операцию. Для удаления проверь роль на Spring-методе и протестируй отсутствие побочного эффекта."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "HTTP-цепочка отвергнет запрос до исполнения. Она получит требование `ROLE_ADMIN` из `@PreAuthorize` метода, выбранного в теле GraphQL-запроса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В показанной схеме HTTP-цепочка пропускает `ROLE_USER`. Spring выбирает резолвер позже по документу, и методный перехватчик применяет своё правило во время исполнения поля.",
+                "source_of_confusion": "Обе проверки выполняет Spring Security, поэтому их можно принять за одну фазу с доступом ко всем данным запроса.",
+                "if_it_were_true": "Если бы HTTP-фильтр применял аннотации по полям, он мог бы определить требуемую роль до выбора операции и валидации схемы.",
+                "how_it_should_be": "Ограничивай общие HTTP-вызовы правилами `SecurityFilterChain`. Для прав на конкретное поле проверяй identity после выбора резолвера."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "HTTP-цепочка пропустит вызов, а method security остановит `deleteOrder`. Отказ из поля переведёт весь HTTP-ответ в 403 через зарегистрированный resolver.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Зарегистрированный `SecurityDataFetcherExceptionResolver` отдаёт GraphQL-ошибку с классификацией `FORBIDDEN`. При обычной доставке результата исполнения это запись в `errors` внутри HTTP 200.",
+                "source_of_confusion": "У HTTP 403 и GraphQL `FORBIDDEN` общий смысл отказа, хотя они относятся к разным уровням и имеют разный охват.",
+                "if_it_were_true": "Если бы resolver менял HTTP-статус всей операции, один отказ во вложенном поле лишил бы клиента обычного GraphQL-ответа с полученными соседними данными.",
+                "how_it_should_be": "Проверяй классификацию и путь GraphQL-ошибки отдельно от HTTP-статуса. Если нужен запрет всему endpoint, настрой его в транспортной цепочке."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем @SchemaMapping отличается от @QueryMapping и @MutationMapping?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@SchemaMapping` выбирает тип по возвращаемому значению метода. `@QueryMapping` и `@MutationMapping` отличаются тем, что выводят тип из входных аргументов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Координаты поля задаются именем типа-владельца и именем поля. У корневых составных аннотаций тип-владелец уже задан. Возвращаемый тип описывает значение поля.",
+                "source_of_confusion": "В схеме `Query.order` возвращает `Order`, и это имя легко принять за координату родителя метода.",
+                "if_it_were_true": "Если бы маппинг выбирался по типу возврата, поля `Query.order` и `Mutation.createOrder` оба попали бы в тип `Order`.",
+                "how_it_should_be": "Сначала найди в SDL тип, внутри которого объявлено поле. Для корневых методов примени аннотацию соответствующего корня, для вложенного укажи его координаты."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@SchemaMapping` обслуживает только вложенные поля. `@QueryMapping` и `@MutationMapping` используют отдельный механизм, недоступный базовой аннотации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@SchemaMapping(typeName = \"Query\", field = \"order\")` валиден. Составные аннотации используют тот же механизм регистрации DataFetcher, предоставляя готовую координату типа.",
+                "source_of_confusion": "Большинство примеров используют базовую аннотацию для вложенных полей, а составные только для корня. Это удобное соглашение о стиле.",
+                "if_it_were_true": "Если бы механизм был разным, замена `@QueryMapping` на эквивалентный `@SchemaMapping` потребовала бы другой runtime wiring для поля.",
+                "how_it_should_be": "Используй короткие формы на стандартных корнях. Для нестандартного имени корневого типа укажи его в `@SchemaMapping` явно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@SchemaMapping` привязывает поле к паре тип и имя. `@QueryMapping` и `@MutationMapping` обе используют тип `Query`, а выбор между чтением и записью делает метод сервиса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@MutationMapping` фиксирует тип `Mutation`, а не меняет поведение поля `Query`. Регистрируемый вызов определяется схемой и документом клиента.",
+                "source_of_confusion": "Оба метода могут возвращать один и тот же объект `Order`. На стороне Java их сигнатуры не обязательно показывают, к какому корню они относятся.",
+                "if_it_were_true": "Если бы обе аннотации обслуживали `Query`, поле `Mutation.createOrder` осталось бы без предназначенного для него резолвера.",
+                "how_it_should_be": "Сопоставляй тип-владелец с SDL. Для `createOrder` из показанного типа `Mutation` выбери `@MutationMapping` или эквивалентную явную пару."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@SchemaMapping` задаёт пару тип и поле. `@QueryMapping` и `@MutationMapping` задают типы `Query` и `Mutation`, а вложенное `Order.customer` маппится на `Order`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый маппинг регистрирует DataFetcher для координаты схемы. Составные аннотации заранее подставляют стандартное имя корневого типа. Вложенный метод получает родителя как source, а аргументы поля связываются отдельно.",
+                "example": "`@SchemaMapping(typeName = \"Order\", field = \"customer\") Customer customer(Order order) { return customers.findById(order.getCustomerId()); }` выполняется для `customer` в selection set заказа. Для `Query.order` можно указать `@QueryMapping(\"order\")`.",
+                "when_to_apply": "Короткие аннотации делают назначение корневого метода очевидным. Явные координаты полезны при отличии имени метода от поля или при нестандартном имени типа.",
+                "edge_cases": "При отсутствии `field` Spring использует имя метода. Если имя Java-метода изменилось, явная координата сохраняет привязку к SDL. У вложенного поля наличие имени типа ещё не создаёт способ поиска родителя.",
+                "related": "`@SubscriptionMapping` следует той же схеме для типа `Subscription`. Отдельный контракт подписки требует источник событий, а аннотация отвечает за привязку."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает introspection и когда его отключать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Интроспекция показывает клиенту типы и поля схемы. При отключении неизвестные пользователю поля становятся недоступны, поэтому их можно оставить без отдельной авторизации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отключение метаполей схемы затрудняет получение её описания. Обычное бизнес-поле продолжает проходить валидацию и выполняться, если объявлено в контракте и доступно по правилам приложения.",
+                "source_of_confusion": "Получение списка полей выглядит как проверка доступности. На деле оно даёт справочную информацию о схеме.",
+                "if_it_were_true": "Если бы скрытие схемы запрещало доступ, уже известный запрос к `adminReport` перестал бы работать даже у администратора.",
+                "how_it_should_be": "Защищай закрытые поля правилами доступа при выполнении. Отключай раскрытие схемы только как дополнительный шаг по политике публикации."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Интроспекция возвращает метаданные через `__schema` и `__type`. Ограничение уменьшает раскрытие схемы и отключает инструменты, которым для автодополнения нужен живой опрос.",
+              "correct": true,
+              "sections": {
+                "explanation": "Движок отдаёт описание типов и полей как результат обычного GraphQL-запроса к метаполям. При запрете этих запросов сохраняется возможность выполнять известные бизнес-операции с подходящими правами.",
+                "example": "Запрос `{ __type(name: \"Order\") { fields { name } } }` позволяет IDE узнать поля `Order`. При `spring.graphql.schema.introspection.enabled: false` инструмент теряет этот источник метаданных, а разрешённый `order(id: \"42\") { id }` продолжает работать.",
+                "when_to_apply": "Ограничивай introspection на внешнем окружении, если полный контракт не должен публиковаться автоматически. Предоставь авторизованным разработчикам SDL или отдельную среду, если их инструменты зависят от него.",
+                "edge_cases": "Отключение introspection не управляет schema printer. Если он отдельно публикует `<http.path>/schema`, текст SDL может оставаться доступен. Сама UI-страница также может открываться и выполнять известные запросы.",
+                "related": "Сравни назначение introspection и авторизации поля. Первое раскрывает структуру, второе решает, разрешено ли исполнение операции для текущего пользователя."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Интроспекция возвращает метаданные из интерфейса GraphiQL. Достаточно выключить GraphiQL, чтобы сторонний HTTP-клиент перестал получать схему.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GraphiQL потребляет метаданные, которые выдаёт движок. При отключённом UI сторонний клиент по-прежнему может запросить `__schema`, если introspection разрешена.",
+                "source_of_confusion": "Именно открытая IDE часто первой показывает схему, поэтому её адрес выглядит источником данных.",
+                "if_it_were_true": "Если бы UI владел метаполями, удаление страницы одновременно ломало бы CLI-загрузку схемы из GraphQL API.",
+                "how_it_should_be": "Настраивай UI и introspection отдельно. Для аудита публикации проверь также доступность самостоятельных маршрутов выдачи SDL."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Интроспекция показывает тип поля на основе данных последнего успешного исполнения. Отключение сохраняет метаданные только для ранее запрошенных операций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Типы и аргументы формируются из схемы при её построении. Чтобы узнать поля типа `Order`, клиенту не нужно выполнять запрос заказа.",
+                "source_of_confusion": "На разных запросах виден разный набор данных. Такое изменение формы ответа легко спутать с изменением самого типизированного контракта.",
+                "if_it_were_true": "Если бы схема выводилась из наблюдений, новый тип не появился бы в документации, пока кто-нибудь не выбрал его из операции.",
+                "how_it_should_be": "Используй SDL или introspection для структуры. Список реально используемых операций получай отдельно из наблюдаемости исполнения."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обрабатывать файловый upload в Spring GraphQL?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Объявить `Upload` и принять `@Argument MultipartFile`. Servlet-контейнер распознает части формы, а Spring автоматически свяжет файл с переменной GraphQL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Servlet MVC может разбирать multipart для собственных контроллеров. Штатный GraphQL-обработчик не реализует multipart request spec и сопоставление частей со словарём переменных.",
+                "source_of_confusion": "`MultipartFile` автоматически связывается с частью формы в MVC. Аннотированный GraphQL-контроллер тоже является Spring-бином, но получает подготовленные аргументы от другого механизма.",
+                "if_it_were_true": "Если бы стандартного разбора формы хватало, серверу не понадобился бы `map`, чтобы подложить одну или несколько файловых частей в нужные пути операции.",
+                "how_it_should_be": "Для `MultipartFile` установи совместимую GraphQL multipart-интеграцию. В обычном MVC-эндпоинте файл можно принять напрямую и затем передать GraphQL идентификатор."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Объявить `Upload` и зарегистрировать реализацию скаляра. Скаляру будет доступно исходное HTTP-тело, из которого он сможет прочитать нужные части формы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Coercion скаляра работает со значениями, переданными движку для аргумента. К моменту его вызова транспорт должен уже разобрать HTTP-тело и сформировать переменные.",
+                "source_of_confusion": "Пользовательские скаляры отвечают за преобразование входа, что похоже на обработку содержимого HTTP-запроса.",
+                "if_it_were_true": "Если бы coercion отвечал за multipart, разбор общей формы повторялся бы на уровне каждого файлового аргумента и зависел от работы движка после маршрутизации.",
+                "how_it_should_be": "Для одного GraphQL-запроса раздели обязанности транспорта и скаляра. Проверь, какой тип файла адаптер помещает в переменные и принимает ли его скаляр."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для `Upload` добавить реализацию скаляра и совместимый multipart-адаптер. Штатный GraphQL-транспорт Spring MVC сам не передаст файл из multipart-запроса в переменную.",
+              "correct": true,
+              "sections": {
+                "explanation": "Объявление скаляра описывает тип в SDL. Адаптер читает части `operations` и `map`, подставляет файловый объект в нужную переменную, а coercion зарегистрированного скаляра и биндинг аргумента передают его резолверу.",
+                "example": "Клиент указывает `variables.file = null` в `operations`, связывает часть `0` с путём `variables.file` через `map` и отправляет файл в части `0`. При настроенной MVC-интеграции резолвер получает `MultipartFile` и возвращает метаданные сохранённого документа.",
+                "when_to_apply": "Используй адаптер, если клиентский контракт требует upload в той же GraphQL-операции. Сверь совместимость стека и релизов, например документированный MVC-пример `multipart-spring-graphql` 1.5.x для Boot 3.4.x.",
+                "edge_cases": "Для WebFlux нужен адаптер соответствующего стека и тип наподобие `FilePart`. Установи лимиты размера, права на заказ и правила очистки временного файла при сбое операции.",
+                "related": "Отдельный HTTP-upload или загрузка в объектное хранилище позволяют передавать мутации только ID файла. Тогда GraphQL проверяет владение ссылкой и связывает файл с заказом. [Загрузка файлов в Spring for GraphQL](https://docs.spring.io/spring-graphql/reference/transports.html#server-transports.http.file-upload)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для `Upload` добавить обычный MVC multipart resolver. Он преобразует имена частей формы в GraphQL-аргументы без регистрации реализации скаляра.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MVC-resolver разбирает части формы, но не исполняет соглашение GraphQL о `operations` и `map`. Для пользовательского скаляра нужна реализация в исполняемой схеме.",
+                "source_of_confusion": "В REST-форме имена частей часто совпадают с именами Java-параметров. В GraphQL путь переменной может указывать на вложенный объект или элемент массива.",
+                "if_it_were_true": "Если бы совпадения имени хватало, multipart-запрос с файлом под именем `file` создал бы корректный GraphQL-вызов без документа операции.",
+                "how_it_should_be": "Для multipart GraphQL настрой совместимый адаптер и wiring скаляра. Для отдельной MVC-ручки используй штатный multipart и передавай в GraphQL ссылку."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как отлаживать и мониторить GraphQL-запросы?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Оставить HTTP-метрики для транспорта, а исполнение наблюдать через `GraphQlObservationInstrumentation`. Для адресной диагностики использовать ограниченное логирование операций.",
+              "correct": true,
+              "sections": {
+                "explanation": "HTTP-таймер видит длительность и статус запроса к одному маршруту. Наблюдения Spring for GraphQL с настроенным `ObservationRegistry` фиксируют результат GraphQL-операции, работу нетривиальных DataFetcher и DataLoader.",
+                "example": "В трассе медленного `GetOrders` длительность `graphql.request` можно сопоставить с `graphql.datafetcher` для `Order.items` и наблюдением пакетного загрузчика. Это помогает отличить задержку SQL от медленного транспорта, даже если оба запроса отдали HTTP 200.",
+                "when_to_apply": "Для production используй метрики с низкой кардинальностью и связанные трассы. При воспроизведении редкой ошибки на ограниченный срок включи DEBUG или добавь instrumentation с фильтрацией чувствительных данных.",
+                "edge_cases": "Простой property fetcher не обязан давать отдельное наблюдение. Текст документа, значения переменных и ID клиентов опасны как теги метрик из-за кардинальности и раскрытия данных.",
+                "related": "В Micrometer метрики показывают массовые изменения длительности и исходов, трассы объясняют единичный запрос, а логи помогают восстановить контекст при известной операции. [Наблюдаемость Spring for GraphQL](https://docs.spring.io/spring-graphql/reference/observability.html)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Использовать только HTTP-метрики по маршруту и статусу. Тег `uri` разделит GraphQL-операции по полям внутри документа, а статусы измерят ошибки резолверов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тег маршрута обычно содержит `\"/graphql\"` и у чтения, и у изменения. Ошибка выполнения поля может вернуться в `errors` при HTTP 200.",
+                "source_of_confusion": "В REST путь часто соответствует бизнес-операции, а 4xx и 5xx полезны для подсчёта отказов маршрута. Для GraphQL эти агрегаты скрывают различия между полями.",
+                "if_it_were_true": "Если бы тег `uri` включал выбор полей, два документа к одному URL учитывались бы как разные HTTP-маршруты без прикладных наблюдений.",
+                "how_it_should_be": "Сохраняй метрики транспорта для доступности. Для ошибок и времени внутри операции добавь наблюдения на уровне GraphQL."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Добавить `Instrumentation`, записывающий полный документ и переменные во все теги метрик. Так можно безопасно разделить задержку по каждому сочетанию пользовательских параметров.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Instrumentation` может видеть контекст исполнения, но тег с произвольным текстом порождает новые временные ряды и может раскрывать секреты или персональные данные.",
+                "source_of_confusion": "Разбор единичного случая выигрывает от точной информации об операции. Переносить её из ограниченного диагностического журнала в измерения массового трафика дорого.",
+                "if_it_were_true": "Если бы такой тег был безопасным, миллион уникальных ID давал бы те же затраты, что пара стабильных значений `graphql.operation.type`.",
+                "how_it_should_be": "Держи теги ограниченными по значениям. Для конкретного случая используй согласованный идентификатор трассы, sampling и редактирование чувствительных полей."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Измерять время SQL через метрики пула соединений. Они позволят установить GraphQL-поле и исход операции без инструментирования выполнения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Драйвер и пул видят работу с БД, но не путь поля в GraphQL-ответе. Некоторые DataFetcher используют другие сервисы или завершаются исключением ещё до SQL.",
+                "source_of_confusion": "Медленное вложенное поле часто связано с запросом к БД. Причину хорошо видно на SQL-уровне, если уже есть связь со сценарием на уровне GraphQL.",
+                "if_it_were_true": "Если бы SQL-метрики сами объясняли исход операции, таймаут внешнего API в резолвере оказался бы виден даже без запроса к базе.",
+                "how_it_should_be": "Свяжи наблюдение операции и поля со span базы или внешнего вызова. Настраивай метрики каждого слоя для его собственных границ."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

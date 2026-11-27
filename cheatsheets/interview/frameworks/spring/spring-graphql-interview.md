@@ -58,11 +58,12 @@ updated: 2026-05-31
 
 ## Q2. Как настроить Spring GraphQL?
 
-Нужны три вещи: стартер, немного YAML и файл схемы. По соглашению Spring GraphQL сам подхватывает все `*.graphqls` из `src/main/resources/graphql/` — отдельно регистрировать схему не нужно.
+Пример рассчитан на Spring Boot 3.5 и Spring for GraphQL 1.4. Для запуска нужны стартер, схема и HTTP-транспорт. По умолчанию Boot ищет `*.graphqls` и `*.gqls` в `classpath:graphql/**/`, обычно это `src/main/resources/graphql/`.
 
 **Шаг 1 — зависимости.** `spring-boot-starter-graphql` плюс web- или webflux-стартер для транспорта:
 
 ```xml
+<!-- Spring Boot 3.5 -->
 <dependency>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-graphql</artifactId>
@@ -83,9 +84,12 @@ spring:
       enabled: true       # UI для тестирования (/graphiql)
     schema:
       printer:
-        enabled: true     # вывод схемы при старте
-    path: /graphql        # endpoint
+        enabled: true
+    http:
+      path: /graphql
 ```
+
+При включённом `spring.graphql.schema.printer.enabled` Spring Boot отдаёт текст схемы по `GET /graphql/schema`. Маршрут строится добавлением `/schema` к `spring.graphql.http.path`. [Свойства Spring Boot 3.5](https://docs.spring.io/spring-boot/3.5/appendix/application-properties/).
 
 **Шаг 3 — схема** (SDL) в `src/main/resources/graphql/`. Описывает контракт: точки входа `Query`/`Mutation` и доменные типы:
 
@@ -217,7 +221,23 @@ public record OrderItemInput(
 
 ## Q5. Что такое проблема N+1 в GraphQL и как её решить?
 
-**N+1** — самая частая проблема производительности GraphQL. Запросили список из N заказов (1 запрос), и резолвер вложенного поля `items` вызывается отдельно для каждого заказа → ещё N запросов к БД. Итого N+1. В GraphQL она острее, чем в REST: клиент сам решает, какие вложенные поля раскрывать, и сервер заранее не знает глубину дерева.
+```java
+// Клиент запрашивает заказы вместе с items.
+// Корневой резолвер одним SQL-запросом возвращает 50 заказов с разными ID.
+// Каждый вызов findByOrderId делает один SQL-запрос. Кэш выключен.
+@Controller
+@RequiredArgsConstructor
+class OrderItemResolver {
+    private final OrderItemService itemService;
+
+    @SchemaMapping(typeName = "Order", field = "items")
+    List<OrderItem> items(Order order) {
+        return itemService.findByOrderId(order.getId());
+    }
+}
+```
+
+Для 50 заказов получаем 51 запрос: один за заказами и ещё по одному за позициями каждого заказа. Так возникает N+1. В GraphQL риск особенно заметен при выборке вложенных полей, состав которых определяет клиент.
 
 Идея решения одна — **batching**: вместо N точечных запросов собрать все ключи и сделать один запрос «дай позиции для этих 50 заказов». Spring GraphQL даёт два способа.
 
@@ -259,7 +279,7 @@ public class OrderDataLoaderConfig {
 }
 ```
 
-**Что выбрать.** `@BatchMapping` — по умолчанию: меньше кода, читается как обычный резолвер. `DataLoader` берут, когда нужна гибкость — например, per-request кэширование загруженных значений или один и тот же loader для разных полей.
+`@BatchMapping` сам регистрирует загрузчик и резолвер поля поверх DataLoader. Явная регистрация полезна, если один loader нужен нескольким полям или требуется отдельно настроить его параметры. Кэш DataLoader в обоих вариантах относится к конкретному запросу. [Маппинги контроллеров Spring for GraphQL](https://docs.spring.io/spring-graphql/reference/controllers.html).
 
 ## Q6. Как реализовать GraphQL Subscriptions?
 
@@ -299,12 +319,14 @@ spring:
 
 ## Q7. Как обрабатывать ошибки в Spring GraphQL?
 
-Исключение из резолвера нельзя просто пробросить как в REST: у GraphQL свой формат ответа — успех и массив `errors` в одном теле, всегда HTTP 200. Задача обработчика — превратить Java-исключение в `GraphQLError` с понятным `errorType` (`NOT_FOUND`, `FORBIDDEN`, ...), иначе клиент получит безликое `INTERNAL_ERROR` и скрытый текст.
+Показанный адаптер обрабатывает исключение резолвера после валидации GraphQL-документа и начала выполнения. Ошибка поля попадает в `errors`. При штатной доставке результата выполнения HTTP-статус обычно равен 200, а тело может содержать и частичные `data`.
+
+Резолвер исключений полей не получает ошибки запроса до выполнения. Например, при согласованном `application/graphql-response+json` ошибка разбора или валидации документа может дать HTTP 4xx. Для таких ошибок при согласованном `application/json` сохраняется прежнее поведение с HTTP 200. [HTTP-транспорт Spring for GraphQL](https://docs.spring.io/spring-graphql/reference/transports.html).
 
 Есть два подхода — выбирают по охвату:
 
 - **`DataFetcherExceptionResolver`** — глобальный `@Component`: ловит исключения из любого резолвера. Удобно для сквозных правил (`AccessDeniedException → FORBIDDEN`). `return null` означает «это не моё, передай дальше по цепочке».
-- **`@GraphQlExceptionHandler`** — локальный метод внутри `@Controller` (как `@ExceptionHandler` в MVC): обрабатывает исключения только этого контроллера. Доступен с Spring GraphQL 1.2+.
+- `@GraphQlExceptionHandler` в `@Controller` обрабатывает исключения его методов. Доступен с Spring GraphQL 1.2. В `@ControllerAdvice` обработчик может применяться к нескольким контроллерам.
 
 ```java
 // 1. GraphQL DataFetcherExceptionResolver — перехватывает ошибки резолверов
@@ -314,19 +336,18 @@ public class OrderExceptionResolver extends DataFetcherExceptionResolverAdapter 
     @Override
     protected GraphQLError resolveToSingleError(Throwable ex, DataFetchingEnvironment env) {
         if (ex instanceof OrderNotFoundException e) {
-            return GraphQLError.newError()
+            return GraphqlErrorBuilder.newError(env)
                 .errorType(ErrorType.NOT_FOUND)
                 .message("Order not found: " + e.getId())
-                .path(env.getExecutionStepInfo().getPath())
                 .build();
         }
         if (ex instanceof AccessDeniedException) {
-            return GraphQLError.newError()
+            return GraphqlErrorBuilder.newError(env)
                 .errorType(ErrorType.FORBIDDEN)
                 .message("Access denied")
                 .build();
         }
-        return null; // передать дальше в default handler
+        return null;
     }
 }
 ```
@@ -339,7 +360,7 @@ public class OrderController {
     @GraphQlExceptionHandler
     public GraphQLError handleOrderNotFound(OrderNotFoundException ex,
                                              DataFetchingEnvironment env) {
-        return GraphQLError.newError()
+        return GraphqlErrorBuilder.newError(env)
             .errorType(ErrorType.NOT_FOUND)
             .message(ex.getMessage())
             .build();
@@ -409,23 +430,33 @@ query GetOrder($id: ID!) {
 
 Директива — это аннотация прямо в схеме (синтаксис `@name`), которая навешивает на поле или тип дополнительное поведение, не меняя сигнатуру. Встроенные — `@deprecated`, `@skip`, `@include`; можно объявлять и свои.
 
-Кастомная директива на сервере реализуется через `SchemaDirectiveWiring`: при сборке схемы Spring оборачивает оригинальный `DataFetcher` поля своей логикой. Классический пример — `@auth(role: ...)`: обёртка проверяет роль до вызова поля и кидает `AccessDeniedException`, если прав не хватает. Плюс подхода — правило авторизации видно прямо в схеме и не дублируется по резолверам.
+При сборке схемы GraphQL Java вызывает зарегистрированный `SchemaDirectiveWiring`. Для `@auth(role: ...)` он оборачивает исходный `DataFetcher` проверкой роли. Правило видно в схеме, а проверка применяется до вызова резолвера.
 
 ```graphql
-# Встроенные директивы
-type Query {
-    orders: [Order!]! @deprecated(reason: "Use ordersByCustomer instead")
-}
-
-# Кастомная директива для авторизации
 directive @auth(role: String!) on FIELD_DEFINITION
 
 type Query {
+    orders: [Order!]! @deprecated(reason: "Use ordersByCustomer instead")
+    ordersByCustomer(customerId: String!): [Order!]!
     adminReport: Report! @auth(role: "ADMIN")
+}
+
+type Report {
+    id: ID!
 }
 ```
 
+В примере Spring MVC компонент `AuthDirectiveWiring` регистрируется под именем `auth` через бин `RuntimeWiringConfigurer`. Spring Boot передаёт configurer в сборщик схемы. Объявление директивы в SDL задаёт её имя и допустимые места применения. [RuntimeWiringConfigurer](https://docs.spring.io/spring-graphql/reference/request-execution.html#execution.graphqlsource.runtimewiringconfigurer).
+
 ```java
+@Configuration(proxyBeanMethods = false)
+class GraphQlConfig {
+    @Bean
+    RuntimeWiringConfigurer authDirective(AuthDirectiveWiring authWiring) {
+        return builder -> builder.directive("auth", authWiring);
+    }
+}
+
 // Обработка кастомной директивы
 @Component
 public class AuthDirectiveWiring implements SchemaDirectiveWiring {
@@ -438,8 +469,8 @@ public class AuthDirectiveWiring implements SchemaDirectiveWiring {
         DataFetcher<?> original = env.getFieldDataFetcher();
         DataFetcher<?> authFetcher = context -> {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            if (!auth.getAuthorities().stream()
-                    .anyMatch(a -> a.getAuthority().equals("ROLE_" + requiredRole))) {
+            if (auth == null || !auth.isAuthenticated() || auth.getAuthorities().stream()
+                    .noneMatch(a -> a.getAuthority().equals("ROLE_" + requiredRole))) {
                 throw new AccessDeniedException("Required role: " + requiredRole);
             }
             return original.get(context);
@@ -452,21 +483,22 @@ public class AuthDirectiveWiring implements SchemaDirectiveWiring {
 
 ## Q10. Как реализовать пагинацию в GraphQL?
 
-Стандарт де-факто — **cursor-based** пагинация по спецификации Relay Connection. В отличие от offset/limit, она устойчива к вставкам и удалениям между страницами: курсор указывает на конкретную позицию в наборе, а не на номер строки, который «съезжает».
+Для списков GraphQL часто используют курсорную пагинацию по спецификации Relay Connection. При keyset-пагинации граница страницы задаётся значениями полей сортировки. Вставки и удаления перед курсором не сдвигают эту границу. Обновления ключей сортировки и изменения состава выборки могут повлиять на обход между запросами.
 
-Спецификация задаёт стандартную обёртку **Connection**: `edges` (узел + его курсор), `pageInfo` (`hasNextPage`, `endCursor` для подгрузки следующей страницы) и опционально `totalCount`. Клиент листает вперёд аргументами `first` + `after`.
+Спецификация задаёт обёртку `Connection` с `edges` и `pageInfo`. У ребра есть узел и курсор. Для движения вперёд клиент может передать `endCursor` предыдущей страницы как `after`. Если нужен `totalCount`, добавьте его в схему и предусмотрите отдельное вычисление.
 
-Spring GraphQL поддерживает это нативно: резолвер возвращает напрямую `Window<T>` (или `Slice<T>`), а Spring сам оборачивает результат в Relay `Connection` через сконфигурированный `ConnectionFieldTypeVisitor` и `CursorStrategy` — вручную строить `Connection` в контроллере не нужно. Под капотом данные берутся через Spring Data `ScrollPosition`/`Window` (keyset-пагинация), курсоры кодирует/декодирует `CursorStrategy`.
+В Spring Boot 3.5 со Spring Data автоконфигурация подключает адаптеры `Window<T>` и `Slice<T>` для преобразования результата в Relay `Connection`, если используемая `CursorStrategy` поддерживает `ScrollPosition`. В этом примере `orderService.findPage` использует keyset-позицию и одинаковую сортировку на всех страницах. Поля сортировки ненулевые. Уникальный `id` определяет порядок заказов с одинаковым `created_at`. [Пагинация Spring for GraphQL](https://docs.spring.io/spring-graphql/reference/request-execution.html).
 
 ```graphql
+# Листание только вперёд. orderService сортирует по created_at DESC, id DESC.
+# created_at и id не содержат NULL, id уникален.
 type Query {
-    orders(first: Int, after: String, last: Int, before: String): OrderConnection!
+    orders(first: Int, after: String): OrderConnection!
 }
 
 type OrderConnection {
     edges: [OrderEdge!]!
     pageInfo: PageInfo!
-    totalCount: Int!
 }
 
 type OrderEdge {
@@ -485,9 +517,6 @@ type PageInfo {
 ```java
 @QueryMapping
 public Window<Order> orders(ScrollSubrange subrange) {
-    // ScrollSubrange собирается Spring GraphQL из аргументов first/after.
-    // Возвращаем Window<Order> напрямую — Spring сам обернёт его
-    // в Relay Connection через сконфигурированный CursorStrategy.
     ScrollPosition position = subrange.position().orElse(ScrollPosition.keyset());
     int count = subrange.count().orElse(20);
     return orderService.findPage(count, position);
@@ -496,12 +525,20 @@ public Window<Order> orders(ScrollSubrange subrange) {
 
 ## Q11. Как Spring GraphQL интегрируется с Spring Security?
 
-Аутентификация навешивается на транспорт (HTTP/WebSocket) обычной Spring Security цепочкой фильтров — она и наполняет `SecurityContextHolder` до того, как запрос дойдёт до резолвера. Дальше на каждое поле работает **method-level security**: `@PreAuthorize` на методах-резолверах применяется так же, как на любом Spring-бине, out-of-the-box.
+В примере Spring Boot 3.5 и Spring MVC HTTP-цепочка Spring Security аутентифицирует вызов и подготавливает контекст безопасности. Конфигурация с `@EnableMethodSecurity` включает перехват вызовов методов с `@PreAuthorize` на Spring-бинах.
 
-Тонкость GraphQL: один HTTP-запрос может дёргать много полей разных типов. Поэтому авторизацию вешают **на резолверы, а не на endpoint** — у `/graphql` он один. Можно ограничивать и точечно (`@PreAuthorize("hasRole('ADMIN')")` на конкретной mutation), и на вложенных полях через `@SchemaMapping`.
+На уровне `/graphql` можно ограничить доступ ко всему транспорту, а на уровне методов-резолверов задать отдельные правила для полей. Например, проверку роли можно поставить на mutation или на метод с `@SchemaMapping` для вложенного поля.
 
 ```java
-// Method-level security работает out-of-the-box
+// Spring MVC. HTTP-цепочка пропускает пользователя с ROLE_USER без ROLE_ADMIN.
+// Пользователь аутентифицирован и вызывает deleteOrder.
+// В GraphQL зарегистрирован SecurityDataFetcherExceptionResolver.
+// Других обработчиков исключений безопасности в этом примере нет.
+@Configuration(proxyBeanMethods = false)
+@EnableMethodSecurity
+class MethodSecurityConfig {
+}
+
 @Controller
 public class OrderController {
 
@@ -524,37 +561,68 @@ spring:
   graphql:
     schema:
       inspection:
-        enabled: true  # проверяет, что все типы определены при старте
+        enabled: true  # сопоставляет поля схемы с маппингами приложения
 ```
 
-**Граничный случай.** `@PreAuthorize` бросает `AccessDeniedException` — её нужно явно превратить в `GraphQLError` с `errorType = FORBIDDEN` (см. Q7), иначе клиент получит безликий `INTERNAL_ERROR`.
+В примере проверка `@PreAuthorize` запрещает вызов тела `deleteOrder`. Зарегистрированный `SecurityDataFetcherExceptionResolver` классифицирует отказ аутентифицированному пользователю как `FORBIDDEN`. Для анонимного пользователя тот же resolver может вернуть `UNAUTHORIZED`. Если ни security resolver, ни другой обработчик из Q7 не обработает исключение, GraphQL вернёт `INTERNAL_ERROR`. Отказ HTTP-цепочки до начала операции обрабатывается на уровне транспорта.
+
+Boot 3.5 может зарегистрировать servlet resolver автоматически при выполнении условий `GraphQlWebMvcSecurityAutoConfiguration`. В примере его наличие зафиксировано явно. [Method Security](https://docs.spring.io/spring-security/reference/6.5/servlet/authorization/method-security.html) · [SecurityDataFetcherExceptionResolver](https://docs.spring.io/spring-graphql/docs/1.4.x/api/org/springframework/graphql/execution/SecurityDataFetcherExceptionResolver.html).
 
 ## Q12. Чем @SchemaMapping отличается от @QueryMapping и @MutationMapping?
 
-`@SchemaMapping` — базовая аннотация: привязывает метод к полю `field` любого типа `typeName`. Остальные три — её удобные сокращения с зафиксированным `typeName` для трёх корневых типов:
+```graphql
+type Query {
+    order(id: ID!): Order
+}
+
+type Mutation {
+    createOrder(input: CreateOrderInput!): Order!
+}
+
+type Order {
+    id: ID!
+    customer: Customer!
+}
+
+input CreateOrderInput {
+    customerId: ID!
+}
+
+type Customer {
+    id: ID!
+    name: String!
+}
+```
+
+`@SchemaMapping` привязывает метод к полю `field` типа `typeName`. Три аннотации ниже задают `typeName` для соответствующих корневых типов:
 
 - `@QueryMapping` ≡ `@SchemaMapping(typeName = "Query")`
 - `@MutationMapping` ≡ `@SchemaMapping(typeName = "Mutation")`
 - `@SubscriptionMapping` ≡ `@SchemaMapping(typeName = "Subscription")`
 
-Во всех случаях имя поля по умолчанию берётся из имени метода. `@SchemaMapping` нужен напрямую там, где целевой тип — **не** корневой: для резолверов вложенных полей доменных типов (`Order.customer`, `Order.items`). Признак такого резолвера — первым параметром идёт родительский объект.
+Если имя поля не указано, Spring берёт имя метода. `@SchemaMapping` подходит и для корневых полей. Для вложенного поля `Order.customer` можно явно указать тип `Order`. Параметр типа `Order` передаёт в резолвер родительский объект. [Маппинги контроллеров Spring for GraphQL](https://docs.spring.io/spring-graphql/reference/controllers.html).
 
 ```java
-// @QueryMapping — сокращение для @SchemaMapping(typeName = "Query")
-@QueryMapping           // ≡ @SchemaMapping(typeName = "Query", field = "order")
-public Order order(@Argument String id) { ... }
+@QueryMapping
+public Order order(@Argument("id") String id) {
+    return orderService.findById(id);
+}
 
-// @MutationMapping — сокращение для @SchemaMapping(typeName = "Mutation")
-@MutationMapping        // ≡ @SchemaMapping(typeName = "Mutation", field = "createOrder")
-public Order createOrder(@Argument CreateOrderInput input) { ... }
+@MutationMapping
+public Order createOrder(@Argument("input") CreateOrderInput input) {
+    return orderService.create(input);
+}
 
-// @SubscriptionMapping — сокращение для @SchemaMapping(typeName = "Subscription")
 @SubscriptionMapping
-public Flux<Order> orderStatusChanged(@Argument String orderId) { ... }
+public Flux<Order> orderStatusChanged(@Argument("orderId") String orderId) {
+    return orderEventPublisher.getOrderEvents()
+        .filter(order -> order.getId().equals(orderId));
+}
 
-// @SchemaMapping — для вложенных типов (не только Query/Mutation/Subscription)
 @SchemaMapping(typeName = "Order", field = "customer")
-public Customer customer(Order order) { ... }
+public Customer customer(Order order) {
+    return customerService.findById(order.getCustomerId());
+}
 ```
 
 ## Q13. Как работает introspection и когда его отключать?
@@ -589,28 +657,34 @@ public GraphQlSourceBuilderCustomizer introspectionCustomizer() {
 
 ## Q14. Как обрабатывать файловый upload в Spring GraphQL?
 
-В самом GraphQL бинарных файлов нет — запросы это JSON. Загрузку добавляют через неофициальную **GraphQL multipart request spec**: объявляют кастомный скаляр `Upload`, а тело шлют как `multipart/form-data`, где первая часть — обычный GraphQL-запрос, остальные — файлы.
-
-**Подводный камень.** Спецификация не входит в стандарт, поэтому требует особых клиентских библиотек (`apollo-upload-client`) и серверной обвязки. На практике часто проще обойти GraphQL: сделать отдельный REST-endpoint для загрузки, а в мутацию передавать уже полученный ID/URL файла.
-
 ```graphql
+# Spring MVC со штатным Spring for GraphQL. Дополнительной multipart-интеграции нет.
+# Клиент отправляет multipart/form-data с файлом для аргумента file.
 scalar Upload
 
 type Mutation {
     uploadDocument(file: Upload!, orderId: ID!): Document!
 }
+
+type Document {
+    id: ID!
+}
 ```
+
+`scalar Upload` задаёт контракт SDL. Для приёма файла нужны серверная реализация скаляра и транспортный обработчик. Штатный Spring for GraphQL не реализует GraphQL multipart request spec напрямую. Части `operations` и `map` описывают операцию и соответствие файлов её переменным. Остальные части содержат файлы. [Spring for GraphQL: File Upload](https://docs.spring.io/spring-graphql/reference/transports.html#server-transports.http.file-upload).
+
+Вариант с `MultipartFile` ниже рассчитан на Spring MVC со сторонним `multipart-spring-graphql` 1.5.x, для которого автор приводит пример на Spring Boot 3.4.x. Интеграция принимает multipart-запрос и передаёт файл в GraphQL-переменную для `Upload`. [Документация multipart-spring-graphql](https://github.com/nkonev/multipart-spring-graphql#compatibility).
 
 ```java
 @MutationMapping
 public Document uploadDocument(
-        @Argument Part file,   // Spring WebFlux Part / MultipartFile
-        @Argument String orderId) {
+        @Argument("file") MultipartFile file,
+        @Argument("orderId") String orderId) {
     return documentService.save(orderId, file);
 }
 ```
 
-На стороне Java аргумент со скаляром `Upload` приходит как `MultipartFile` (MVC) или `Part` (WebFlux) — дальше работаете с ним как с обычной загрузкой.
+В WebFlux с соответствующей интеграцией параметр файла может иметь тип `FilePart`. Другой вариант использует отдельный HTTP-эндпоинт загрузки, а GraphQL-мутация принимает идентификатор уже загруженного файла.
 
 ## Q15. Как отлаживать и мониторить GraphQL-запросы?
 
