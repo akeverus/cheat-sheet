@@ -1,95 +1,905 @@
 {
- "topic_slug":"spring-integration-interview",
- "questions":[
- {"q_number":1,"blocks":[{"block_idx":0,"question_text":"Что такое Spring Integration и какие EIP-паттерны он реализует?","options":[
- {"order":0,"label":"A","text":"Фреймворк строит потоки сообщений через каналы. Router меняет формат, Transformer выбирает направление, Aggregator собирает группу.","correct":false,"sections":{"what_actually":"Router выбирает маршрут, а Transformer меняет сообщение.","source_of_confusion":"Оба компонента могут анализировать payload.","if_it_were_true":"Перевод JSON в DTO задавался бы выбором канала.","how_it_should_be":"Разделяйте маршрутизацию и преобразование."}},
- {"order":1,"label":"B","text":"Фреймворк строит потоки сообщений через каналы. Router выбирает направление, Transformer меняет сообщение, Aggregator собирает группу.","correct":true,"sections":{"explanation":"Spring Integration реализует EIP как компоненты обработки сообщений, связанные каналами.","example":"Transformer декодирует заказ, Router выбирает ветку, Aggregator собирает результаты по пакету.","when_to_apply":"Когда интеграцию нужно собрать из заменяемых обработчиков.","edge_cases":"Канал сам по себе не требует внешнего брокера.","related":"Service Activator связывает поток с бизнес-методом."}},
- {"order":2,"label":"C","text":"Фреймворк строит потоки сообщений через каналы. Router выбирает направление, Transformer меняет сообщение, Aggregator делит пакет.","correct":false,"sections":{"what_actually":"Пакет делит Splitter. Aggregator выпускает результат группы.","source_of_confusion":"Оба компонента связывают одиночные сообщения и коллекции.","if_it_were_true":"Aggregator отправлял бы несколько сообщений на один вход.","how_it_should_be":"Разделяйте вход Splitter и выход Aggregator."}},
- {"order":3,"label":"D","text":"Фреймворк строит цепочки прямых вызовов бинов. Router выбирает направление, Transformer меняет сообщение, Aggregator собирает группу.","correct":false,"sections":{"what_actually":"Интеграционные компоненты связываются через каналы.","source_of_confusion":"Обработчики сами являются Spring-бинами.","if_it_were_true":"Каждый обработчик знал бы конкретного следующего получателя.","how_it_should_be":"Определите контракт сообщения и канал передачи между шагами."}}
- ]}]},
- {"q_number":2,"blocks":[{"block_idx":0,"question_text":"Какие типы MessageChannel существуют?","options":[
- {"order":0,"label":"A","text":"DirectChannel передаёт сообщение всем подписчикам, QueueChannel хранит до чтения, PublishSubscribeChannel выбирает одного получателя.","correct":false,"sections":{"what_actually":"DirectChannel использует point-to-point dispatch. PublishSubscribeChannel рассылает.","source_of_confusion":"У DirectChannel тоже может быть несколько подписчиков.","if_it_were_true":"Отправка через DirectChannel запускала бы каждую ветку.","how_it_should_be":"Для доставки всем используйте PublishSubscribeChannel."}},
- {"order":1,"label":"B","text":"DirectChannel вызывает обработчик в потоке отправителя, QueueChannel копирует запись каждому получателю, PublishSubscribeChannel рассылает подписчикам.","correct":false,"sections":{"what_actually":"Из QueueChannel элемент забирает один получатель.","source_of_confusion":"К одной очереди может обращаться несколько потребителей.","if_it_were_true":"У каждого получателя была бы своя копия содержимого очереди.","how_it_should_be":"Используйте QueueChannel для буферизации point-to-point."}},
- {"order":2,"label":"C","text":"DirectChannel вызывает обработчик в потоке отправителя, QueueChannel хранит до чтения, PublishSubscribeChannel рассылает подписчикам.","correct":true,"sections":{"explanation":"Каналы различаются моделью доставки, буферизацией и способом исполнения.","example":"Синхронную команду отправляют в DirectChannel, уведомление — в PublishSubscribeChannel.","when_to_apply":"При выборе способа связи между endpoint.","edge_cases":"Endpoint с QueueChannel использует polling. PublishSubscribeChannel может работать с executor.","related":"PriorityChannel упорядочивает очередь, FluxMessageChannel предоставляет реактивную границу."}},
- {"order":3,"label":"D","text":"DirectChannel хранит сообщение до poller, QueueChannel вызывает обработчик в потоке отправителя, PublishSubscribeChannel рассылает подписчикам.","correct":false,"sections":{"what_actually":"Буферизация относится к QueueChannel.","source_of_confusion":"Оба канала могут передавать сообщение одному получателю.","if_it_were_true":"DirectChannel не требовал бы активного подписчика в момент отправки.","how_it_should_be":"Выбирайте DirectChannel для непосредственного вызова, QueueChannel для накопления."}}
- ]}]},
- {"q_number":3,"blocks":[{"block_idx":0,"question_text":"Что такое Service Activator?","options":[
- {"order":0,"label":"A","text":"Endpoint получает сообщение из входного канала, вызывает бизнес-метод и при наличии отправляет его результат дальше.","correct":true,"sections":{"explanation":"Service Activator адаптирует сообщение к сигнатуре метода и формирует ответ из возвращённого результата.","example":"Метод processOrder принимает Order и возвращает OrderResult.","when_to_apply":"Для включения существующей бизнес-операции в поток.","edge_cases":"Без явного outputChannel ответ направляется по replyChannel, если он указан. Void обычно завершает ветку.","related":"Эквивалентную обработку можно описать через handle в DSL."}},
- {"order":1,"label":"B","text":"Endpoint получает сообщение из выходного канала, вызывает бизнес-метод и отправляет его результат во входной канал.","correct":false,"sections":{"what_actually":"Сообщение читается из inputChannel.","source_of_confusion":"Оба канала задаются рядом в аннотации.","if_it_were_true":"Результат возвращался бы к тому же входу.","how_it_should_be":"Назначайте вход и выход по направлению передачи."}},
- {"order":2,"label":"C","text":"Endpoint получает сообщение из входного канала, вызывает бизнес-метод и всегда возвращает результат через повторный вызов метода.","correct":false,"sections":{"what_actually":"Ответ отправляется сообщением, повторный вызов для этого не нужен.","source_of_confusion":"При ошибке endpoint может использовать retry advice.","if_it_were_true":"Одна успешная команда исполнялась бы дважды.","how_it_should_be":"Возвращайте результат один раз и настройте канал ответа."}},
- {"order":3,"label":"D","text":"Endpoint получает сообщение из входного канала, вызывает бизнес-метод и отбрасывает любое возвращённое значение.","correct":false,"sections":{"what_actually":"Непустой результат может стать ответным сообщением.","source_of_confusion":"Void-метод не отправляет ответ.","if_it_were_true":"Активатор не мог бы обслужить request/reply.","how_it_should_be":"Возвращайте значение, если поток должен продолжиться с результатом."}}
- ]}]},
- {"q_number":4,"blocks":[{"block_idx":0,"question_text":"Как работает MessagingGateway?","options":[
- {"order":0,"label":"A","text":"Прокси превращает аргументы метода в сообщение, отправляет его в replyChannel и ждёт ответ из requestChannel.","correct":false,"sections":{"what_actually":"Запрос идёт в requestChannel, ответ возвращается через механизм replyChannel.","source_of_confusion":"Два канала нередко задаются вместе.","if_it_were_true":"Обработчик запроса не увидел бы отправку на свой вход.","how_it_should_be":"Назначайте requestChannel для входа в поток."}},
- {"order":1,"label":"B","text":"Прокси превращает аргументы метода в сообщение, отправляет его в requestChannel и адаптирует ответ к типу метода.","correct":true,"sections":{"explanation":"MessagingGateway скрывает работу с каналами за Java-интерфейсом.","example":"Вызов placeOrder передаёт заказ как payload и возвращает результат работы потока.","when_to_apply":"На границе обычного вызова и интеграционного потока.","edge_cases":"Void не ждёт reply, но при DirectChannel работа может выполняться синхронно.","related":"Header и Payload позволяют задать отображение аргументов."}},
- {"order":2,"label":"C","text":"Прокси получает от вызывающего кода готовое сообщение для любого метода, отправляет его и возвращает только сырой Message.","correct":false,"sections":{"what_actually":"Gateway поддерживает POJO-аргументы и типизированный ответ.","source_of_confusion":"Низкоуровневая отправка работает непосредственно с Message.","if_it_were_true":"Интерфейс клиента зависел бы от messaging даже для простого DTO.","how_it_should_be":"Выразите входной и выходной типы в сигнатуре интерфейса."}},
- {"order":3,"label":"D","text":"Прокси напрямую вызывает конечный сервис без передачи сообщения по каналу и адаптирует ответ к типу метода.","correct":false,"sections":{"what_actually":"Прокси отправляет сообщение в интеграционный поток.","source_of_confusion":"Вызов внешне выглядит как обращение к обычному Spring-бину.","if_it_were_true":"Маршрутизация и трансформация потока обходились бы.","how_it_should_be":"Вызывайте gateway как интерфейс, а обработчики связывайте каналами."}}
- ]}]},
- {"q_number":5,"blocks":[{"block_idx":0,"question_text":"Как устроен Java DSL?","options":[
- {"order":0,"label":"A","text":"From задаёт источник, методы цепочки добавляют операции, а get запускает обработку первого сообщения.","correct":false,"sections":{"what_actually":"Get строит объект IntegrationFlow.","source_of_confusion":"Get завершает формирование цепочки.","if_it_were_true":"Создание бина требовало бы входного сообщения.","how_it_should_be":"Объявите flow, а сообщения подавайте после запуска компонентов."}},
- {"order":1,"label":"B","text":"From задаёт источник, методы цепочки добавляют операции, но между всеми шагами обязательно объявляют именованные каналы.","correct":false,"sections":{"what_actually":"DSL создаёт промежуточные каналы при необходимости.","source_of_confusion":"В аннотационной конфигурации каналы часто именуют явно.","if_it_were_true":"Даже простая цепочка transform и handle потребовала бы отдельного бина канала.","how_it_should_be":"Объявляйте канал явно, если нужен контроль над семантикой или именем."}},
- {"order":2,"label":"C","text":"From задаёт источник, методы цепочки добавляют операции, а get возвращает IntegrationFlow с настроенными связями.","correct":true,"sections":{"explanation":"DSL представляет поток как конфигурацию последовательных или разветвлённых EIP-операций.","example":"From принимает канал, transform меняет payload, filter отбрасывает неподходящие записи.","when_to_apply":"Когда последовательность интеграционных шагов удобнее описать в одном месте.","edge_cases":"Можно явно задать промежуточный канал для смены границы исполнения.","related":"Route подключает несколько ветвей обработки."}},
- {"order":3,"label":"D","text":"From задаёт приёмник, методы цепочки выполняют операции над одним значением, а get открывает входной канал.","correct":false,"sections":{"what_actually":"DSL описывает источник и компоненты, а не обрабатывает одно конкретное значение при вызове builder.","source_of_confusion":"Цепочка похожа на обработку коллекции.","if_it_were_true":"Описанный flow нельзя было бы переиспользовать для новых сообщений.","how_it_should_be":"Указывайте вход через from и возвращайте готовую конфигурацию через get."}}
- ]}]},
- {"q_number":6,"blocks":[{"block_idx":0,"question_text":"Как реализовать Splitter и Aggregator?","options":[
- {"order":0,"label":"A","text":"Splitter отправляет каждый элемент отдельно, а Aggregator собирает сообщения по correlation key и выпускает группу по release strategy.","correct":true,"sections":{"explanation":"Разделение создаёт отдельные сообщения, а агрегатор связывает результаты и определяет момент их готовности.","example":"Список заказов разбивают на сообщения, обрабатывают и собирают результаты одного пакета.","when_to_apply":"Для сценария scatter-gather с отдельной обработкой элементов.","edge_cases":"Стратегия завершения должна учитывать фильтрацию и неполные группы. Можно задать timeout.","related":"MessageStore хранит накопленные группы."}},
- {"order":1,"label":"B","text":"Splitter отправляет каждый элемент отдельно, а Aggregator объединяет соседние сообщения независимо от correlation key.","correct":false,"sections":{"what_actually":"Агрегатор определяет группу по стратегии корреляции.","source_of_confusion":"Один пакет в тесте часто приходит подряд.","if_it_were_true":"Одновременные пакеты могли бы смешаться.","how_it_should_be":"Выберите идентификатор пакета в качестве correlation key."}},
- {"order":2,"label":"C","text":"Splitter возвращает коллекцию одним сообщением, а Aggregator считает каждый элемент этой коллекции отдельным входом.","correct":false,"sections":{"what_actually":"Splitter выдаёт отдельные сообщения для элементов.","source_of_confusion":"Метод split может возвращать List.","if_it_were_true":"Обработчик после split получал бы пакет целиком.","how_it_should_be":"Передавайте элементы раздельно и собирайте результаты в следующем endpoint."}},
- {"order":3,"label":"D","text":"Splitter выпускает отдельные сообщения, а Aggregator завершает группу при первом результате с соответствующим ключом.","correct":false,"sections":{"what_actually":"Одна корреляция не определяет готовность группы.","source_of_confusion":"Первое сообщение действительно создаёт группу.","if_it_were_true":"Остальные ответы пакета терялись бы для первого результата.","how_it_should_be":"Задайте условие релиза, например ожидаемый размер группы."}}
- ]}]},
- {"q_number":7,"blocks":[{"block_idx":0,"question_text":"Как обрабатывать ошибки?","options":[
- {"order":0,"label":"A","text":"Любой сбой обработчика автоматически отправлять в глобальный errorChannel, включая обычный синхронный вызов через DirectChannel.","correct":false,"sections":{"what_actually":"Синхронное исключение может вернуться вызывающему.","source_of_confusion":"Фреймворк действительно публикует ошибки фоновых задач.","if_it_were_true":"Синхронный отправитель не мог бы обработать исключение обычным способом.","how_it_should_be":"Проверяйте модель исполнения и настройки обработки ошибок."}},
- {"order":1,"label":"B","text":"Синхронный сбой обрабатывать у вызывающего, асинхронный возвращать по тому же стеку после завершения фоновой задачи.","correct":false,"sections":{"what_actually":"Фоновая ошибка не возвращается по уже завершённому стеку отправителя.","source_of_confusion":"Обе операции начинаются через вызов send.","if_it_were_true":"Отправитель получил бы исключение после возврата из метода.","how_it_should_be":"Публикуйте ErrorMessage из фоновой обработки."}},
- {"order":2,"label":"C","text":"Асинхронный сбой публиковать как ErrorMessage, а исключение DirectChannel по умолчанию может получить вызывающий.","correct":true,"sections":{"explanation":"Способ доставки ошибки зависит от границы исполнения. Асинхронный обработчик использует канал ошибок.","example":"Обработчик errorChannel маршрутизирует ErrorMessage, а синхронный клиент перехватывает ошибку вызова.","when_to_apply":"При проектировании обработки ошибок синхронных и фоновых ветвей.","edge_cases":"При публикации учитывается errorChannel из заголовка, если он есть. Gateway может иметь собственную настройку.","related":"RequestHandlerRetryAdvice позволяет повторить временный сбой до recovery."}},
- {"order":3,"label":"D","text":"Асинхронный сбой публиковать как ErrorMessage, а наличие retry advice всегда поглощает исключение после последней попытки.","correct":false,"sections":{"what_actually":"После исчерпания попыток исход зависит от recovery и настроек потока.","source_of_confusion":"Повтор иногда заканчивается успешным выполнением.","if_it_were_true":"Исчерпанные сбои исчезали бы без сигнала.","how_it_should_be":"Настройте конечное действие после повторов явно."}}
- ]}]},
- {"q_number":8,"blocks":[{"block_idx":0,"question_text":"Как подключить Kafka через Spring Integration?","options":[
- {"order":0,"label":"A","text":"Message-driven адаптер пишет сообщения канала в Kafka, а producer handler передаёт записи топика в поток.","correct":false,"sections":{"what_actually":"Указанные направления перепутаны.","source_of_confusion":"Оба компонента входят в одну Kafka-интеграцию.","if_it_were_true":"Producer handler выполнял бы роль consumer.","how_it_should_be":"Используйте listener на входе и KafkaTemplate на выходе."}},
- {"order":1,"label":"B","text":"Message-driven адаптер передаёт записи топика в поток, а producer handler публикует сообщения канала через KafkaTemplate.","correct":true,"sections":{"explanation":"Входной адаптер подключён к listener container, выходной обработчик использует Kafka producer.","example":"Вход читает orders, поток преобразует событие, выход публикует его в results.","when_to_apply":"Когда Kafka служит источником или приёмником EIP-потока.","edge_cases":"Ошибки отправки и подтверждение чтения требуют согласованной политики.","related":"Тему публикации можно определить выражением по сообщению."}},
- {"order":2,"label":"C","text":"Message-driven адаптер создаёт канал для записей, но получение каждой записи требует прикладного вызова poll из обработчика.","correct":false,"sections":{"what_actually":"Listener container доставляет записи адаптеру.","source_of_confusion":"Kafka consumer внутри контейнера действительно опрашивает брокер.","if_it_were_true":"Прикладной поток сам управлял бы циклом чтения.","how_it_should_be":"Делегируйте цикл чтения контейнеру."}},
- {"order":3,"label":"D","text":"Message-driven адаптер передаёт записи в поток, а producer handler публикует их обратно через тот же listener container.","correct":false,"sections":{"what_actually":"Для отправки используется KafkaTemplate, а не listener container.","source_of_confusion":"Чтение и запись могут быть настроены для одного кластера.","if_it_were_true":"Потребительский контейнер содержал бы транспорт публикации.","how_it_should_be":"Настройте раздельно consumer и producer."}}
- ]}]},
- {"q_number":9,"blocks":[{"block_idx":0,"question_text":"Как транзакции работают в Spring Integration?","options":[
- {"order":0,"label":"A","text":"DirectChannel открывает отдельную транзакцию на обработчик, а QueueChannel сохраняет транзакцию отправителя до чтения.","correct":false,"sections":{"what_actually":"DirectChannel сохраняет текущий поток. Очередь не переносит транзакцию отправителя потребителю.","source_of_confusion":"Очередь может поддерживать транзакционное чтение.","if_it_were_true":"Отправитель удерживал бы транзакцию до чужой обработки.","how_it_should_be":"Выбирайте границу транзакции отдельно для потребителя."}},
- {"order":1,"label":"B","text":"DirectChannel позволяет продолжить текущую транзакцию, а ExecutorChannel переносит её в рабочий поток вместе с payload.","correct":false,"sections":{"what_actually":"Транзакция обычного Spring tx связана с потоком исполнения.","source_of_confusion":"Заголовки сообщения переходят через границу исполнения.","if_it_were_true":"Передача Message автоматически переносила бы транзакционные ресурсы.","how_it_should_be":"Открывайте транзакцию внутри асинхронной обработки при необходимости."}},
- {"order":2,"label":"C","text":"DirectChannel и QueueChannel автоматически объединяют работу отправителя и потребителя в одну транзакцию при наличии poller.","correct":false,"sections":{"what_actually":"Транзакционный poller начинает отдельный контекст на стороне получения.","source_of_confusion":"Poller может охватывать получение и последующую синхронную обработку.","if_it_were_true":"Poller присоединялся бы к завершённой отправительской транзакции.","how_it_should_be":"Для очереди настройте транзакцию получателя, если её поддерживает ресурс."}},
- {"order":3,"label":"D","text":"DirectChannel позволяет продолжить текущую транзакцию, а после смены потока транзакцию при необходимости открывает потребитель.","correct":true,"sections":{"explanation":"В синхронной ветке обработчик выполняется в потоке отправителя. Асинхронная граница отделяет контекст исполнения.","example":"Транзакционный poller обрабатывает сообщение QueueChannel в отдельной транзакции.","when_to_apply":"Когда нужно явно выбрать границы атомарной обработки.","edge_cases":"Согласованный rollback очереди зависит от совместимого хранилища и менеджера транзакций.","related":"ExecutorChannel передаёт выполнение через TaskExecutor."}}
- ]}]},
- {"q_number":10,"blocks":[{"block_idx":0,"question_text":"Как тестировать Spring Integration потоки?","options":[
- {"order":0,"label":"A","text":"Подать сообщение на вход, проверить выход и при необходимости заменить выбранный обработчик через MockIntegrationContext.","correct":true,"sections":{"explanation":"Тест исполняет настоящую конфигурацию потока и может заменить только внешнюю границу или отдельный endpoint.","example":"Mock-обработчик бросает исключение, а тест проверяет реакцию соответствующей ветки.","when_to_apply":"Для проверки маршрутизации, формата результата и отказов.","edge_cases":"Для обычного request/reply проверяйте результат gateway. Ошибку синхронной ветки можно ожидать как исключение.","related":"SpringIntegrationTest предоставляет поддержку подмен, после теста их следует сбросить."}},
- {"order":1,"label":"B","text":"Подать сообщение на вход, заменить весь поток одним mock через MockIntegrationContext и проверить его собственный ответ.","correct":false,"sections":{"what_actually":"Подмена отдельных узлов позволяет проверить остальную цепочку.","source_of_confusion":"Mock часто заменяет целую внешнюю систему.","if_it_were_true":"Маршрутизация рабочего потока не исполнялась бы в тесте.","how_it_should_be":"Подменяйте только зависимости, находящиеся вне проверяемого сценария."}},
- {"order":2,"label":"C","text":"Подать сообщение на вход, проверить только успешный вызов send и считать это подтверждением содержимого выходного сообщения.","correct":false,"sections":{"what_actually":"Факт принятия входа не доказывает правильный выход.","source_of_confusion":"В синхронном потоке send может дождаться обработки.","if_it_were_true":"Тест прошёл бы даже при неправильной трансформации payload.","how_it_should_be":"Проверяйте ожидаемый результат на выходе."}},
- {"order":3,"label":"D","text":"Подать сообщение на вход, а любую ошибку проверять как ErrorMessage в глобальном канале независимо от модели потока.","correct":false,"sections":{"what_actually":"Результат ошибки зависит от синхронности и конфигурации.","source_of_confusion":"Отдельный канал упрощает проверку фоновой ветки.","if_it_were_true":"Даже обычное синхронное исключение нельзя было бы проверить у вызывающего.","how_it_should_be":"Проверяйте настроенный канал либо исключение в зависимости от границы вызова."}}
- ]}]},
- {"q_number":11,"blocks":[{"block_idx":0,"question_text":"Чем Spring Integration отличается от Apache Camel?","options":[
- {"order":0,"label":"A","text":"Spring Integration и Camel используют одну модель бинов и один Java DSL, поэтому между ними отличаются только имена адаптеров.","correct":false,"sections":{"what_actually":"У них разные runtime, DSL и конфигурация.","source_of_confusion":"Оба описывают EIP цепочками методов.","if_it_were_true":"Маршрут Camel можно было бы зарегистрировать как IntegrationFlow.","how_it_should_be":"Сравнивайте контракты адаптеров и способ описания маршрутов."}},
- {"order":1,"label":"B","text":"Spring Integration встраивает EIP в модель Spring, а Camel имеет собственную модель маршрутов и широкий каталог компонентов.","correct":true,"sections":{"explanation":"Оба решают интеграционные задачи, но предоставляют разные модели конфигурации и каталоги транспортов.","example":"Существующее Boot-приложение может собрать IntegrationFlow, а Camel — маршрут через RouteBuilder.","when_to_apply":"Выбирайте по нужным адаптерам и существующему стеку команды.","edge_cases":"Camel также интегрируется со Spring Boot.","related":"Оба поддерживают базовые EIP, включая фильтрацию и маршрутизацию."}},
- {"order":2,"label":"C","text":"Spring Integration предоставляет EIP независимо от Spring, а Camel может работать только как часть контейнера Spring.","correct":false,"sections":{"what_actually":"Spring Integration основан на Spring. Camel поддерживает самостоятельный запуск.","source_of_confusion":"Camel часто встречается внутри Boot.","if_it_were_true":"У Camel не было бы собственного runtime вне Spring.","how_it_should_be":"Различайте возможность интеграции и обязательную зависимость."}},
- {"order":3,"label":"D","text":"Spring Integration предоставляет EIP, а Camel ограничивается коннекторами и требует реализовывать маршрутизацию и агрегацию вручную.","correct":false,"sections":{"what_actually":"Camel поддерживает EIP в собственном DSL.","source_of_confusion":"Camel известен большим числом коннекторов.","if_it_were_true":"У Camel не было бы стандартных split и aggregate.","how_it_should_be":"Сравните реализацию нужных EIP в обоих инструментах."}}
- ]}]},
- {"q_number":12,"blocks":[{"block_idx":0,"question_text":"Когда использовать Spring Integration vs Spring Kafka?","options":[
- {"order":0,"label":"A","text":"Spring Kafka использовать для маршрутизации между FTP и HTTP, а Spring Integration — для прямой отправки через KafkaTemplate.","correct":false,"sections":{"what_actually":"KafkaTemplate относится к Spring Kafka, а многотранспортный flow — к Spring Integration.","source_of_confusion":"Kafka-адаптер Integration использует KafkaTemplate.","if_it_were_true":"Библиотека Kafka управляла бы FTP и HTTP-адаптерами.","how_it_should_be":"Для разных транспортов собирайте EIP-поток."}},
- {"order":1,"label":"B","text":"Spring Kafka использовать для прямой работы с Kafka, а Spring Integration — как движок потоковой аналитики для окон и joins.","correct":false,"sections":{"what_actually":"Spring Integration компонует маршруты и адаптеры. Потоковая аналитика — другой класс задач.","source_of_confusion":"Aggregator визуально похож на оконную агрегацию.","if_it_were_true":"Обычный flow имел бы встроенную модель event time и окон.","how_it_should_be":"Для оконной обработки рассмотрите Kafka Streams или Flink."}},
- {"order":2,"label":"C","text":"Spring Kafka использовать для прямой работы с Kafka, а Spring Integration — для EIP-потока, особенно между разными транспортами.","correct":true,"sections":{"explanation":"Spring Kafka предоставляет клиентские компоненты конкретного транспорта. Spring Integration добавляет композицию обработки.","example":"Простому listener достаточно Spring Kafka, а маршруту Kafka → HTTP → файл подходят адаптеры Integration.","when_to_apply":"Выбирайте слой по сложности интеграции и числу транспортов.","edge_cases":"Подходы дополняют друг друга. Kafka-адаптеры могут использовать инфраструктуру Spring Kafka.","related":"Для джойнов по времени и окон нужны специализированные потоковые инструменты."}},
- {"order":3,"label":"D","text":"Spring Kafka использовать только для публикации, а Spring Integration — для любого чтения из Kafka.","correct":false,"sections":{"what_actually":"Spring Kafka поддерживает и producer, и consumer.","source_of_confusion":"KafkaTemplate известен как отправитель, а вход Integration как адаптер.","if_it_were_true":"Не существовало бы обычного KafkaListener.","how_it_should_be":"Выбирайте Integration по потребности в потоке, а не по направлению."}}
- ]}]},
- {"q_number":13,"blocks":[{"block_idx":0,"question_text":"Что такое Claim Check и как его реализовать?","options":[
- {"order":0,"label":"A","text":"Сохранить в хранилище ключ, а по каналу отправлять исходный payload для последующего восстановления ключа.","correct":false,"sections":{"what_actually":"Хранилище держит данные, а канал несёт ссылку.","source_of_confusion":"Оба шага работают с ключом и содержимым.","if_it_were_true":"Размер сообщения в брокере остался бы прежним.","how_it_should_be":"Выносите объёмные данные за пределы канала."}},
- {"order":1,"label":"B","text":"Сохранить payload в хранилище, передать ключ по каналу, затем извлечь данные по ключу в нужном шаге.","correct":true,"sections":{"explanation":"Claim Check заменяет передаваемое содержимое ссылкой, сохраняя возможность восстановить его позже.","example":"В очередь отправляется ключ объекта, а потребитель загружает документ из object storage.","when_to_apply":"Когда размер payload создаёт нагрузку на брокер или превышает лимит.","edge_cases":"Время хранения должно покрывать задержки и повторы. Удаление до завершения обработки может потерять данные.","related":"В Spring Integration есть claim-check transformers на основе MessageStore."}},
- {"order":2,"label":"C","text":"Сохранить payload в хранилище, передать полный payload вместе с ключом, затем использовать ключ лишь для аудита.","correct":false,"sections":{"what_actually":"Для уменьшения сообщения содержимое заменяют ссылкой.","source_of_confusion":"Архивирование полезно и без уменьшения payload.","if_it_were_true":"Лимит размера брокера оставался бы ограничением.","how_it_should_be":"Отправьте ключ и только те метаданные, которые нужны маршрутизации."}},
- {"order":3,"label":"D","text":"Разбить payload на небольшие сообщения, передать идентификатор группы, затем восстановить данные только из фрагментов.","correct":false,"sections":{"what_actually":"Это разбиение и повторная сборка, а Claim Check хранит данные вне потока.","source_of_confusion":"Оба подхода уменьшают размер отдельного сообщения.","if_it_were_true":"Полный объём содержимого всё равно прошёл бы через брокер.","how_it_should_be":"Запишите содержимое отдельно и передайте ссылку."}}
- ]}]},
- {"q_number":14,"blocks":[{"block_idx":0,"question_text":"Как работает Enricher (Content Enricher)?","options":[
- {"order":0,"label":"A","text":"При внешнем lookup отправляет запрос и полностью заменяет исходное сообщение ответом, теряя остальные поля.","correct":false,"sections":{"what_actually":"Enricher сопоставляет результаты lookup с полями обогащаемого сообщения.","source_of_confusion":"Вспомогательный поток действительно возвращает отдельный payload.","if_it_were_true":"Из ответа о клиенте исчезли бы данные заказа.","how_it_should_be":"Добавьте нужные поля к исходному сообщению."}},
- {"order":1,"label":"B","text":"При внешнем lookup отправляет запрос и сразу передаёт исходное сообщение дальше, независимо от ответа.","correct":false,"sections":{"what_actually":"В request/reply варианте результат нужен для обогащения перед отправкой дальше.","source_of_confusion":"Обычный send может быть односторонним.","if_it_were_true":"Следующий шаг не получал бы найденные данные.","how_it_should_be":"Настройте ожидание ответа и правила его отображения."}},
- {"order":2,"label":"C","text":"При внешнем lookup отправляет запрос, получает ответ и переносит нужные значения в payload или заголовки сообщения.","correct":true,"sections":{"explanation":"Enricher использует запрос по данным исходного сообщения и обогащает его значениями результата.","example":"По customerId запрашивает профиль и добавляет имя клиента к заказу.","when_to_apply":"Когда следующему шагу нужны сведения, отсутствующие во входном сообщении.","edge_cases":"Внешний lookup добавляет задержку. Определите поведение при отсутствии ответа.","related":"Локальные свойства или заголовки можно обогатить и без внешнего запроса."}},
- {"order":3,"label":"D","text":"При внешнем lookup отправляет запрос, получает ответ и оставляет в исходном потоке только идентификатор вместо добавленных полей.","correct":false,"sections":{"what_actually":"Задача Enricher состоит в добавлении отсутствующего контента.","source_of_confusion":"Идентификатор обычно используется как payload lookup-запроса.","if_it_were_true":"Потребителю пришлось бы заново делать тот же lookup.","how_it_should_be":"Используйте идентификатор для запроса, а из ответа перенесите нужные данные."}}
- ]}]},
- {"q_number":15,"blocks":[{"block_idx":0,"question_text":"Как мониторить Spring Integration?","options":[
- {"order":0,"label":"A","text":"Через integrationgraph смотреть каналы и связи, через Micrometer — длительности операций и заполнение очередей.","correct":true,"sections":{"explanation":"Integrationgraph показывает структуру потока, а метрики отражают поведение запущенных компонентов.","example":"Графом находят вход медленной ветки, затем сравнивают таймер обработчика и размер очереди.","when_to_apply":"Для диагностики топологии, задержек и накопления сообщений.","edge_cases":"Доступ к endpoint Actuator и регистрация метрик настраиваются отдельно. Имена метрик зависят от версии и режима инструментирования.","related":"С Micrometer Observation можно также подключить трассировку."}},
- {"order":1,"label":"B","text":"Через integrationgraph смотреть длительности и заполнение, через Micrometer — статическую схему каналов и связей.","correct":false,"sections":{"what_actually":"Граф отвечает за топологию, Micrometer — за измерения.","source_of_confusion":"Оба источника доступны в контуре наблюдаемости Actuator.","if_it_were_true":"Схема потока появлялась бы только при наличии метрик.","how_it_should_be":"Используйте граф для структуры и реестр для динамики."}},
- {"order":2,"label":"C","text":"Через integrationgraph смотреть каналы и связи, а пропускную способность оценивать по их числу без метрик выполнения.","correct":false,"sections":{"what_actually":"Количество каналов не показывает скорость обработки.","source_of_confusion":"Граф помогает определить место, где искать узкое звено.","if_it_were_true":"Изменение нагрузки без изменения топологии оставалось бы невидимым.","how_it_should_be":"Собирайте длительности, частоту и размер очереди во времени."}},
- {"order":3,"label":"D","text":"Через integrationgraph смотреть каналы и связи, а рост очереди трактовать как ускорение потребителя относительно отправителя.","correct":false,"sections":{"what_actually":"Устойчивая прибавка очереди означает, что поступление опережает удаление.","source_of_confusion":"Рост показателя иногда ошибочно считают ростом производительности.","if_it_were_true":"Ускорение чтения увеличивало бы backlog.","how_it_should_be":"Сопоставьте скорость входа, чтения и длительность работы обработчика."}}
- ]}]}
- ]
+  "topic_slug": "spring-integration-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Spring Integration и какие EIP-паттерны он реализует?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это набор EIP поверх Spring, где Router меняет формат сообщения, а Transformer выбирает следующий канал.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Router выбирает адресата по правилу. Transformer формирует новое представление данных. Router, прочитав type из JSON, сам не превратит строку в объект Order.",
+                "source_of_confusion": "Оба компонента могут читать содержимое сообщения. Извлечение поля для выбора ветки легко принять за преобразование полезной нагрузки.",
+                "if_it_were_true": "При таком устройстве после одной маршрутизации потребитель expressOrders уже получил бы Order вместо исходной JSON-строки.",
+                "how_it_should_be": "Если правило маршрутизации использует доменный объект, поставьте Transformer перед Router. Преобразуйте JSON в Order, затем выберите ветку по type."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это набор EIP поверх Spring, где Filter разбивает сообщения на части, а Aggregator направляет части в разные каналы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Filter принимает решение по целому сообщению. Aggregator накапливает сообщения по ключу группы и выпускает результат по правилу готовности. Разбиение и маршрутизация выполняются другими endpoint.",
+                "source_of_confusion": "Фильтрация элементов коллекции внутри бизнес-метода похожа на выпуск нескольких сообщений. У Message Filter единица отбора совпадает с входным сообщением.",
+                "if_it_were_true": "Если бы Filter разбивал пакет из трёх заказов, подписчик получил бы три вызова вместо одного с принятой коллекцией.",
+                "how_it_should_be": "Разбейте пакет Splitter, поставьте Filter после него и предусмотрите критерий завершения Aggregator, учитывающий отсеянные элементы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это набор EIP поверх Spring, где Channel связывает обработчики, Router выбирает направление, а Transformer меняет представление данных.",
+              "correct": true,
+              "sections": {
+                "explanation": "Spring Integration регистрирует компоненты в Spring-контексте. Источник отправляет Message с payload и заголовками в MessageChannel. Канал связывает отправителя с endpoint, который выполняет конкретную роль: фильтрацию, преобразование, разбиение, сбор группы или вызов бизнес-метода.",
+                "example": "Transformer превращает JSON с типом EXPRESS в Order, Router выбирает expressOrders, Service Activator вызывает обработчик экспресс-заказа. Входной адаптер передаёт данные в канал, не содержа логики выбора бизнес-метода.",
+                "when_to_apply": "Собирайте поток из EIP, когда приём, обработка и выдача данных развиваются независимо или переиспользуются. Задайте формат payload и заголовков на границах шагов.",
+                "edge_cases": "Подмена endpoint совместима с соседями, пока сохраняется контракт сообщения. Замена канала может повлиять на синхронность, путь исключения и границу транзакции.",
+                "related": "Messaging Gateway скрывает вход в поток за Java-интерфейсом. Channel Adapter связывает поток с внешней системой, например Kafka или SFTP."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это набор EIP поверх Spring, где Channel вызывает бизнес-метод, а Service Activator выбирает канал по содержимому сообщения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Канал доставляет Message, Service Activator присоединяет бизнес-метод к потоку, Router выбирает адрес доставки. В синхронном стеке все три роли могут выполняться на одном потоке.",
+                "source_of_confusion": "DirectChannel вызывает подписчика внутри send(), поэтому диспетчер канала и бизнес-обработчик легко выглядят одним компонентом.",
+                "if_it_were_true": "Если бы бизнес-вызов принадлежал реализации канала, при смене DirectChannel на очередь пришлось бы переносить в код очереди обработку заказов.",
+                "how_it_should_be": "Держите вызов OrderService в endpoint. Для выбора между несколькими бизнес-процессами поставьте Router перед каналами этих процессов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие типы MessageChannel существуют?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`DirectChannel` рассылает сообщение подписчикам, `PublishSubscribeChannel` выбирает одного, а `QueueChannel` буферизует сообщение до чтения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DirectChannel работает в режиме point-to-point и вызывает обработчик в стеке send(). При сбое failover может передать попытку другому подписчику. PublishSubscribeChannel предназначен для рассылки.",
+                "source_of_confusion": "Оба подписных канала позволяют зарегистрировать несколько обработчиков. Количество подписок само по себе не определяет политику доставки.",
+                "if_it_were_true": "Если бы DirectChannel рассылал, успешная обработка одним подписчиком не мешала бы другому получить то же сообщение для аудита.",
+                "how_it_should_be": "Используйте PublishSubscribeChannel, когда аудит и уведомления должны оба увидеть событие. Для взаимозаменяемых обработчиков выбирайте point-to-point и настраивайте failover осознанно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`DirectChannel` вызывает обработчик синхронно, `PublishSubscribeChannel` рассылает сообщение, а `QueueChannel` буферизует сообщение до чтения.",
+              "correct": true,
+              "sections": {
+                "explanation": "DirectChannel выстраивает point-to-point вызов в потоке отправителя. PublishSubscribeChannel рассылает сообщение подписчикам, по умолчанию в том же потоке. QueueChannel хранит сообщение до receive(), например до чтения poller.",
+                "example": "Если подписчики аудита и уведомлений подключены к broadcasts, оба получают событие. Если три заказа отправлены в ordersQueue ёмкостью 100 при выключенном poller, они ждут в буфере.",
+                "when_to_apply": "Выберите DirectChannel для вызова следующего шага в текущем потоке, PublishSubscribeChannel для независимых реакций и QueueChannel для разделения момента отправки и получения.",
+                "edge_cases": "PublishSubscribeChannel может работать с executor. Рассылка не создаёт глубокую копию изменяемого payload для каждого получателя. В заполненной ограниченной очереди учитывайте таймаут отправки.",
+                "related": "PriorityChannel выбирает записи по приоритету. ExecutorChannel делегирует point-to-point обработку исполнителю. FluxMessageChannel соединяет канал с реактивным потоком."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`DirectChannel` вызывает обработчик синхронно, `PublishSubscribeChannel` рассылает сообщение, а `QueueChannel` отдаёт сообщение каждому читателю.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Успешный receive() удаляет запись из QueueChannel. Два poller на одной очереди получают разные записи либо один из них обнаруживает пустой буфер.",
+                "source_of_confusion": "Представление о позиции чтения для каждой подписки подходит для некоторых брокеров, но его легко ошибочно перенести на обычную очередь сообщений.",
+                "if_it_were_true": "Если бы запись выдавалась каждому poller, один заказ могли бы независимо обработать два потребителя, хотя он был отправлен один раз.",
+                "how_it_should_be": "Для конкурентного разбора используйте общую очередь. Чтобы каждый получатель имел собственный буфер, разошлите событие в отдельные очереди."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`DirectChannel` буферизует сообщение до чтения, `PublishSubscribeChannel` рассылает сообщение, а `QueueChannel` вызывает обработчик синхронно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DirectChannel передаёт Message подписчику в стеке вызова send(). QueueChannel помещает его в буфер для последующего чтения.",
+                "source_of_confusion": "Общий метод send() скрывает различия реализации. Отсюда ошибочное ожидание, что синхронность определяется интерфейсом, а не типом канала.",
+                "if_it_were_true": "Если бы QueueChannel напрямую вызывал подписчика, медленный JDBC-запрос задерживал бы каждый send() даже при свободной ёмкости очереди.",
+                "how_it_should_be": "Для обработки в вызывающем потоке используйте DirectChannel. Если отправитель должен передать данные без ожидания медленной обработки, настройте QueueChannel, poller и предел ёмкости."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Service Activator?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Подключить `Service Activator` к `ordersOutput`, передать payload в `process` и отправить результат в `ordersInput`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Вызов происходит при доставке сообщения на вход endpoint. Подписка на ordersOutput не соединяет обработчик с заказами, поступающими на ordersInput.",
+                "source_of_confusion": "Названия каналов можно прочитать относительно внешней системы. В настройках Service Activator они описывают направление относительно самого endpoint.",
+                "if_it_were_true": "Если бы перевёрнутая конфигурация работала, отправка в ordersInput вызывала бы обработчик без подписки или маршрута до ordersOutput.",
+                "how_it_should_be": "Укажите inputChannel = \"ordersInput\" и outputChannel = \"ordersOutput\". В DSL начните эту часть с from(\"ordersInput\")."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Подключить `Service Activator` к `ordersInput`, передать весь `Message` в `process` и отправить результат в `ordersOutput`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для сигнатуры process(Order) endpoint извлекает из Message полезную нагрузку Order. Сам контейнер сообщения не соответствует типу аргумента.",
+                "source_of_confusion": "MessageHandler действительно получает Message<?>. Его контракт легко перепутать с адаптацией аргументов обычного метода через Service Activator.",
+                "if_it_were_true": "Если бы оболочка передавалась по умолчанию в каждый метод, существующий process(Order) пришлось бы менять даже без потребности в заголовках.",
+                "how_it_should_be": "Оставьте доменный аргумент Order. При необходимости добавьте отдельный параметр для нужного заголовка либо обработайте оболочку в адаптере."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Подключить `Service Activator` к `ordersInput`, передать payload в `process` и завершить обработку без отправки результата.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метод возвращает ненулевой OrderResult. Reply-producing endpoint преобразует его в сообщение для ordersOutput.",
+                "source_of_confusion": "Лямбда MessageHandler имеет void-контракт. Запись message -> service.process(...) в таком месте может отбросить вычисленное значение.",
+                "if_it_were_true": "Если бы значение терялось и при вызове обычного возвращающего метода, ordersOutput оставался бы пустым после успешной обработки.",
+                "how_it_should_be": "Для одностороннего вызова используйте void или MessageHandler. Для передачи результата объявите возвращающий метод либо DSL-обработчик, создающий reply."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Подключить `Service Activator` к `ordersInput`, передать payload в `process` и отправить результат в `ordersOutput`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Endpoint получает Message с Order, сопоставляет payload с аргументом метода и вызывает сервис. Ненулевой OrderResult становится полезной нагрузкой выходного сообщения. Явный outputChannel задаёт адрес результата.",
+                "example": "`@ServiceActivator(inputChannel = \"ordersInput\", outputChannel = \"ordersOutput\")` на методе `OrderResult handle(Order order)` связывает его с каналами. После отправки заказа 42 потребитель ordersOutput получает возвращённый сервисом OrderResult для 42.",
+                "when_to_apply": "Используйте Service Activator, когда существующему сервису достаточно доменных данных. Для непосредственной работы с Message доступны сигнатура с оболочкой или подключение MessageHandler с учётом его void-контракта.",
+                "edge_cases": "Без outputChannel ответ может уйти по replyChannel из заголовка. Void или null по умолчанию не порождает ответ. С requiresReply отсутствие результата считается ошибкой.",
+                "related": "Messaging Gateway формирует запрос из Java-вызова и может ожидать ответ. Service Activator соединяет следующий участок потока с бизнес-методом."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает MessagingGateway?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Прокси формирует запрос и ждёт ответ у обоих методов. У `submitOrder` тип `void` скрывает полученный результат.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ожидание reply есть у placeOrder. SubmitOrder отправляет сообщение с односторонним контрактом. При синхронном канале время работы обработчика входит во время вызова метода, даже без ответа.",
+                "source_of_confusion": "Возврат после синхронного вызова обработчика похож на ожидание результата. Отсюда предположение, что void просто отбрасывает уже доставленный ответ.",
+                "if_it_were_true": "При такой модели submitOrder с QueueChannel ожидал бы reply даже при успешно заполненном буфере и отсутствии отвечающего endpoint.",
+                "how_it_should_be": "Для результата объявите возвращаемый тип и путь ответа. Для одностороннего метода определяйте время возврата по механике канала."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Прокси формирует запрос и ждёт ответ у `placeOrder`. У `submitOrder` тип `void` переносит обработчик в отдельный поток.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Void задаёт отсутствие запроса ответа. Если orderSubmissions является DirectChannel, обработчик выполняется в стеке вызывающего. Очередь с poller даёт другую модель выполнения.",
+                "source_of_confusion": "Одностороннюю доставку часто строят на очередях. Поэтому отсутствие результата легко принять за встроенное асинхронное исполнение.",
+                "if_it_were_true": "Если бы void переключал поток, обработчик DirectChannel всегда наблюдал бы другой поток, чем клиент gateway.",
+                "how_it_should_be": "Настройте QueueChannel с poller или исполнитель, если нужна граница выполнения. Учтите блокировку или отказ при заполнении очереди и политику насыщения исполнителя."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Прокси формирует запрос и ждёт ответ у `placeOrder`. У `submitOrder` тип `void` отключает ожидание ответа, а исполнение зависит от канала.",
+              "correct": true,
+              "sections": {
+                "explanation": "Spring создаёт прокси интерфейса. Он упаковывает аргумент placeOrder в Message, отправляет в ordersInput и преобразует payload ответа в OrderResult. У submitOrder действует переопределённый requestChannel и односторонний контракт. В placeUrgentOrder @Payload и @Header разделяют тело и метаданные.",
+                "example": "Если поток ordersInput возвращает OrderResult(42, \"OK\"), placeOrder отдаёт его клиенту. Если orderSubmissions является очередью со свободным местом, submitOrder может завершиться до первого чтения poller.",
+                "when_to_apply": "Ставьте gateway на границе, где нужен типизированный Java-вызов. Для request/reply обеспечьте путь ответа и настройте время ожидания. Для void определите, где наблюдать ошибки обработки.",
+                "edge_cases": "При отсутствии явного reply-канала gateway обычно использует временный канал ответа. Future и CompletableFuture могут использовать AsyncTaskExecutor gateway. Для Mono выполнение откладывается до подписки, а выбор потока зависит от цепочки.",
+                "related": "Service Activator вызывает сервис и может сформировать результат для gateway. @Gateway переопределяет общий requestChannel для отдельного метода."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Прокси отправляет запрос через reply-канал у `placeOrder`. У `submitOrder` запрос уходит через канал из аннотации метода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Запрос placeOrder идёт в ordersInput. OrdersOutput связан с возвратом результата. Для submitOrder аннотация действительно меняет канал отправки на orderSubmissions.",
+                "source_of_confusion": "Выход flow часто имеет явное имя. Место этого имени в конфигурации gateway легко принять за выбор адреса исходного запроса.",
+                "if_it_were_true": "Если бы запрос шёл в ordersOutput, подписчик результата получил бы Order вместо OrderResult, а входной обработчик не увидел бы заказ.",
+                "how_it_should_be": "Указывайте во входном requestChannel адрес первого шага обработки. Согласуйте ответный выход с gateway или оставьте маршрутизацию по replyChannel из заголовка."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроен Java DSL?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Начать с `from(kafkaAdapter)`, преобразовать JSON, передать отказы через `filter`, развести типы через `route` и вызвать `get()`.",
+              "correct": true,
+              "sections": {
+                "explanation": "DSL строит IntegrationFlow от входного адаптера к endpoint. Transformer создаёт Order. Filter пропускает положительные суммы и передаёт отказы в discardChannel. Router выбирает ветку по type. Для обычных соседних шагов DSL создаёт промежуточные каналы, как правило DirectChannel.",
+                "example": "Заказ с суммой 0 попадает в rejectedOrders. Заказ EXPRESS с суммой 150 проходит фильтр и вызывает обработчик express-подпотока. Отбрасывание задаётся через `.filter((Order o) -> o.amount().signum() > 0, f -> f.discardChannel(\"rejectedOrders\"))`.",
+                "when_to_apply": "Объявляйте IntegrationFlow как Spring-бин, когда важно видеть весь маршрут обработки в одной цепочке. Именуйте канал там, где он нужен внешнему участнику или где вы задаёте другую реализацию доставки.",
+                "edge_cases": "Отказ по сумме, неизвестный тип и невалидный JSON возникают на разных этапах. Для неизвестного типа при необходимости добавьте явный маршрут, а для ошибки парсинга настройте обработку сбоя.",
+                "related": "`.handle(...)` связывает шаг с бизнес-методом. `.bridge(...)` соединяет каналы без преобразования. `.split()`, `.aggregate()` и `.enrich()` добавляют соседние EIP в ту же модель."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Начать с `from(kafkaAdapter)`, преобразовать JSON, развести типы встроенными ветками `filter`, передать отказы через `route` и вызвать `get()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один Filter проверяет один критерий пропуска и может направить отклонение в discardChannel. Он сам не сопоставляет значения EXPRESS и NORMAL с рабочими подпотоками.",
+                "source_of_confusion": "Discard-канал создаёт второй наблюдаемый путь. Это похоже на двоичный Router, хотя второй путь фильтра представляет отклонение сообщения.",
+                "if_it_were_true": "Если бы Filter самостоятельно сопоставлял значения с рабочими ветками, одного фильтра хватило бы, чтобы вызвать разные обработчики для EXPRESS и NORMAL без явной маршрутизации.",
+                "how_it_should_be": "Примените проверку суммы до бизнес-обработки. После неё используйте маршрутизацию по типу. Единый Router тоже потребовал бы явного составного правила для всех трёх исходов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Начать с `from(kafkaAdapter)`, проверить сумму и тип методами `Order`, преобразовать JSON в ветках и вызвать `get()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Источник даёт JSON. Предикат и маршрут, рассчитанные на поля объекта Order, нуждаются в преобразованном payload уже на входе этих этапов.",
+                "source_of_confusion": "Маршрутизация по заголовку Kafka или явно извлечённому полю JSON позволяет отложить доменное преобразование. В данном потоке сумма и тип относятся к заказу.",
+                "if_it_were_true": "Если бы отправленная строка уже предоставляла методы Order, фильтр мог бы вызвать amount() до десериализации и получить сумму 0.",
+                "how_it_should_be": "Преобразуйте payload до первого правила, читающего поля Order. Если правила рассчитаны на иной формат, явно реализуйте извлечение данных для этого формата."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Начать с `from(kafkaAdapter)`, преобразовать JSON, применить `filter` и `route`, объявив обязательные отдельные бины каналов между всеми шагами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В обычной DSL-цепочке промежуточные каналы связываются при регистрации потока. Отдельные именованные бины для каждого перехода не требуются.",
+                "source_of_confusion": "В конфигурации через отдельные endpoint часто указывают пары inputChannel и outputChannel. Эту схему легко принять за обязательную для DSL.",
+                "if_it_were_true": "Если бы отдельные бины требовались для каждого перехода, цепочка с transform, filter и route не смогла бы передать сообщение от одного шага к другому.",
+                "how_it_should_be": "Вставляйте явный channel, если меняете тип доставки или подключаете внешнего участника. Для последовательных шагов используйте соединения, созданные DSL."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать Splitter и Aggregator?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Разбить пакеты на заказы, группировать результаты по `sequenceNumber` и выпускать группу при достижении `sequenceSize`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Номер позиции повторяется в разных пакетах. При ключе sequenceNumber результаты A1 и B1 попадут в одну группу, хотя относятся к разным заказам верхнего уровня.",
+                "source_of_confusion": "Индекс полезен для порядка внутри пакета, а название sequenceNumber похоже на общий идентификатор последовательности. Его область действия ограничена исходной группой.",
+                "if_it_were_true": "Если бы позиция идентифицировала пакет, первый результат A и первый результат B имели бы разные ключи группировки. На деле ключ у обоих равен 1.",
+                "how_it_should_be": "Группируйте по correlationId или batchId. Используйте номер позиции, когда надо восстановить порядок, и сохраняйте заголовки при построении результатов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Разбить пакеты на заказы, группировать результаты по ID пакета и выпускать по полноте группы или по заданному сроку.",
+              "correct": true,
+              "sections": {
+                "explanation": "Splitter выпускает отдельное сообщение для каждого заказа. При включённом applySequence он добавляет correlationId, sequenceNumber и sequenceSize для коллекции известного размера. Aggregator хранит независимые группы в MessageStore. ReleaseStrategy определяет их полноту, а конфигурация истечения отдельно определяет судьбу недостающих результатов.",
+                "example": "При порядке B2, A1, B1, A3 группа B выпускается после B1. Группа A продолжает ждать A2. Если лимит истёк и sendPartialResultOnExpiry включён, выпускается частичный A с результатами A1 и A3.",
+                "when_to_apply": "Используйте split/aggregate, когда элементы можно обработать самостоятельно, но клиенту нужен общий итог. Обеспечьте сохранение корреляции, а при повторах считайте уникальные результаты, если дубль не должен закрывать группу.",
+                "edge_cases": "Фиксированный groupTimeout(5000L) отсчитывается после последнего поступления. Для пяти секунд от создания группы используйте groupTimeoutExpression, считающий остаток от timestamp группы. У Iterator размер может быть неизвестен, поэтому задайте иной сигнал полноты. Просроченные и опоздавшие результаты требуют явной политики.",
+                "related": "MessageGroupStore хранит состояние. Если его нужно пережить после перезапуска, подберите постоянное хранилище и отдельно настройте восстановление обработки незавершённых групп."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Разбить пакеты на заказы, группировать результаты по ID пакета и после истечения срока продолжать ждать сообщения до полноты группы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Корреляция по пакету верна, но при потере A2 полная группа A может так и не образоваться. По сроку нужна отдельная ветка: частичный результат либо обработка истечения.",
+                "source_of_confusion": "Правило полного выпуска часто принимают за универсальный барьер. Оно работает, если все элементы гарантированно доходят и время ожидания не ограничено.",
+                "if_it_were_true": "Если бы периодическая проверка полноты завершала неполный пакет, для A1 и A3 Aggregator смог бы собрать отсутствующий A2 без сообщения от его обработчика.",
+                "how_it_should_be": "Выберите критерий полноты и настройте истечение. Если бизнесу допустим частичный итог, включите sendPartialResultOnExpiry. Иначе отправьте недособранные элементы на разбор или выпустите прикладной статус ошибки."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Разбить пакеты на заказы, объединять результаты по порядку поступления и выпускать каждые три сообщения либо остаток по сроку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Агрегация окна из трёх сообщений не восстанавливает принадлежность к A или B. При смешанном поступлении первые три сообщения могут одновременно содержать два пакета.",
+                "source_of_confusion": "Для одного пакета без конкуренции группировка по порядку иногда совпадает с бизнес-группой. При перемешивании этот признак перестаёт отражать источник.",
+                "if_it_were_true": "Если бы порядок поступления определял принадлежность, последовательность B2, A1, B1 дала бы итог единственного пакета с тремя заказами, которого в исходных данных нет.",
+                "how_it_should_be": "Группируйте по идентичности пакета, затем применяйте размер группы и дедлайн отдельно. Если нужен исходный порядок внутри уже собранного пакета, используйте сохранённый номер элемента."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обрабатывать ошибки?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Через `DirectChannel` сбой выходит из `send()`. Через `QueueChannel` сбой обработки публикует poller как `ErrorMessage`.",
+              "correct": true,
+              "sections": {
+                "explanation": "DirectChannel вызывает обработчик внутри send(), поэтому необработанный сбой виден в этом стеке, обычно с обёрткой MessagingException. QueueChannel успешно принимает сообщение. Когда poller вызывает обработчик позже, штатный обработчик ошибок публикует ErrorMessage. Учитывается заданный errorChannel сообщения, иначе используется глобальный канал ошибок.",
+                "example": "В первом запуске вокруг `sendDirect(directInput)` можно перехватить исключение и найти причину Order service unavailable. Во втором `sendQueued(queuedInput)` завершается после приёма, а потребитель errorChannel получает ErrorMessage отдельно. Его payload имеет тип Throwable.",
+                "when_to_apply": "Проверяйте контракт сбоя в точке фактического вызова. Для poller настройте потребителя ошибок, если нужна отдельная маршрутизация. Для временной ошибки конкретной операции добавьте RequestHandlerRetryAdvice, если повтор действия безопасен.",
+                "edge_cases": "Проверяйте тип Throwable перед getFailedMessage(), поскольку этот метод есть у MessagingException и может вернуть null. В 6.5 advice использует Spring Retry RetryTemplate, где maxAttempts(3) включает первую попытку. С 7.0 применяются Spring Framework Core RetryTemplate и RetryPolicy с другим API, а RecoveryCallback принадлежит Spring Integration.",
+                "related": "Retry advice повторяет работу конкретного обработчика и может делегировать исчерпанный сбой recovery callback. ErrorChannel обеспечивает доставку сообщения о сбое на границе, которая умеет его публиковать. [Миграция retry API](https://docs.spring.io/spring-integration/reference/changes-6.5-7.0.html)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Через `DirectChannel` и через `QueueChannel` сбой выходит из исходного `send()`. Poller добавляет к исключению данные сообщения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для queuedInput исходный вызов send() заканчивается при помещении сообщения в очередь. Позднее исключение возникает в стеке задачи poller и не может подняться в завершившийся стек отправителя.",
+                "source_of_confusion": "У send() и в самом деле бывают собственные ошибки передачи или ожидания места. Их легко принять за исключение бизнес-обработчика.",
+                "if_it_were_true": "Если бы queued send() ждал обработчика, вызывающий мог бы поймать отказ сервиса даже при чтении очереди на следующем тике.",
+                "how_it_should_be": "Различайте приём сообщения и его обработку. Для синхронной ошибки используйте обработку исключения в стеке вызова. Если нужен результат асинхронной обработки, организуйте reply или отдельное событие со статусом."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Через `DirectChannel` и через `QueueChannel` сбой публикуется как `ErrorMessage`. Исходный `send()` завершает передачу без исключения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Штатный синхронный DirectChannel не переводит исключение обработчика в публикацию на глобальный errorChannel. Без gateway или другой явной границы исключение идёт вызывающему. У poller действует отдельная обработка ошибки.",
+                "source_of_confusion": "В обоих случаях используется Message, а глобальный errorChannel есть в контексте. Наличие канала легко принять за перехват всякого исключения.",
+                "if_it_were_true": "Если бы публикация была автоматической для DirectChannel, catch вокруг sendDirect не увидел бы IllegalStateException в цепочке причин.",
+                "how_it_should_be": "Для синхронного потока обработайте исключение у клиента либо настройте компонент, переводящий сбой в сообщение, например gateway с каналом ошибок. Poller проверяйте по факту публикации ErrorMessage."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Через `DirectChannel` poller публикует `ErrorMessage`, а через `QueueChannel` ошибка возвращается из `send()` после обработки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В прямом маршруте poller отсутствует. В очередном маршруте poller читает буфер независимо от send() и обрабатывает сбой своей задачи.",
+                "source_of_confusion": "У обоих flow похожие вызовы from().handle(). Если не учесть тип подписки и poller на втором endpoint, роли легко поменять местами.",
+                "if_it_were_true": "Если бы сбой queuedFlow возвращался отправителю, остановленный poller оставлял бы каждый успешный send() незавершённым даже при свободной очереди.",
+                "how_it_should_be": "Проверьте, кто фактически вызывает endpoint. При подписке на DirectChannel это отправитель. При чтении QueueChannel это poller, поэтому результат и ошибку наблюдайте отдельным путём."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как подключить Kafka через Spring Integration?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "На входе поставить `KafkaProducerMessageHandler` для `orders-topic`, а на выходе `KafkaMessageDrivenChannelAdapter` для `order-results`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Первый компонент публикует сообщения через KafkaTemplate. Второй слушает записи через listener container. В предложенной конфигурации ни один из них не выполняет требуемое направление.",
+                "source_of_confusion": "Оба компонента называют Kafka-адаптерами, а слова inbound и outbound относятся к границе приложения. Если смотреть со стороны брокера, направления легко поменять местами.",
+                "if_it_were_true": "При такой схеме запись в orders-topic не поступила бы в ordersInput. Подписка на order-results сама не создаёт публикаций результата.",
+                "how_it_should_be": "Для потока внутрь приложения подключите listener container к inbound-адаптеру. Для потока наружу подпишите producer handler на канал результатов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "На входе читать `orders-topic` одним poller канала `ordersInput`, а на выходе публиковать из `ordersOutput` через producer handler.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Poller читает сообщение, которое уже находится в PollableChannel, либо вызывает специально сконфигурированный MessageSource. Сам poller канала не получает записи из Kafka. В message-driven схеме poll() брокера выполняет контейнер.",
+                "source_of_confusion": "Kafka consumer действительно опрашивает брокер. Эту операцию можно смешать с polling endpoint Spring Integration, хотя объекты и границы отличаются.",
+                "if_it_were_true": "Если бы poller ordersInput читал топик, он получил бы запись из Kafka даже при пустом локальном канале и без адаптера или источника.",
+                "how_it_should_be": "Используйте KafkaMessageDrivenChannelAdapter с listener container. Если нужен именно polling lifecycle, подключайте совместимый KafkaMessageSource как источник flow и настраивайте его отдельно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "На входе связать `orders-topic` с `ordersInput` через listener adapter, а на выходе связать `ordersOutput` с `order-results` через producer handler.",
+              "correct": true,
+              "sections": {
+                "explanation": "KafkaMessageDrivenChannelAdapter в record-режиме получает записи от listener container и публикует Message в ordersInput. Поток преобразует и обрабатывает заказ. KafkaProducerMessageHandler получает Message из ordersOutput и отправляет результат через KafkaTemplate в топик из topic expression.",
+                "example": "Для входа задайте `adapter.setOutputChannelName(\"ordersInput\")`, а для выхода `handler.setTopicExpression(new LiteralExpression(\"order-results\"))`. Запись с заказом 42 проходит обработчик и при успешной отправке появляется в order-results с результатом для 42.",
+                "when_to_apply": "Применяйте адаптеры, когда Kafka служит источником или приёмником EIP-потока. Проверьте соответствие десериализатора входному payload и сериализатора результату.",
+                "edge_cases": "Если flow строится через from(kafkaAdapter), DSL связывает входной адаптер с первым каналом. Если outputChannel уже назначен отдельно, начинайте обработку с этого канала. При асинхронной отправке отдельно наблюдайте подтверждение или сбой Kafka.",
+                "related": "Адаптеры используют Spring Kafka, поэтому commit offset, повтор, подтверждение отправки и транзакции задаются настройками контейнера и producer. Локальное принятие сообщения каналом само по себе ничего не говорит о доставке в Kafka. [Поддержка Kafka](https://docs.spring.io/spring-integration/reference/6.5/kafka.html)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "На входе связать `orders-topic` с `ordersInput` через listener adapter, а на выходе направить `ordersOutput` обратно в этот adapter для публикации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Входной адаптер получает записи и выдаёт их в поток. Он не принимает результаты как producer. Для отправки нужен отдельный обработчик на базе KafkaTemplate.",
+                "source_of_confusion": "Некоторые gateway поддерживают двусторонний обмен. Из этого легко сделать вывод, что любой channel adapter может работать в обратном направлении.",
+                "if_it_were_true": "Если бы входной адаптер автоматически публиковал ответы, вызов обработки ordersOutput создавал бы запись в order-results даже при отсутствии producer и конфигурации выходного топика.",
+                "how_it_should_be": "Подключите два односторонних адаптера для двух направлений. Если требуется Kafka request/reply, отдельно настройте корреляцию запросов и ответов и соответствующий gateway."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как транзакции работают в Spring Integration?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Обновление через `directOrders` входит в транзакцию отправителя, а через `queuedOrders` выполняется за её границей.",
+              "correct": true,
+              "sections": {
+                "explanation": "DirectChannel вызывает JDBC-обработчик в потоке отправителя. JdbcTemplate берёт соединение того же DataSource, привязанное к активной транзакции. В queuedFlow JDBC-вызов происходит в потоке poller и не видит этого привязанного соединения.",
+                "example": "При отправке order-1 через directOrders изменение статуса откатывается вместе с транзакцией отправителя. Если заранее отправить тот же заказ в queuedOrders, а затем откатить транзакцию отправителя, запись в памяти останется доступной poller и обновление может быть выполнено отдельно.",
+                "when_to_apply": "Оставляйте шаг на синхронном пути, если его JDBC-изменения должны иметь общий commit с отправителем. Убедитесь, что используется общий ресурс и нет REQUIRES_NEW или другой несовместимой границы.",
+                "edge_cases": "`Pollers.fixedDelay(1000).transactional(jdbcTx)` создаёт отдельную транзакцию вокруг работы poller. Откат отменит участвующее JDBC-обновление, но сам по себе не восстановит запись обычной очереди в памяти.",
+                "related": "То же участие возможно в PublishSubscribeChannel без executor при совместимых ресурсе и propagation. Для ExecutorChannel уточняйте фактическое исполнение, поскольку CallerRunsPolicy иногда выполняет работу в потоке отправителя. [Транзакции](https://docs.spring.io/spring-integration/reference/6.5/transactions.html)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Обновления через `directOrders` и `queuedOrders` входят в транзакцию отправителя, поскольку используют тот же `DataSource`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Общий DataSource позволяет JdbcTemplate найти привязанное соединение в текущем потоке. Поток poller не наследует ресурс, который менеджер привязал к потоку отправителя.",
+                "source_of_confusion": "Сопоставление транзакционных менеджеров с DataSource важно. Из совпадения ресурса легко ошибочно вывести совпадение состояния транзакции у двух потоков.",
+                "if_it_were_true": "Если бы этого хватало, откат отправителя отменил бы запись queuedFlow даже после её выполнения на другом JDBC-соединении.",
+                "how_it_should_be": "Для общего локального commit вызывайте JDBC-обработчик синхронно на том же ресурсе. Для асинхронной надёжной передачи используйте, например, запись в transactional outbox и отдельно транзакционного получателя."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Обновления через `directOrders` и `queuedOrders` выполняются за границей транзакции отправителя, поскольку оба потока используют `IntegrationFlow`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "IntegrationFlow описывает соединения компонентов. В данном directFlow отправка и JDBC-вызов идут в одном потоке, поэтому JdbcTemplate участвует в текущей транзакции.",
+                "source_of_confusion": "Fluent-цепочка может включать очередь или executor. Возможность смены потока легко принять за действие самого DSL на каждом переходе.",
+                "if_it_were_true": "При такой модели вызов updateOrder через directOrders фиксировался бы самостоятельно, и откат отправителя не смог бы вернуть прежний статус.",
+                "how_it_should_be": "Определяйте границу по типу канала и фактическому вызову обработчика. Затем проверьте ресурс и propagation, особенно если обработчик делегирует работу в новый транзакционный метод."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Обновление через `directOrders` входит в транзакцию отправителя, а через `queuedOrders` входит после добавления transactional poller.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Transactional poller может открыть свою транзакцию, но не присоединяется к императивной транзакции отправителя из другого потока. Эти транзакции имеют независимые исходы.",
+                "source_of_confusion": "Метод transactional настраивает границу чтения и обработки. Его легко понять как способ продолжить ранее открытую транзакцию через очередь.",
+                "if_it_were_true": "Если бы poller продолжал транзакцию отправителя, решение commit или rollback одного потока управляло бы JDBC-записью другого даже после того, как отправитель завершил свой вызов.",
+                "how_it_should_be": "Настройте отдельный commit poller для его ресурса. Для отката потребления используйте совместимый транзакционный транспорт или QueueChannel с транзакционным хранилищем, участвующим в той же транзакции."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как тестировать Spring Integration потоки?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В тесте успешного исхода вызвать `gateway.process`. Для сбоя подменить весь `statusFlow` и проверить исключение из вызова.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Подмена всего flow убирает проверяемую связку канала и endpoint. Исключение мока потока не доказывает, что ошибка orderHandler дойдёт через настоящий маршрут до вызывающего.",
+                "source_of_confusion": "Для unit-теста клиента gateway действительно удобно заменить всю зависимость. Здесь цель затрагивает действительную конфигурацию и изолированную неисправность шага.",
+                "if_it_were_true": "Если бы мок целого потока сохранял маршрутизацию, тест мог бы поймать ошибочный ID endpoint. На деле проверка может пройти и при неверно соединённом канале.",
+                "how_it_should_be": "Загрузите настоящий flow, вызовите gateway для проверки reply и подмените MessageHandler ровно у orderHandler с помощью MockIntegrationContext."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В тесте успешного исхода вызвать `gateway.process`. Для сбоя подменить `orderHandler` и ждать `ErrorMessage` в глобальном канале.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В тестируемой конфигурации DirectChannel вызывает подменённый обработчик синхронно. У gateway отсутствует собственный errorChannel. Ошибка возвращается в вызов, глобальная публикация для этого сценария не происходит автоматически.",
+                "source_of_confusion": "В poller или у gateway с заданным каналом ошибок ErrorMessage действительно наблюдается как отдельное сообщение. Такая проверка уместна при другой входной границе.",
+                "if_it_were_true": "Если бы существующий flow создавал ErrorMessage автоматически, клиент мог бы дождаться записи в errorChannel вместо перехвата исключения из gateway.process.",
+                "how_it_should_be": "Проверяйте исключение при gateway-вызове или send напрямую, если тестируете именно канал. Для теста публикации настройте асинхронный источник и явный pollable-канал ошибок."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В тесте успешного исхода читать reply отдельным `receive()` после `gateway.process`. Для сбоя подменить `orderHandler` и проверить исключение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Здесь gateway сам получает reply и возвращает строку. Дополнительный receive() не извлекает тот же результат из временного канала. Подмена обработчика может корректно проверить исключение, но первая часть теста проверяет другой контракт.",
+                "source_of_confusion": "Для одностороннего flow с выходным QueueChannel именно receive(timeout) позволяет наблюдать обработанный результат. Этот приём легко перенести на request/reply.",
+                "if_it_were_true": "Если бы reply оставался для повторного чтения, клиент получил бы processed:order-1 из gateway и затем ещё раз прочитал бы его из канала.",
+                "how_it_should_be": "Проверяйте возвращённое значение у request/reply gateway. Отдельный receive(timeout) используйте для независимо наблюдаемого выхода, явной очереди или сообщения об ошибке poller."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В тесте успешного исхода проверить ответ `gateway.process`. Для сбоя подменить обработчик `orderHandler` и проверить исключение из вызова.",
+              "correct": true,
+              "sections": {
+                "explanation": "@SpringIntegrationTest добавляет MockIntegrationContext в тестовый контекст с настоящим flow. substituteMessageHandlerFor использует ID endpoint, который оборачивает MessageHandler. После подмены существующий DirectChannel доходит до тестового обработчика. Gateway без канала ошибок возвращает сбой клиенту.",
+                "example": "Проверьте `assertThat(gateway.process(\"order-1\")).isEqualTo(\"processed:order-1\")`. В другом тесте подставьте обработчик, бросающий IllegalStateException, и проверьте эту ошибку в вызове gateway с учётом того, что прокси может распаковать MessagingException. Для проверки самого канала вызовите `input.send(new GenericMessage<>(\"order-1\"))` и проверяйте MessagingException и его причину.",
+                "when_to_apply": "Используйте такой тест, когда нужно проверить связку gateway, канала и endpoint, сохранив контроль над сбоями отдельного шага. Загрузите приложение через @SpringBootTest или соответствующую тестовую конфигурацию.",
+                "edge_cases": "После подмены вызовите resetBeans() в @AfterEach. У poller ошибка может появиться на настроенном канале как ErrorMessage с Throwable в payload, и тогда проверка ожидает сообщение с ограниченным таймаутом.",
+                "related": "MockMessageHandler позволяет захватить входное сообщение и задать контролируемый ответ. PollableChannel пригоден для независимого результата одностороннего потока. [Поддержка тестирования](https://docs.spring.io/spring-integration/reference/6.5/testing.html)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем Spring Integration отличается от Apache Camel?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Spring Integration строится вокруг Spring-бинов, а Camel добавляет маршруты как расширение того же рантайма `IntegrationFlow`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring Integration использует Spring-контекст и свои каналы с endpoint. Camel имеет собственный CamelContext, маршруты и модель Exchange. Стартер связывает жизненный цикл Camel с Boot, сохраняя его модель выполнения.",
+                "source_of_confusion": "Оба фреймворка работают в Spring Boot и позволяют вызвать Spring-бин из маршрута. Поэтому стартер Camel можно принять за адаптер к рантайму Spring Integration.",
+                "if_it_were_true": "Если бы Camel исполнял IntegrationFlow, Camel route можно было бы зарегистрировать как IntegrationFlow-бин и управлять им через тот же набор классов.",
+                "how_it_should_be": "Выбирайте по модели, которую команда готова сопровождать. В Spring Integration настраивайте бины и каналы Spring, в Camel настраивайте CamelContext, маршруты и зависимости компонентов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Spring Integration строится вокруг готовых Camel-компонентов, а Camel предлагает собственный DSL для подключения адаптеров Spring Integration.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У каждого фреймворка собственная экосистема. Адаптер SFTP Spring Integration связывает Spring MessageChannel с удалёнными файлами. Camel использует endpoint SFTP из своего компонента и передаёт дальше Exchange.",
+                "source_of_confusion": "Одни и те же протоколы и EIP имеют похожие имена. Отсюда ошибочное ожидание, что модули взаимозаменяемы.",
+                "if_it_were_true": "Если бы каталоги были общими, добавление camel-ftp создало бы SFTP inbound adapter в Spring Integration без написания связующего кода.",
+                "how_it_should_be": "Сначала найдите нужный компонент в каталоге выбранного фреймворка и проверьте его API и версии. Если обе модели уже есть в приложении, соедините их через явную границу."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Spring Integration и Camel используют один набор компонентов, а выбор между ними сводится к форме записи Java DSL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "EIP общие как понятия, но модели выполнения и каталоги компонентов разные. Camel описывает маршруты и Exchange, Spring Integration связывает Spring Messaging endpoints каналами.",
+                "source_of_confusion": "В обеих цепочках можно увидеть from, filter и split. Сходство глаголов создаёт ощущение, что сменить библиотеку значит переписать конфигурацию без изменения поведения.",
+                "if_it_were_true": "При совпадающей модели Camel route и IntegrationFlow имели бы одинаковые правила обработки ошибок, обмена контекстом и типа результата на границе.",
+                "how_it_should_be": "Перед выбором сравните поддержку фактических протоколов, модель ошибок и тестирования. При миграции проверьте поведение маршрута на реальных сценариях, особенно rollback и retry."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Spring Integration строится вокруг каналов и Spring-бинов, а Camel использует собственный контекст маршрутов и широкий каталог компонентов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Оба реализуют EIP. Spring Integration строит поток на Spring Messaging и конфигурирует его как набор бинов. Apache Camel маршрутизирует Exchange в CamelContext между endpoint и подключает транспорт через Camel-компоненты. Он может работать в Spring Boot, сохраняя собственный рантайм.",
+                "example": "Команде на Boot достаточно Kafka, SFTP и вызова внутренних сервисов. Она описывает этот поток через IntegrationFlow и готовые адаптеры. Если новый маршрут требует специфичного коннектора, имеющегося у Camel, команда может реализовать его на Camel без самостоятельной разработки этого коннектора.",
+                "when_to_apply": "Выбирайте Spring Integration, если важна общая модель Spring-бинов и нужные адаптеры уже есть. Выбирайте Camel, если нужный компонент, способ маршрутизации или готовая эксплуатационная модель оправдывают отдельный рантайм.",
+                "edge_cases": "Оба поддерживают распространённые EIP и могут интегрироваться в Boot. Сравнивайте функциональность модуля для вашей версии, например нужные режимы аутентификации или работы с файлами. Общее число коннекторов такую проверку не заменяет.",
+                "related": "@SpringIntegrationTest и MockIntegrationContext работают с Spring endpoints. В Camel тесты поднимают или адаптируют маршруты CamelContext. [Каталог компонентов Camel](https://camel.apache.org/components/4.18.x/index.html)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда использовать Spring Integration vs Spring Kafka?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Для A взять `Spring Integration`, потому что топики требуют EIP-слоя. Для B взять `Spring Kafka`, потому что он маршрутизирует результаты в SFTP.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Kafka-only поток можно построить на @KafkaListener и KafkaTemplate. Spring Kafka не предоставляет SFTP endpoint, хотя приложение может вызвать отдельный SFTP-клиент.",
+                "source_of_confusion": "В KafkaTemplate можно вычислить имя топика динамически. Эта возможность похожа на маршрутизацию по приёмникам, но ограничена Kafka.",
+                "if_it_were_true": "Если бы producer поддерживал SFTP как ещё один транспорт назначения, вызов send с адресом файла записывал бы файл, хотя producer работает с топиком Kafka.",
+                "how_it_should_be": "Для простого consume-transform-produce используйте Spring Kafka. Для маршрута к Kafka или SFTP соберите EIP-поток либо явно реализуйте ветвление и подключите отдельную SFTP-библиотеку."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для A и B взять `Spring Integration`, поскольку `Spring Kafka` работает только под адаптером и не предоставляет собственные точки чтения и записи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring Kafka предоставляет @KafkaListener, listener container и KafkaTemplate самостоятельно. Адаптеры Spring Integration используют возможности Spring Kafka, когда требуется связать внешний транспорт с каналами.",
+                "source_of_confusion": "В проекте с адаптерами контейнер может быть скрыт за Java DSL. Поэтому незаметно, что его можно использовать без IntegrationFlow.",
+                "if_it_were_true": "Если бы Spring Kafka требовал адаптер EIP, приложение с одним @KafkaListener и KafkaTemplate не смогло бы принять и отправить запись.",
+                "how_it_should_be": "Начинайте с прямого API при простой Kafka-only связке. Добавляйте Spring Integration, когда конфигурация отдельных путей, трансформаций и адаптеров приносит измеримую пользу для поддержки."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для A достаточно `Spring Kafka` с listener и producer. Для B подходит `Spring Integration` с маршрутизацией между Kafka и SFTP.",
+              "correct": true,
+              "sections": {
+                "explanation": "Spring Kafka решает задачи чтения и записи Kafka напрямую. Spring Integration позволяет выразить вход, преобразование и условные направления в одной модели MessageChannel и endpoint. В сценарии B Router выбирает между двумя разными транспортами.",
+                "example": "При A метод с @KafkaListener принимает order-1 и отправляет результат в out с помощью KafkaTemplate. При B тот же тип входа становится Message, а ветки Router отправляют событие оплаты в Kafka или подготовленный отчёт на SFTP.",
+                "when_to_apply": "Используйте прямой API для узкой Kafka-интеграции с небольшим управлением потоком. Если участвуют разные приёмники и маршрутизация должна быть явно видна и тестируема, рассмотрите адаптеры Spring Integration.",
+                "edge_cases": "Простой выбор одного из двух транспортов можно реализовать прикладным кодом с отдельным SFTP-клиентом. Если задача меняется на stateful joins и временные окна, оцените Kafka Streams или Flink.",
+                "related": "Spring Kafka отвечает за контейнер, offsets, producer и Kafka-транзакции. Spring Integration добавляет композицию шагов и не превращает Kafka и SFTP в единый транзакционный ресурс."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для A достаточно `Spring Kafka`. Для B подходит `Spring Kafka`, поскольку его механизмы retry и выбора топика покрывают маршрутизацию в SFTP.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Retry Spring Kafka управляет повтором Kafka-обработки. Выбор топика определяет назначение Kafka-записи. Для SFTP нужен отдельный клиент или адаптер и ветка маршрута.",
+                "source_of_confusion": "Внутри Kafka приложение действительно может выбирать топик и использовать retry topics. Такой набор возможностей легко принять за общий роутер по транспортам.",
+                "if_it_were_true": "Если бы retry topic мог быть SFTP-приёмником, конфигурация повторов отправляла бы файл на сервер без создания SFTP-сессии и настройки credentials.",
+                "how_it_should_be": "Если оставляете Spring Kafka как вход, добавьте отдельную SFTP-интеграцию и явно определите политику повторов файловой записи. Для инфраструктуры, общей для обеих веток, подойдут EIP-каналы и Router."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Claim Check и как его реализовать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Передать метаданные и упакованные байты целиком через брокер, а записать вложение в хранилище на этапе проверки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Упаковка сама по себе не обеспечивает лимит 1 МБ для исходных 20 МБ. Claim Check сохраняет тяжёлые данные до передачи в ограниченный канал.",
+                "source_of_confusion": "Сжатие иногда уменьшает текст в десятки раз. Для уже сжатого архива или медиа такого коэффициента может не быть. Кодирование Base64, напротив, увеличивает размер данных.",
+                "if_it_were_true": "Если бы упаковка гарантировала заданный лимит, любой 20-мегабайтный файл проходил бы через брокер одним сообщением, включая практически несжимаемые данные.",
+                "how_it_should_be": "Вынесите вложение до брокера. Если используете компрессию для других payload, проверяйте итоговый размер с учётом всего сообщения и обрабатывайте превышение лимита."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Сохранить вложение до брокера, передать ключ и метаданные, а перед проверкой получить исходные байты по ключу.",
+              "correct": true,
+              "sections": {
+                "explanation": "Claim Check разделяет хранение и передачу. Встроенный ClaimCheckInTransformer сохраняет исходное Message в MessageStore и выдаёт ID. ClaimCheckOutTransformer читает по ID из того же хранилища. Для S3 можно сделать свои store и retrieve для работы с байтами.",
+                "example": "Store помещает 20 МБ объекта под ключом orders/42/attachment. По брокеру уходит короткое сообщение с ключом, типом файла и ID заказа. Router читает метаданные, а валидатор загружает и проверяет исходный объект.",
+                "when_to_apply": "Применяйте паттерн, когда брокер ограничивает размер либо когда промежуточным шагам содержимое не требуется. Обеспечьте обоим концам доступ к хранилищу и сохраняйте информацию, нужную для маршрута, в компактном сообщении.",
+                "edge_cases": "Хранилище и брокер могут отказать независимо. Публикуйте только действительный ключ, предусмотрите идемпотентность записи и восстановления, очистку осиротевших объектов и срок хранения, покрывающий задержки и повторы.",
+                "related": "Content Filter выкидывает лишние поля без механизма восстановления. Claim Check сохраняет удалённые из сообщения данные доступными по ссылке. [Claim Check](https://docs.spring.io/spring-integration/reference/6.5/claim-check.html)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Записать вложение в хранилище, опубликовать ключ и метаданные, затем удалить объект сразу после публикации ключа в брокер.",
+              "correct": false,
+              "sections": {
+                "what_actually": "После удаления адрес перестаёт указывать на доступные данные. Если потребитель прочитает сообщение после удаления объекта, он не получит байты даже при первой проверке.",
+                "source_of_confusion": "Подтверждение брокера означает, что принято сообщение со ссылкой. Его легко принять за признак завершения проверки самого файла.",
+                "if_it_were_true": "Если бы публикации хватало для безопасного удаления, проверка смогла бы скачать 20 МБ даже после остановки и позднего запуска получателя.",
+                "how_it_should_be": "Удаляйте объект по подтверждённому завершению всех нужных потребителей или по политике хранения, рассчитанной на повторы. Если повтор не предусмотрен, явно закрепите допустимую потерю данных при сбое."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Разбить вложение на части меньше лимита, направить все части через брокер и получить исходные байты из ключа первой части.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ключ первого фрагмента не восстанавливает содержимое остальных фрагментов. Если байты не сохранены за пределами брокера, потребителю понадобится отдельный протокол сборки.",
+                "source_of_confusion": "И Claim Check, и Chunking используют идентификатор. В первом случае ID ссылается на сохранённый объект, во втором связывает несколько сообщений с частями объекта.",
+                "if_it_were_true": "Если бы ключ первого фрагмента заменял остальные данные, проверка могла бы получить файл целиком, даже когда пришёл один фрагмент из двадцати.",
+                "how_it_should_be": "Если выбираете фрагментацию, передавайте корреляцию, размер и порядок, обрабатывайте повторы и неполные группы. Для Claim Check вынесите объект в хранилище и передайте настоящий адрес восстановления."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает Enricher (Content Enricher)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Послать `customerId` в канал справочника, получить `CustomerInfo` и заменить им заказ в основном потоке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В задаче downstream ожидает исходный заказ с дополнительными полями. Если сделать ответ справочника новым payload, потеряются данные заказа, например его номер и сумма.",
+                "source_of_confusion": "Обычный Transformer часто заменяет payload результатом метода. Enricher тоже использует ответ вспомогательного шага, но проецирует его поля в исходные данные.",
+                "if_it_were_true": "Если бы замена payload удовлетворяла контракту, обработчик смог бы прочитать сумму заказа непосредственно из CustomerInfo, где есть только сведения о клиенте.",
+                "how_it_should_be": "Сохраните заказ как тип результата и используйте propertyFunction для нужных свойств. Если требуется новый объект из-за неизменяемости, создайте обогащённый Order явным преобразованием."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Послать `customerId` в канал справочника, дождаться `CustomerInfo` и перенести два поля ответа в исходный заказ.",
+              "correct": true,
+              "sections": {
+                "explanation": "Content Enricher строит вспомогательный request/reply. requestPayloadExpression выбирает customerId, requestChannel ведёт к lookup, а propertyFunction читает payload ответа и записывает нужное свойство заказа. Основной flow продолжается с обогащённым payload.",
+                "example": "`.requestPayloadExpression(\"payload.customerId\").propertyFunction(\"customerName\", r -> ((CustomerInfo) r.getPayload()).name())` направляет ID в настроенный requestChannel и переносит имя клиента. Аналогичное свойство creditLimit переносит лимит. Для заказа 42 и клиента 17 downstream получает тот же номер заказа, имя Анна и лимит 10 000 из ответа справочника.",
+                "when_to_apply": "Используйте Enricher, если есть ключ для lookup и последующий шаг требует дополнительные данные. Определите контракт ответа и предел ожидания по входу в lookup и его завершению.",
+                "edge_cases": "Просроченный или отсутствующий ответ требует явной политики. Если свойства исходного объекта изменяемы, учтите побочные эффекты для других ссылок. Для immutable payload используйте преобразование, которое создаёт новый объект.",
+                "related": "Header Enricher дополняет метаданные сообщения. Запись creditLimit только в заголовок не удовлетворяет потребителя, который читает поле Order."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Послать `customerId` в канал справочника, дождаться `CustomerInfo` и записать два поля только в заголовки выходного сообщения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поля customerName и creditLimit должны появиться в payload заказа. Заголовки доступны в Message, но не изменяют Order.",
+                "source_of_confusion": "Content Enricher умеет дополнять и заголовки. Это удобно для маршрутизации или передачи метаданных, хотя такой результат не меняет доменный объект.",
+                "if_it_were_true": "Если бы заголовок автоматически становился свойством payload, метод order.creditLimit() прочитал бы значение, записанное только в MessageHeaders.",
+                "how_it_should_be": "Пишите свойства заказа через propertyFunction или создавайте новый Order. Добавляйте заголовки, если следующий endpoint явно читает их для технической маршрутизации."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Послать `customerId` в канал справочника без ожидания `CustomerInfo` и сразу продолжить с заказом, заполнив поля позднее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для данного шага lookup должен вернуть результат до отправки обогащённого Order дальше. При односторонней отправке данные ещё не доступны следующему обработчику.",
+                "source_of_confusion": "Отдельный канал запроса может быть асинхронным. Исполнение lookup на другом потоке не превращает request/reply в отправку без ожидания.",
+                "if_it_were_true": "Если бы продолжение было немедленным, следующий обработчик мог бы списать деньги, увидев пустое или старое значение лимита до ответа справочника.",
+                "how_it_should_be": "Используйте request/reply с ограниченным ожиданием. Если нужен долгоживущий асинхронный процесс, сохраните состояние заказа и запускайте следующий шаг после коррелированного ответа."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как мониторить Spring Integration?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Взять схему из `integrationgraph`, размер очереди из gauge и длительность обработчика из таймера с `type=handler`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Граф Actuator показывает связи endpoints и каналов. При наличии MeterRegistry Spring Integration 6.5 регистрирует метрики поддерживаемых компонентов. Gauge spring.integration.channel.queue.size показывает глубину очереди, а spring.integration.send с type=handler измеряет вызовы обработчика. Темп получения из очереди можно сопоставить с spring.integration.receive.",
+                "example": "По графу ordersQueue ведёт в orderHandler. За минуту очередь растёт с 10 до 80, скорость чтения падает, а длительность orderHandler растёт с 30 до 400 мс. Эти наблюдения позволяют проверить задержку обработчика как причину отставания.",
+                "when_to_apply": "Используйте граф, чтобы выбрать компоненты для сравнения, затем сопоставьте размер и свободную ёмкость очереди, темп успешной отправки и чтения и время обработки по именам компонентов.",
+                "edge_cases": "Рост очереди может объясняться всплеском входа или расписанием poller при стабильном времени обработки. Для HTTP-доступа к integrationgraph нужны экспозиция и соответствующий доступ. При Observation для обработчика и обработчике метрик применима метрика spring.integration.handler.",
+                "related": "`spring.integration.channel.queue.remaining.capacity` показывает запас места. Gauge `spring.integration.handlers` показывает число компонентов-обработчиков. [Метрики Spring Integration](https://docs.spring.io/spring-integration/reference/6.5/metrics.html)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Взять схему из `integrationgraph`, размер очереди из графа связей и длительность обработчика из таймера с `type=handler`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Integrationgraph показывает топологию, а динамику заполнения QueueChannel даёт Micrometer gauge. Связь канала с poller сама по себе не измеряет число сообщений.",
+                "source_of_confusion": "В Actuator доступны как карта компонентов, так и данные мониторинга. Близость этих инструментов создаёт ожидание, что в JSON графа встроены временные ряды.",
+                "if_it_were_true": "Если бы граф содержал динамику очереди, ответ на один запрос integrationgraph показывал бы, когда ordersQueue выросла с 10 до 80.",
+                "how_it_should_be": "Используйте граф для идентификации names и связей, а gauge spring.integration.channel.queue.size собирайте периодически и фильтруйте по имени канала."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Взять схему из `integrationgraph`, размер очереди из счётчика `receive` и длительность обработчика из таймера с `type=handler`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring.integration.receive учитывает операции чтения pollable-канала. Это поток событий, а текущая глубина буфера является отдельным измерением состояния.",
+                "source_of_confusion": "У успешно прочитанного сообщения есть прямая связь с уменьшением очереди. Но счётчик чтения не учитывает изменения от входящих сообщений и исходный размер.",
+                "if_it_were_true": "Если бы число чтений отражало глубину, после 500 завершённых receive и полного опустошения очереди метрика показывала бы 0 вместо накопленного значения.",
+                "how_it_should_be": "Измеряйте глубину gauge и оценивайте скорость чтения по изменению счётчика за интервал. Сверяйте с входящим темпом, чтобы различить всплеск нагрузки и деградацию обработчика."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Взять схему из `integrationgraph`, размер очереди из gauge и длительность обработчика из gauge `spring.integration.handlers`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring.integration.handlers считает компоненты MessageHandler. Для времени нужны timer spring.integration.send с type=handler или настроенная метрика Observation.",
+                "source_of_confusion": "Название handlers говорит, каких объектов касается gauge, но не говорит, какую величину он измеряет. Его легко перепутать с таймером работы обработчиков.",
+                "if_it_were_true": "Если бы gauge отражал длительность, он менялся бы при замедлении orderHandler без появления и удаления компонентов.",
+                "how_it_should_be": "Выберите таймер по типу и имени обработчика. Сопоставьте число вызовов и длительность с динамикой очереди. Для перцентилей настройте их сбор в выбранном реестре или мониторинге."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
 }

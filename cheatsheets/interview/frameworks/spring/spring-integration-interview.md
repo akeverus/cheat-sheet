@@ -75,14 +75,14 @@ updated: 2026-05-31
 - **Splitter** — разбивает одно сообщение на N (например список заказов → отдельные заказы).
 - **Aggregator** — обратная операция: собирает N сообщений в одно по корреляционному ключу.
 - **Service Activator** — точка, где сообщение передаётся в бизнес-метод.
-- **Gateway** — двусторонний мост request/reply: вызывающий код получает ответ синхронно.
+- **Gateway** скрывает обмен сообщениями за вызовом метода. Поддерживает одностороннюю отправку и request/reply (Q4).
 
-Каждый паттерн в Spring Integration — это обычный Spring-бин (endpoint), а каналы связывают их в поток.
+Компоненты Spring Integration регистрируются в контейнере. Каналы связывают endpoints в поток.
 
 ```java
 @Configuration
 @EnableIntegration
-public class IntegrationConfig { ... }
+public class IntegrationConfig {}
 ```
 
 ## Q2. (!) Какие типы MessageChannel существуют?
@@ -91,14 +91,14 @@ public class IntegrationConfig { ... }
 
 | Канал | Поведение | Применение |
 |-------|-----------|------------|
-| `DirectChannel` | Синхронный, в потоке отправителя | Default; поддерживает транзакции |
+| `DirectChannel` | Синхронный, в потоке отправителя | Последовательный вызов обработчика в текущем потоке |
 | `PublishSubscribeChannel` | Broadcast всем подписчикам | Уведомления, events |
 | `QueueChannel` | In-memory FIFO (требует poller) | Буферизация, развязка потоков |
 | `PriorityChannel` | Очередь с приоритетом | Приоритизация сообщений |
 | `ExecutorChannel` | Асинхронный (TaskExecutor) | Параллельная обработка |
 | `FluxMessageChannel` | Реактивный (Reactor) | Bridge к Spring WebFlux |
 
-Ключевое различие — **point-to-point** (`DirectChannel`, `QueueChannel`, `ExecutorChannel`: одно сообщение получает ровно один подписчик) против **publish-subscribe** (`PublishSubscribeChannel`: копию получают все подписчики). Каналы с очередью (`QueueChannel`, `PriorityChannel`) развязывают отправителя и получателя по времени, но требуют poller, который вынимает из них сообщения.
+При **point-to-point** доставке сообщение предназначено одному получателю (`DirectChannel`, `QueueChannel`, `ExecutorChannel`). При включённом failover диспетчер может попробовать другого обработчика после сбоя. При **publish-subscribe** доставке (`PublishSubscribeChannel`) канал рассылает сообщение подписчикам. Каналы с очередью (`QueueChannel`, `PriorityChannel`) развязывают отправителя и получателя по времени, но требуют poller, который вынимает из них сообщения.
 
 ```java
 @Bean public MessageChannel ordersInput() { return new DirectChannel(); }
@@ -106,9 +106,15 @@ public class IntegrationConfig { ... }
 @Bean public MessageChannel broadcasts() { return new PublishSubscribeChannel(); }
 ```
 
-**Правило**: канал по умолчанию — `DirectChannel`. Он же единственный, кто прозрачно пропускает транзакцию: обработчик выполняется в том же потоке и в той же транзакции, что и отправитель. Любой канал с очередью или executor'ом разрывает поток выполнения, а значит и транзакционный контекст.
+Неявные каналы между обычными шагами Java DSL обычно являются `DirectChannel`. Для императивной транзакции важны поток выполнения, общий транзакционный ресурс и настройки propagation. Например, `PublishSubscribeChannel` без executor тоже вызывает подписчиков в потоке отправителя. При передаче работы другому потоку транзакция отправителя туда автоматически не переносится (Q9).
 
 ## Q3. Что такое Service Activator?
+
+```text
+В канале ordersInput приходит Order. Бизнес-метод OrderService.process(Order)
+возвращает OrderResult. Результат должен попасть в ordersOutput.
+Как связать каналы с существующим методом сервиса?
+```
 
 **Service Activator** — это endpoint, который соединяет канал с обычным методом бизнес-компонента. Он берёт сообщение из `inputChannel`, разворачивает его в payload, передаёт в ваш метод, а возвращённое значение заворачивает обратно в `Message` и кладёт в `outputChannel`. По сути это «точка входа» доменной логики в интеграционный поток — благодаря ему бизнес-код остаётся обычным Java-методом и не зависит от Spring Integration.
 
@@ -120,19 +126,20 @@ public class IntegrationConfig { ... }
 Если `outputChannel` не задан, ответ отправится в канал из заголовка `replyChannel` (его проставляет, например, Gateway). Если метод возвращает `void`, поток на этом endpoint завершается.
 
 ```java
-// Аннотация
+// Через аннотацию
 @ServiceActivator(inputChannel = "ordersInput", outputChannel = "ordersOutput")
 public OrderResult processOrder(Order order) {
     return orderService.process(order);
 }
 
-// Java DSL
+// Альтернативная конфигурация через Java DSL
 IntegrationFlow flow = IntegrationFlow
     .from("ordersInput")
-    .handle((Order order, MessageHeaders headers) -> orderService.process(order))
+    .handle(Order.class, (order, headers) -> orderService.process(order))
+    .channel("ordersOutput")
     .get();
 
-// С явным указанием бина
+// Односторонний вариант с MessageHandler
 @ServiceActivator(inputChannel = "ordersInput")
 @Bean
 public MessageHandler orderHandler(OrderService service) {
@@ -147,9 +154,11 @@ public MessageHandler orderHandler(OrderService service) {
 Так Gateway становится границей между «обычным» приложением и интеграционным слоем: на входе в поток ставят Gateway, на выходе из бизнес-логики — Service Activator (Q3).
 
 **Поведение метода зависит от сигнатуры:**
-- метод **возвращает значение** → синхронный request/reply, вызывающий поток ждёт ответ;
-- метод возвращает **`void`** → fire-and-forget, ответа не ждём;
-- возврат `Future`/`Mono` → асинхронный ответ без блокировки потока.
+- Обычный возвращаемый тип задаёт request/reply. Вызывающий поток ждёт ответ.
+- `void` задаёт одностороннюю отправку. Ответа нет, но при `DirectChannel` обработчик выполняется в потоке вызывающего до возврата из метода. При `QueueChannel` с poller отправка помещает сообщение в очередь, а обработчик вызывается отдельно.
+- Для поддерживаемого `Future` или `CompletableFuture` gateway может выполнять вызов через `AsyncTaskExecutor`. При отключённом async executor downstream сам должен предоставить значение нужного типа. `Mono` задаёт реактивный контракт с отложенным выполнением на подписке. Выбор потока зависит от конфигурации цепочки.
+
+[Messaging Gateways, Spring Integration 6.5](https://docs.spring.io/spring-integration/reference/6.5/gateway.html)
 
 Заголовки сообщения задаются через `@Header`, payload — через `@Payload`.
 
@@ -157,14 +166,12 @@ public MessageHandler orderHandler(OrderService service) {
 @MessagingGateway(defaultRequestChannel = "ordersInput",
                    defaultReplyChannel = "ordersOutput")
 public interface OrderGateway {
-    // Синхронный — ждёт ответ
     OrderResult placeOrder(Order order);
 
-    // Асинхронный — не ждёт
-    @Gateway(requestChannel = "ordersAsync")
-    void placeOrderAsync(Order order);
+    // Тип канала orderSubmissions не указан. Что гарантирует сигнатура submitOrder?
+    @Gateway(requestChannel = "orderSubmissions")
+    void submitOrder(Order order);
 
-    // С заголовком
     @Gateway(requestChannel = "priorityOrders")
     OrderResult placeUrgentOrder(@Payload Order order,
                                   @Header("priority") String priority);
@@ -182,6 +189,13 @@ public void submit(Order order) {
 ```
 
 ## Q5. (!) Как устроен Java DSL?
+
+```text
+Источник: Kafka-сообщение с JSON заказа.
+У заказов с суммой <= 0 получатель rejectedOrders.
+Заказы с положительной суммой обрабатываются по-разному для EXPRESS и NORMAL.
+Как описать этот поток в конфигурации Spring Integration?
+```
 
 **Java DSL** — это fluent-способ описать весь интеграционный поток одной цепочкой методов в одном `@Bean`, вместо россыпи отдельных бинов с аннотациями и явно проименованных каналов. Каждый вызов в цепочке (`.transform()`, `.filter()`, `.route()`, …) добавляет в поток очередной EIP-паттерн, а каналы между ними Spring создаёт сам, «по месту» — вручную их объявлять не нужно.
 
@@ -205,9 +219,9 @@ public class OrderIntegrationFlow {
             .<Order, String>route(                               // Content-Based Router
                 o -> o.type().name(),
                 m -> m.subFlowMapping("EXPRESS", sf -> sf
-                        .handle(orderService::processExpress))
+                        .handle(Order.class, (order, headers) -> orderService.processExpress(order)))
                       .subFlowMapping("NORMAL", sf -> sf
-                        .handle(orderService::processNormal))
+                        .handle(Order.class, (order, headers) -> orderService.processNormal(order)))
             )
             .get();
     }
@@ -225,6 +239,13 @@ public class OrderIntegrationFlow {
 - `.bridge()` — соединить два канала без обработки.
 
 ## Q6. Как реализовать Splitter и Aggregator?
+
+```text
+Пакет A: заказы A1, A2, A3. Пакет B: заказы B1, B2.
+Заказы обрабатываются по одному, результаты могут прийти вперемешку.
+Для каждого пакета нужен общий результат. Ожидание неполной группы: до 5 секунд.
+Как обработать отдельные заказы и сгруппировать результаты?
+```
 
 **Splitter** и **Aggregator** — это парные паттерны: первый разбивает одно сообщение на много, второй собирает много обратно в одно. Их часто используют вместе по схеме scatter-gather: разбили пакет на отдельные элементы, обработали каждый (возможно параллельно), затем собрали результаты обратно.
 
@@ -244,7 +265,7 @@ public List<Order> split(BatchOrderRequest batch) {
 **Aggregator** — собирает несколько сообщений в одно по корреляционному ключу. Он держит группу в `MessageStore` (по умолчанию in-memory) и отдаёт результат, когда срабатывает условие релиза. Три ключевые настройки:
 - **correlation** — по какому признаку сообщения объединяются в группу (например `headers['batchId']`);
 - **release** — когда группа считается полной и пора собирать (например пришли все `batchSize` элементов);
-- **timeout** — что делать, если часть сообщений так и не пришла: `groupTimeout` + `sendPartialResultOnExpiry` позволяют отдать неполную группу, иначе она зависнет в памяти навсегда.
+- **timeout** определяет срок ожидания недостающих сообщений. `groupTimeout` вместе с `sendPartialResultOnExpiry` позволяет отдать неполную группу. При отключённой отправке частичного результата просроченные сообщения можно направить в discard-канал.
 
 ```java
 @Aggregator(inputChannel = "orderResults", outputChannel = "batchResults")
@@ -252,10 +273,10 @@ public BatchResult aggregate(List<OrderResult> results) {
     return new BatchResult(results);
 }
 
-// DSL с настройкой корреляции
+// DSL для сообщений с заголовками batchId и batchSize
 .aggregate(aggregator -> aggregator
     .correlationExpression("headers['batchId']")
-    .releaseExpression("size() == headers['batchSize']")
+    .releaseExpression("size() == getOne().headers['batchSize']")
     .sendPartialResultOnExpiry(true)
     .groupTimeout(5000L)  // отправить частичный результат через 5с
 )
@@ -263,46 +284,90 @@ public BatchResult aggregate(List<OrderResult> results) {
 
 ## Q7. Как обрабатывать ошибки?
 
-В Spring Integration исключение из обработчика не просто пробрасывается вверх по стеку — оно заворачивается в `ErrorMessage` (внутри лежит `MessagingException` с причиной и исходным `failedMessage`) и отправляется в специальный канал ошибок. Это позволяет обрабатывать сбои декларативно, тем же messaging-механизмом, а не try/catch на каждом шаге.
-
-**Три уровня обработки, от глобального к локальному:**
-1. **`errorChannel`** — глобальный канал-«ловушка»: сюда по умолчанию попадают все необработанные ошибки потока. Удобно для логирования и отправки в DLQ.
-2. **Локальный `errorChannel` у конкретного endpoint** — перехватывает ошибки только этого шага, не задевая остальной поток.
-3. **`RequestHandlerRetryAdvice`** — не обрабатывает ошибку, а пытается выполнить операцию повторно (retry с backoff), прежде чем считать её сбоем. Часто это то, что нужно для transient-ошибок (`IOException`, недоступность внешнего сервиса).
-
 ```java
-// 1. errorChannel — глобальный канал ошибок
-@ServiceActivator(inputChannel = "errorChannel")
-public void handleError(ErrorMessage errorMessage) {
-    Throwable cause = errorMessage.getPayload().getCause();
-    Message<?> failedMessage = errorMessage.getPayload().getFailedMessage();
-    log.error("Integration error for message: {}", failedMessage, cause);
-    // отправить в DLQ или алертинг
+@Bean
+DirectChannel directInput() {
+    return new DirectChannel();
 }
 
-// 2. Локальная обработка ошибок в потоке
-IntegrationFlow flow = IntegrationFlow
-    .from("ordersInput")
-    .handle(orderService::process,
-        e -> e.advice(retryAdvice())  // retry при ошибке
-              .errorChannel("orderErrorChannel"))
-    .get();
-
-// 3. RequestHandlerRetryAdvice
 @Bean
-public RequestHandlerRetryAdvice retryAdvice() {
-    RequestHandlerRetryAdvice advice = new RequestHandlerRetryAdvice();
-    RetryTemplate template = RetryTemplate.builder()
+QueueChannel queuedInput() {
+    return new QueueChannel(10);
+}
+
+@Bean
+IntegrationFlow directFlow() {
+    return IntegrationFlow.from("directInput")
+        .handle(String.class, this::processOrder)
+        .get();
+}
+
+@Bean
+IntegrationFlow queuedFlow() {
+    return IntegrationFlow.from("queuedInput")
+        .handle(String.class, this::processOrder,
+            e -> e.poller(Pollers.fixedDelay(1000)))
+        .get();
+}
+
+private Object processOrder(String orderId, MessageHeaders headers) {
+    throw new IllegalStateException("Order service unavailable");
+}
+
+// Два независимых запуска в Spring Integration 6.5, без gateway и retry advice.
+// В каждом запуске вызывается один из методов с соответствующим бином канала.
+void sendDirect(DirectChannel directInput) {
+    directInput.send(new GenericMessage<>("order-1"));
+}
+
+void sendQueued(QueueChannel queuedInput) {
+    queuedInput.send(new GenericMessage<>("order-1"));
+}
+// Где проявится ошибка каждого вызова обработчика?
+```
+
+В первом запуске `DirectChannel` вызывает обработчик в стеке `send()`. Исключение возвращается вызывающему, обычно как `MessagingException` с причиной. Во втором запуске `send()` помещает сообщение в очередь. При стандартной обработке ошибок задача poller публикует сбой как `ErrorMessage`. Сначала учитывается канал в заголовке `errorChannel` исходного сообщения, затем используется глобальный `errorChannel`. Отдельные входные компоненты, например gateway, могут настраивать собственную обработку ошибок.
+
+`ErrorMessage` уже является сообщением. Его payload имеет тип `Throwable`. `getFailedMessage()` можно вызвать после проверки, что исключение относится к `MessagingException`. Метод может вернуть `null`.
+
+```java
+@ServiceActivator(inputChannel = "errorChannel")
+public void handleError(ErrorMessage errorMessage) {
+    Throwable error = errorMessage.getPayload();
+    Message<?> failedMessage = error instanceof MessagingException messagingException
+        ? messagingException.getFailedMessage()
+        : null;
+    log.error("Integration error for message: {}", failedMessage, error);
+}
+```
+
+Для локального повтора на endpoint можно добавить `e.advice(retryAdvice())`. В Spring Integration 6.5 `RequestHandlerRetryAdvice` использует `org.springframework.retry.support.RetryTemplate`. В примере максимум три попытки с учётом первой и повтор только для `IOException`, в том числе вложенного. Без recovery callback исчерпанный сбой выходит из advice по правилам вызвавшего компонента.
+
+```java
+@Bean
+RequestHandlerRetryAdvice retryAdvice() {
+    var advice = new RequestHandlerRetryAdvice();
+    advice.setRetryTemplate(org.springframework.retry.support.RetryTemplate.builder()
         .maxAttempts(3)
         .exponentialBackoff(1000, 2, 10000)
         .retryOn(IOException.class)
-        .build();
-    advice.setRetryTemplate(template);
+        .traversingCauses()
+        .build());
     return advice;
 }
 ```
 
+Начиная с Spring Integration 7.0 этот advice использует Retry API из Spring Framework Core. Типы `RetryTemplate`, `RetryPolicy` и recovery callback меняются.
+
+[Error Handling](https://docs.spring.io/spring-integration/reference/6.5/error-handling.html) · [Retry Advice](https://docs.spring.io/spring-integration/reference/6.5/handler-advice/classes.html#retry-advice) · [Миграция на 7.0](https://docs.spring.io/spring-integration/reference/changes-6.5-7.0.html)
+
 ## Q8. Как подключить Kafka через Spring Integration?
+
+```text
+orders-topic содержит JSON заказов. Приложение должно передавать входящие
+записи в ordersInput, обрабатывать заказы и публиковать результаты
+из ordersOutput в топик order-results. Как подключить оба направления?
+```
 
 Kafka подключается через **channel-адаптеры** — мосты между внешним транспортом и каналами Spring Integration. Их два, по направлению:
 - **Inbound** (`KafkaMessageDrivenChannelAdapter`) — читает из топика и кладёт сообщения в канал потока. «Message-driven» означает, что адаптер сам слушает Kafka (внутри `MessageListenerContainer`) и проталкивает сообщения, а не вы их опрашиваете.
@@ -325,17 +390,18 @@ public KafkaMessageDrivenChannelAdapter<String, String> kafkaInboundAdapter(
 
 @Bean
 public IntegrationFlow kafkaToServiceFlow(
-        KafkaMessageDrivenChannelAdapter<String, String> adapter,
         OrderService service) {
     return IntegrationFlow
-        .from(adapter)
+        .from("ordersInput")
         .transform(Transformers.fromJson(Order.class))
-        .handle(service::process)
+        .handle(Order.class, (order, headers) -> service.process(order))
+        .transform(Transformers.toJson())
+        .channel("ordersOutput")
         .get();
 }
 
-// Outbound adapter
 @Bean
+@ServiceActivator(inputChannel = "ordersOutput")
 public KafkaProducerMessageHandler<String, String> kafkaOutboundAdapter(
         KafkaTemplate<String, String> template) {
     KafkaProducerMessageHandler<String, String> handler =
@@ -347,79 +413,128 @@ public KafkaProducerMessageHandler<String, String> kafkaOutboundAdapter(
 
 ## Q9. Как транзакции работают в Spring Integration?
 
-Транзакция в Spring — это контекст, привязанный к потоку выполнения. Поэтому в Spring Integration работает простое правило: **транзакция жива ровно до тех пор, пока сообщение идёт в одном потоке**. Через `DirectChannel` обработка выполняется в потоке отправителя, поэтому транзакция, открытая вызывающим кодом, охватывает весь поток — от отправки до последнего endpoint.
-
-Как только в потоке появляется канал с очередью (`QueueChannel`) или executor'ом (`ExecutorChannel`), сообщение подхватывает **другой поток** — транзакционный контекст обрывается. Чтобы и асинхронная часть была транзакционной, транзакцию нужно открывать заново — на стороне poller'а, который вынимает сообщения из очереди.
-
 ```java
-// DirectChannel поддерживает транзакцию от отправителя до конца потока
-@Transactional
-public void receiveAndProcess(Order order) {
-    orderGateway.placeOrder(order);  // транзакция включает обработку в канале
+@Bean
+DirectChannel directOrders() {
+    return new DirectChannel();
 }
 
-// Для асинхронных каналов — настройка транзакций через Poller
-IntegrationFlow flow = IntegrationFlow
-    .from("queueChannel",
-        c -> c.poller(Pollers.fixedDelay(1000)
-            .transactionSynchronizationFactory(transactionSynchronizationFactory())
-            .transactional()))
-    .handle(service::process)
-    .get();
+@Bean
+QueueChannel queuedOrders() {
+    return new QueueChannel(10);
+}
+
+@Bean
+IntegrationFlow directOrderFlow(JdbcTemplate jdbc) {
+    return IntegrationFlow.from("directOrders")
+        .handle(String.class, (id, headers) -> updateOrder(jdbc, id))
+        .get();
+}
+
+@Bean
+IntegrationFlow queuedOrderFlow(JdbcTemplate jdbc) {
+    return IntegrationFlow.from("queuedOrders")
+        .handle(String.class, (id, headers) -> updateOrder(jdbc, id),
+            e -> e.poller(Pollers.fixedDelay(1000)))
+        .get();
+}
+
+private Object updateOrder(JdbcTemplate jdbc, String id) {
+    jdbc.update("UPDATE orders SET status = 'PROCESSED' WHERE id = ?", id);
+    return null;
+}
+
+// Отдельные запуски: отправитель в активной JDBC-транзакции вызывает
+// send() на одном из каналов. JdbcTemplate использует тот же DataSource,
+// что и менеджер транзакций. Poller выполняется в отдельном потоке.
+// Какие обновления входят в транзакцию отправителя?
 ```
 
-**Ограничение**: сквозная транзакция «из коробки» работает только через `DirectChannel`. `QueueChannel` разрывает транзакционный контекст, потому что вводит асинхронность — поэтому транзакцию для асинхронной части настраивают явно на poller'е (`.transactional()`).
+Императивная транзакция Spring привязана к потоку и ресурсу. При `DirectChannel` обработчик выполняется в стеке `send()`. `JdbcTemplate` получает соединение того же `DataSource`, привязанное к транзакции отправителя, поэтому обновление входит в неё. Если обработчик сам задаёт транзакционную границу, учитывается её propagation. Аналогично участвует в транзакции синхронный обработчик другого канала, например `PublishSubscribeChannel` без executor, при том же ресурсе и совместимой propagation.
+
+При `QueueChannel` запись выполняет poller в другом потоке. Транзакция отправителя на него не распространяется. `ExecutorChannel` обычно тоже передаёт работу другому потоку. Проверять нужно фактическое выполнение, поскольку, например, политика `CallerRunsPolicy` может выполнить задачу в потоке отправителя.
+
+Чтобы обернуть чтение из очереди и обработку в **отдельную** транзакцию, замените конфигурацию queued-потока на вариант с транзакционным poller.
+
+```java
+@Bean
+IntegrationFlow queuedOrderFlow(JdbcTemplate jdbc, PlatformTransactionManager jdbcTx) {
+    return IntegrationFlow.from("queuedOrders")
+        .handle(String.class, (id, headers) -> updateOrder(jdbc, id),
+            e -> e.poller(Pollers.fixedDelay(1000).transactional(jdbcTx)))
+        .get();
+}
+```
+
+Откат этой транзакции отменяет JDBC-изменения. Обычная очередь в памяти не становится транзакционной, и откат сам по себе не возвращает сообщение в неё.
+
+[Transaction Support, Spring Integration 6.5](https://docs.spring.io/spring-integration/reference/6.5/transactions.html)
 
 ## Q10. Как тестировать Spring Integration потоки?
 
-Поток — это набор бинов, связанных каналами, поэтому тестировать его удобнее целиком, как чёрный ящик: подать сообщение на вход и проверить, что пришло на выход. Для этого есть два инструмента из `spring-integration-test`:
-- **`@SpringIntegrationTest`** — поднимает контекст в тест-режиме и даёт `MockIntegrationContext`.
-- **`MockIntegrationContext`** — позволяет на лету подменять отдельные endpoint'ы моками (`substituteMessageHandlerFor`), не трогая остальной поток. Так удобно симулировать сбой конкретного шага и проверить, что ошибка ушла в `errorChannel`.
+```java
+@MessagingGateway(defaultRequestChannel = "ordersInput")
+interface OrderStatusGateway {
+    String process(String orderId);
+}
 
-**Типовой сценарий теста:** отправить сообщение через Gateway → дождаться результата на выходном `PollableChannel` (`receive(timeout)`) → проверить payload. Для проверки ошибок — подменить нужный handler на бросающий исключение и убедиться, что в `errorChannel` пришёл `ErrorMessage`.
+@Bean
+DirectChannel ordersInput() {
+    return new DirectChannel();
+}
+
+@Bean
+IntegrationFlow statusFlow() {
+    return IntegrationFlow.from("ordersInput")
+        .handle(String.class, (id, headers) -> "processed:" + id,
+            endpoint -> endpoint.id("orderHandler"))
+        .get();
+}
+
+// В тесте нужно вызвать gateway.process("order-1") и отдельно
+// воспроизвести исключение только на endpoint orderHandler.
+// У gateway не задан errorChannel. Как подменить шаг и проверить оба исхода?
+```
+
+`@SpringIntegrationTest` добавляет в тестовый Spring-контекст инструменты Spring Integration, в том числе `MockIntegrationContext`. Контекст с приложением загружает `@SpringBootTest`. С помощью `substituteMessageHandlerFor` можно заменить обработчик endpoint по его ID и сохранить остальную конфигурацию. После теста `resetBeans()` восстанавливает исходные обработчики.
+
+В request/reply сценарии проверяем результат вызова gateway. Из `DirectChannel` при отсутствии настроенного канала ошибок сбой возвращается в тот же вызов. Чтобы проверить именно контракт `send()`, тест отправляет `GenericMessage` прямо в этот канал.
 
 ```java
-@SpringIntegrationTest
 @SpringBootTest
+@SpringIntegrationTest
 class OrderIntegrationTest {
+    @Autowired MockIntegrationContext mockIntegrationContext;
+    @Autowired OrderStatusGateway gateway;
+    @Autowired @Qualifier("ordersInput") MessageChannel input;
 
-    @Autowired
-    private MockIntegrationContext mockIntegrationContext;
-
-    @Autowired
-    private OrderGateway gateway;
-
-    @Autowired
-    @Qualifier("ordersOutput")
-    private PollableChannel outputChannel;
-
-    @Test
-    void shouldProcessOrder() {
-        Order order = new Order("customer-1", BigDecimal.TEN);
-
-        gateway.placeOrder(order);
-
-        Message<?> result = outputChannel.receive(5000);
-        assertThat(result).isNotNull();
-        assertThat(result.getPayload()).isInstanceOf(OrderResult.class);
+    @AfterEach
+    void restoreHandlers() {
+        mockIntegrationContext.resetBeans();
     }
 
     @Test
-    void shouldHandleServiceFailure() {
-        // Замена реального handler на mock
+    void returnsReply() {
+        assertThat(gateway.process("order-1")).isEqualTo("processed:order-1");
+    }
+
+    @Test
+    void propagatesHandlerFailure() {
         mockIntegrationContext.substituteMessageHandlerFor(
-            "orderHandler",
-            m -> { throw new RuntimeException("Service unavailable"); }
-        );
+            "orderHandler", message -> {
+                throw new IllegalStateException("Service unavailable");
+            });
 
-        // Проверяем попадание в errorChannel
-        gateway.placeOrder(new Order(...));
-
-        Message<?> error = errorChannel.receive(5000);
-        assertThat(error.getPayload()).isInstanceOf(ErrorMessage.class);
+        assertThatThrownBy(() -> input.send(new GenericMessage<>("order-1")))
+            .isInstanceOf(MessagingException.class)
+            .hasRootCauseInstanceOf(IllegalStateException.class);
     }
 }
 ```
+
+Для теста одностороннего потока можно читать отдельный выходной `PollableChannel` через `receive(timeout)`. Для проверки доставки ошибок нужен источник, который публикует ошибку, и настроенный канал, например `QueueChannel`, заданный как канал ошибок poller. Тогда результат `receive(timeout)` проверяют на тип `ErrorMessage`, а его payload проверяют как исключение.
+
+[Testing Support](https://docs.spring.io/spring-integration/reference/6.5/testing.html) · [Error Handling](https://docs.spring.io/spring-integration/reference/6.5/error-handling.html)
 
 ## Q11. Чем Spring Integration отличается от Apache Camel?
 
@@ -439,6 +554,13 @@ class OrderIntegrationTest {
 
 ## Q12. Когда использовать Spring Integration vs Spring Kafka?
 
+```text
+A. Сервис читает записи из Kafka и пишет результаты в другой топик Kafka.
+B. Сервис читает записи из Kafka, преобразует их и направляет результат
+   по содержимому либо в топик Kafka, либо на SFTP-сервер.
+Какой инструмент подходит для каждого сценария?
+```
+
 Это вопрос про уровень абстракции. **Spring Kafka** — тонкий слой именно над Kafka (`@KafkaListener`, `KafkaTemplate`): берите его, когда задача — просто читать/писать в топик. **Spring Integration** — уровень выше: он не привязан к одному транспорту и даёт EIP-паттерны (маршрутизация, трансформация, агрегация, retry) поверх Kafka и не только. Эмпирическое правило: если кроме чтения/записи нужна заметная логика обработки или несколько источников — поднимайтесь на Spring Integration; если же речь про потоковую аналитику (окна, джойны) — это вообще другой класс инструментов (Kafka Streams / Flink).
 
 ```text
@@ -457,15 +579,25 @@ Real-time stream processing (windowing, joins):
 
 ## Q13. Что такое Claim Check и как его реализовать?
 
+```text
+Во входящем сообщении есть вложение на 20 МБ. Лимит сообщения брокера: 1 МБ.
+Маршрутизации нужны только метаданные. Исходные байты нужны на этапе проверки вложения.
+Как передать данные между этапами при таком лимите?
+```
+
 **Claim Check** — это EIP-паттерн «номерок в гардероб»: вместо того чтобы таскать большой payload через весь поток, его один раз кладут во внешнее хранилище (S3, БД), а по каналам гоняют только лёгкий ключ-ссылку. Когда тяжёлые данные снова нужны, по ключу их забирают обратно.
 
 **Зачем:** очереди, брокеры и сериализация плохо переносят большие сообщения (растёт latency, память, лимиты брокера). Claim Check держит сами очереди и маршрутизацию лёгкими — большой объём «лежит на полке» и не мешает.
 
 Реализуется парой шагов: **store** (payload → хранилище, в сообщении остаётся ключ) на входе и **retrieve** (ключ → payload из хранилища) там, где данные реально понадобились.
 
+Встроенные `ClaimCheckInTransformer` и `ClaimCheckOutTransformer` работают с общим `MessageStore`. Первый сохраняет исходное сообщение и выдаёт его ID, второй по ID восстанавливает сообщение. Для распределённого потока хранилище должно быть доступно обоим этапам.
+
+При хранении вложения в S3 можно реализовать пару пользовательских преобразований. В этом фрагменте `AttachmentClaimCheck` обозначает прикладной компонент, у которого `store` сохраняет вложение и возвращает ключ, а `retrieve` читает байты по ключу. Метаданные для промежуточных шагов передаются отдельно, например в заголовках сообщения.
+
 ```java
 @Bean
-public IntegrationFlow claimCheckFlow(ClaimCheckTransformer claimCheck) {
+public IntegrationFlow claimCheckFlow(AttachmentClaimCheck claimCheck) {
     return IntegrationFlow
         .from("largeOrdersInput")
         .transform(claimCheck::store)  // payload → S3, возвращает ключ
@@ -474,7 +606,7 @@ public IntegrationFlow claimCheckFlow(ClaimCheckTransformer claimCheck) {
 }
 
 @Bean
-public IntegrationFlow claimCheckRetrieveFlow(ClaimCheckTransformer claimCheck) {
+public IntegrationFlow claimCheckRetrieveFlow(AttachmentClaimCheck claimCheck) {
     return IntegrationFlow
         .from("lightweightChannel")
         .transform(claimCheck::retrieve)  // ключ → реальный payload из S3
@@ -483,7 +615,16 @@ public IntegrationFlow claimCheckRetrieveFlow(ClaimCheckTransformer claimCheck) 
 }
 ```
 
+[Claim Check, Spring Integration 6.5](https://docs.spring.io/spring-integration/reference/6.5/claim-check.html)
+
 ## Q14. Как работает Enricher (Content Enricher)?
+
+```text
+На входе заказ с customerId. Сервис клиентов по этому ID возвращает
+CustomerInfo с именем и кредитным лимитом. Следующему шагу нужен
+тот же заказ с заполненными customerName и creditLimit.
+Как встроить получение этих полей в поток?
+```
 
 **Content Enricher** решает частую проблему: в сообщении не хватает данных, которые лежат в другой системе. Например пришёл заказ только с `customerId`, а дальше по потоку нужны имя клиента и кредитный лимит. Enricher делает запрос за недостающими данными и дописывает их в сообщение — в payload или в заголовки.
 
@@ -509,35 +650,32 @@ IntegrationFlow flow = IntegrationFlow
 
 ## Q15. Как мониторить Spring Integration?
 
-Мониторинг строится на двух вещах: **метрики через Micrometer** (сколько сообщений прошло, как долго работали обработчики, насколько забиты очереди) и **`integrationgraph`** — actuator-endpoint, который отдаёт весь поток в виде графа узлов и каналов. Граф удобен, чтобы увидеть реальную топологию приложения: какие каналы есть, что к чему подключено, где узкое место.
-
-На что смотреть в первую очередь: `channels.queueSize` сигналит, что `QueueChannel` не успевает разгружаться (получатель медленнее отправителя), а время в `handlers` показывает, какой endpoint тормозит поток.
-
-```java
-// Spring Integration Metrics через Micrometer
-@Configuration
-public class MetricsConfig {
-
-    @Bean
-    public MetricsIntegrationExtension metricsExtension(MeterRegistry registry) {
-        return new MetricsIntegrationExtension(registry);
-    }
-}
+```text
+У приложения несколько каналов и обработчиков. В одном QueueChannel
+растёт число сообщений. Нужно увидеть связи между endpoint и определить,
+какой обработчик замедлился и как меняется размер очереди.
+Какие данные о топологии и работе компонентов нужно собрать?
 ```
 
-Метрики Spring Integration:
-- `spring.integration.send` — количество отправленных сообщений по каналу
-- `spring.integration.receive` — получение (для поллируемых каналов)
-- `spring.integration.handlers` — время выполнения handlers
-- `spring.integration.channels.queueSize` — размер очереди для `QueueChannel`
+В Spring Integration 6.5 `MeterRegistry` в контексте включает регистрацию метрик поддерживаемых компонентов. В приложении с Actuator реестр может предоставить Spring Boot. Для диагностики очереди сравнивайте динамику её размера, отправки и чтения сообщений и длительность работы обработчика. Один граф топологии не показывает скорость обработки.
+
+- `spring.integration.channel.queue.size` и `spring.integration.channel.queue.remaining.capacity` показывают текущий размер и свободную ёмкость `QueueChannel`.
+- `spring.integration.send` с `type=channel` измеряет число и длительность операций отправки. С `type=handler` тот же таймер измеряет вызовы обработчика. `spring.integration.receive` считает операции получения, например из pollable-канала при `type=channel`.
+- `spring.integration.handlers` показывает число компонентов-обработчиков. Для длительности используется таймер с `type=handler` либо `spring.integration.handler` при включённом Observation для обработчика и настроенном обработчике метрик Micrometer.
+
+Actuator endpoint `integrationgraph` показывает каналы, endpoints и связи между ними. Для чтения по HTTP добавьте его в экспозицию и обеспечьте авторизацию вызывающего, если маршрут защищён.
 
 ```yaml
 management:
   endpoints:
     web:
       exposure:
-        include: integrationgraph  # /actuator/integrationgraph — граф потоков
+        include: health,integrationgraph
 ```
+
+При стандартном префиксе граф доступен по `GET /actuator/integrationgraph`.
+
+[Metrics and Management](https://docs.spring.io/spring-integration/reference/6.5/metrics.html) · [Actuator Endpoints в Boot 3.5](https://docs.spring.io/spring-boot/3.5/reference/actuator/endpoints.html)
 
 ## See also
 
