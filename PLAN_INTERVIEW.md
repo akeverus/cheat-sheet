@@ -32,9 +32,14 @@
 диапазона, включая Notification System и Java Functional Interface, не входят
 в счётчик 55. Для учёта достаточно путей и записей о передаче полного файла.
 
-Из 55 файлов партии 42 восстановлены в `master`. Вне этой партии уже
+Из 55 файлов партии 43 восстановлены в `master`. Вне этой партии уже
 закоммичены Notification System, Java Functional Interface, Vector Databases
 и JDBC и пулы соединений.
+
+- **Spring Cloud**. MCQ-чат передал полный JSON в ходе
+  `01a21e39-d70a-7352-866a-f34575a585ac`. Использованы исходный JSON из `b28a1c807` и согласованный Markdown (SHA-256 `533ab428c7d63b1178eefe1a78675befb5c1056a33e679a9e7cf7f9cca149873`).
+  Полный JSON перенесён как есть из
+  `work/spring-cloud-recovery-full-regeneration/spring-cloud-interview.json`.
 
 - **Spring GraphQL**. MCQ-чат передал полный JSON в ходе
   `01a21e33-4c0c-7c42-a76b-78873f043b16`. Использованы исходный JSON из `b28a1c807` и согласованный Markdown (SHA-256 `bdfe2b8996009de5ba1687a284c846fd2d9768222d7b4e396810bbb8ed612e7e`).

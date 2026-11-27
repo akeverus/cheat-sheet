@@ -23,6 +23,8 @@ updated: "2026-05-07"
 
 **Spring Cloud** — набор проектов для построения микросервисных приложений на базе `Spring Boot`. Покрывает все ключевые аспекты распределённых систем: конфигурация, service discovery, маршрутизация, отказоустойчивость, трассировка, обмен сообщениями. На собеседованиях проверяют понимание архитектурных паттернов и практический опыт настройки компонентов.
 
+**Версии примеров.** Spring Boot 3.5.x и Spring Cloud 2025.0.x с BOM `spring-cloud-dependencies`. Boot 4.0.x соответствует train 2025.1.x. Исторические примеры помечены отдельно. [Матрица совместимости](https://spring.io/projects/spring-cloud/)
+
 ## Полезные ссылки
 
 ### Официальная документация
@@ -73,7 +75,7 @@ updated: "2026-05-07"
 **API Gateway**
 - [Q15. (!) Что такое `Spring Cloud Gateway`?](#q15--что-такое-spring-cloud-gateway)
 - [Q16. (!) Как настроить маршруты и фильтры в `Spring Cloud Gateway`?](#q16--как-настроить-маршруты-и-фильтры-в-spring-cloud-gateway)
-- [Q17. В чём разница между `Spring Cloud Gateway` и `Zuul`?](#q17-в-чём-разница-между-spring-cloud-gateway-и-zuul)
+- [Q17. Чем Gateway Server WebFlux 4.3 отличается от Zuul 1.x в Spring Cloud Netflix?](#q17-чем-gateway-server-webflux-43-отличается-от-zuul-1x-в-spring-cloud-netflix)
 
 **Балансировка нагрузки**
 - [Q18. (!) Как работает балансировка нагрузки в `Spring Cloud`?](#q18--как-работает-балансировка-нагрузки-в-spring-cloud)
@@ -110,7 +112,7 @@ updated: "2026-05-07"
 - [Q37. Что такое `Spring Cloud Contract` и как он помогает при тестировании микросервисов?](#q37-что-такое-spring-cloud-contract-и-как-он-помогает-при-тестировании-микросервисов)
 
 **Актуальные темы**
-- [Q38. (!) Spring Cloud Gateway vs Zuul — актуальность и ключевые отличия?](#q38--spring-cloud-gateway-vs-zuul--актуальность-и-ключевые-отличия)
+- [Q38. (!) Что меняется при миграции с Zuul 1.x в Spring Cloud Netflix на Gateway Server WebFlux 4.3 в Boot 3.5 и Cloud 2025.0?](#q38--что-меняется-при-миграции-с-zuul-1x-в-spring-cloud-netflix-на-gateway-server-webflux-43-в-boot-35-и-cloud-20250)
 - [Q39. (!) Что такое Spring Cloud Kubernetes и как он заменяет Eureka?](#q39--что-такое-spring-cloud-kubernetes-и-как-он-заменяет-eureka)
 - [Q40. (!) Как обновить конфигурацию без рестарта — @RefreshScope и /actuator/refresh?](#q40--как-обновить-конфигурацию-без-рестарта--refreshscope-и-actuatorrefresh)
 - [Q41. (!) Как устроена модель программирования Spring Cloud Stream на основе функций?](#q41--как-устроена-модель-программирования-spring-cloud-stream-на-основе-функций)
@@ -130,6 +132,16 @@ updated: "2026-05-07"
 - **Балансировка нагрузки** — клиентский выбор инстанса из реестра (`Spring Cloud Load Balancer`)
 - **Трассировка** — сквозное отслеживание запроса через цепочку сервисов (`Micrometer Tracing` + `Zipkin`/`Jaeger`)
 - **Обмен сообщениями** — единая абстракция над брокерами (`Spring Cloud Stream`)
+
+```mermaid
+flowchart LR
+    A[Сервисы Spring Boot]
+    B[Адреса экземпляров меняются]
+    C[Общие настройки хранятся централизованно]
+    D[Вызовы между сервисами иногда завершаются ошибкой]
+```
+
+**Схема для разбора**
 
 ```mermaid
 graph TB
@@ -157,7 +169,7 @@ graph TB
     style ZIP fill:#ffd43b,color:#000
 ```
 
-**Важный нюанс для собеседования:** `Spring Cloud` — это не облачная платформа, а набор библиотек. Слово «Cloud» в названии вводит в заблуждение: код одинаково работает и в публичном облаке (AWS, Azure, GCP), и on-premise. Никакой привязки к конкретному провайдеру нет.
+Spring Cloud можно использовать в публичном облаке и on-premise. Конкретную интеграцию выбирают под инфраструктуру, например Kubernetes API или Consul.
 
 ## Q2. (!) Какие ключевые компоненты входят в `Spring Cloud`?
 
@@ -167,25 +179,25 @@ graph TB
 |-----------|-----------|--------|
 | `Spring Cloud Config` | Централизованная конфигурация | Активный |
 | `Spring Cloud Netflix Eureka` | Service Discovery | Активный (только Eureka) |
-| `Spring Cloud Gateway` | API Gateway (реактивный) | Активный |
+| `Spring Cloud Gateway` | API Gateway (Server WebFlux и Server Web MVC) | Активный |
 | `Spring Cloud LoadBalancer` | Клиентская балансировка | Активный (замена Ribbon) |
 | `Spring Cloud CircuitBreaker` | Абстракция Circuit Breaker | Активный (Resilience4j) |
-| `Spring Cloud OpenFeign` | Декларативный HTTP-клиент | Активный |
+| `Spring Cloud OpenFeign` | Декларативный блокирующий HTTP-клиент | Feature-complete |
 | `Micrometer Tracing` | Distributed tracing | Активный (замена Sleuth) |
 | `Spring Cloud Stream` | Event-driven микросервисы | Активный |
 | `Spring Cloud Bus` | Распространение событий | Активный |
 | `Spring Cloud Consul` | Service Discovery + Config | Активный |
-| `Spring Cloud Vault` | Управление секретами | Активный |
+| `Spring Cloud Vault` | Интеграция с Vault для доступа к секретам | Активный |
 | `Spring Cloud Kubernetes` | Интеграция с K8s | Активный |
 
-**Устаревшие компоненты** (maintenance mode) и их современные замены — частый вопрос «что чем заменили»:
+**Исторические компоненты и их замены**
 
 - `Ribbon` → `Spring Cloud LoadBalancer`
 - `Hystrix` → `Resilience4j`
 - `Zuul` → `Spring Cloud Gateway`
 - `Sleuth` → `Micrometer Tracing` (начиная с Spring Cloud 2022.0)
 
-Общий вектор: всё, что пришло из Netflix OSS, постепенно заменили на собственные реактивные реализации Spring (кроме `Eureka` — она осталась).
+Границы релизов для модулей Netflix приведены в Q30. Для новых декларативных клиентов Spring предлагает рассмотреть HTTP Service Clients. [Spring Cloud OpenFeign](https://spring.io/projects/spring-cloud-openfeign)
 
 ## Q3. В чём разница между `Spring Cloud` и `Spring Boot`?
 
@@ -208,50 +220,46 @@ graph TB
 |--------|---------------|-------------|
 | Service Discovery | Eureka, Consul | kube-dns, CoreDNS |
 | Конфигурация | Config Server | ConfigMaps, Secrets |
-| Балансировка | LoadBalancer (клиентская) | Service (серверная) |
+| Балансировка | LoadBalancer (клиентская) | Service (распределение трафика через сетевой слой) |
 | Health Checks | Actuator | Liveness/Readiness probes |
 | Деплой | — | Deployments, Helm |
 
-**Современная тенденция:** если приложение и так живёт в Kubernetes, многие компоненты `Spring Cloud` становятся избыточными — кластер уже даёт DNS-discovery, ConfigMaps и серверную балансировку. Проект `Spring Cloud Kubernetes` как раз стыкует Spring-приложения с нативными механизмами K8s (ConfigMaps вместо Config Server, kube-dns вместо Eureka), позволяя выкинуть лишний инфраструктурный код. Подробнее в [вопросах по Kubernetes](../../devops/kubernetes-interview.md).
+В Kubernetes часть задач уже решает платформа. Например, приложение может обращаться к Service по DNS и получать конфигурацию из ConfigMap. Spring Cloud Kubernetes даёт Java-приложению доступ к этим механизмам через абстракции Spring. Подробнее в [вопросах по Kubernetes](../../devops/kubernetes-interview.md).
 
 ## Q5. Какие наиболее популярные аннотации в `Spring Cloud`?
 
-Большинство аннотаций группируются по компонентам: одни включают серверную часть (`@EnableEurekaServer`, `@EnableConfigServer`), другие — клиентскую (`@EnableDiscoveryClient`, `@EnableFeignClients`), третьи навешиваются на методы для отказоустойчивости (`@CircuitBreaker`).
+Аннотации зависят от модуля. Серверы Config и Eureka включают явно. Клиент Eureka и Consul Discovery обычно подключаются автоконфигурацией стартера.
 
 ```java
-// Service Discovery
-@EnableDiscoveryClient   // регистрация в Eureka/Consul
-@EnableEurekaServer      // запуск Eureka Server
+// Отдельные приложения: сервер конфигурации, узел реестра и клиент.
+// В приложении-клиенте есть HTTP-вызов order-service и защищаемый метод.
+// Какие аннотации применимы к каждому элементу сценария?
 
-// Config
-@EnableConfigServer      // запуск Config Server
-@RefreshScope            // перечитывание конфигурации без рестарта
-
-// Gateway
-@EnableGateway           // (опционально) включение Spring Cloud Gateway
-
-// Feign
-@EnableFeignClients      // включение Feign-клиентов
-@FeignClient(name = "order-service")  // декларативный HTTP-клиент
-
-// Circuit Breaker
+@EnableDiscoveryClient
+@EnableEurekaServer
+@EnableConfigServer
+@RefreshScope
+@EnableFeignClients
+@FeignClient(name = "order-service")
 @CircuitBreaker(name = "backendA", fallbackMethod = "fallback")
-
-// Stream
-@EnableBinding(Source.class)  // (legacy) привязка к каналу
 ```
 
-**Тренд:** начиная с Spring Cloud 2022.0 многие `@Enable*` аннотации больше не обязательны — достаточно положить нужный стартер в classpath, и автоконфигурация подключится сама. Аннотации остаются для явности и обратной совместимости, но «магия по зависимости» постепенно вытесняет ручное включение.
+- `@EnableConfigServer` включает Config Server, а `@EnableEurekaServer` включает сервер Eureka.
+- `@EnableDiscoveryClient` указывает на участие приложения в discovery. При наличии реализации, например Eureka Client в classpath, отдельная аннотация обычно не нужна.
+- `@RefreshScope` задаёт область действия для обновляемых целей бинов. `@EnableFeignClients` включает поиск Feign-клиентов, а `@FeignClient` объявляет конкретный HTTP-клиент.
+- `@CircuitBreaker` в Resilience4j задаёт защиту метода именованным предохранителем и может указывать метод fallback.
+
+Gateway Server запускается через стартер выбранного веб-стека. В Cloud Stream 4.3 объявляют функциональные бины и задают `spring.cloud.function.definition`. `@EnableBinding` относится к старому API. `@CircuitBreaker` в примере принадлежит Resilience4j, а программный API Spring Cloud показан в Q43.
 
 ## Q6. (!) Каким рекомендациям следовать при разработке приложений `Spring Cloud`?
 
 Базовый принцип: в распределённой системе всё рано или поздно ломается, а компонентов много. Поэтому рекомендации сводятся к двум целям — **вынести всё изменчивое наружу** (конфигурацию, адреса) и **изолировать сбои**, чтобы падение одного сервиса не валило систему.
 
-1. **Externalized Configuration** — все настройки в Config Server, секреты в Vault. Один и тот же артефакт работает в любом окружении, меняется только конфигурация.
+1. **Externalized Configuration.** Параметры окружения хранятся вне артефакта, например в Config Server или ConfigMap. Секреты можно получать из Vault.
 2. **Service Discovery** — никаких hardcoded URL, только имена сервисов. Инстансы появляются и исчезают, адреса меняются — discovery решает это автоматически.
-3. **Circuit Breaker** — все внешние вызовы через Resilience4j с fallback, чтобы зависший сосед не «утащил» вас за собой.
+3. **Отказоустойчивость.** Задайте сетевые таймауты, ограничьте параллелизм при необходимости и используйте Circuit Breaker на подходящих границах. Fallback имеет смысл, когда результат деградации сохраняет контракт операции.
 4. **Tracing** — Micrometer Tracing на всех сервисах: без сквозного `traceId` отладить путь запроса через 5+ сервисов практически невозможно.
-5. **Health Checks** — `/actuator/health` с readiness и liveness пробами, чтобы оркестратор знал, когда слать трафик и когда перезапускать под.
+5. **Health Checks.** При включённых группах проб используйте `/actuator/health/readiness` для готовности принимать трафик и `/actuator/health/liveness` для проверки жизнеспособности приложения.
 6. **Contract Testing** — Spring Cloud Contract ловит несовместимость API на этапе сборки, а не в проде.
 7. **Graceful Shutdown** — `server.shutdown=graceful`: дать активным запросам доработать перед остановкой инстанса.
 8. **12-Factor App** — логи в stdout, stateless-сервисы, конфигурация через окружение. Фундамент, на котором держатся остальные пункты.
@@ -282,6 +290,8 @@ management:
         enabled: true
 ```
 
+Для HTTP-экспозиции нужен Actuator, а для `/actuator/prometheus` также реестр `micrometer-registry-prometheus`. Доступ к диагностическим маршрутам настраивается отдельно. [Spring Boot 3.5 Actuator](https://docs.spring.io/spring-boot/3.5/reference/actuator/endpoints.html)
+
 ## Q7. (!) Что такое `Spring Cloud Config` и как он работает?
 
 `Spring Cloud Config` — централизованное хранилище конфигурации для всех микросервисов. Решает проблему «у меня 30 сервисов, и в каждом свои `application.yml`»: настройки лежат в одном месте (обычно Git), а сервисы тянут их оттуда при старте. Состоит из двух частей:
@@ -291,13 +301,23 @@ management:
 
 ```mermaid
 sequenceDiagram
+    participant A as order-service
+    participant C as Config Server
+    participant G as Репозиторий Git
+    Note over A: Запуск приложения с профилем prod
+```
+
+**Разбор.** Config Client обращается к Config Server за настройками приложения и профиля. Сервер читает выбранный источник и возвращает набор свойств клиенту.
+
+```mermaid
+sequenceDiagram
     participant S as Микросервис (Client)
     participant CS as Config Server
     participant Git as Git Repository
 
     S->>CS: GET /{application}/{profile}
     CS->>Git: Читает файл конфигурации
-    Git-->>CS: application-prod.yml
+    Git-->>CS: Общие и прикладные файлы для выбранного профиля
     CS-->>S: JSON с конфигурацией
     Note over S: Применяет настройки
 ```
@@ -308,9 +328,19 @@ sequenceDiagram
 - Обновление без рестарта через `@RefreshScope` + `/actuator/refresh`
 - Версионирование конфигурации через Git — история изменений, откат, code review настроек как кода
 
+Основные координаты запроса: `application`, `profile` и опциональный `label` (например, Git-ветка). При Config Data Import возможны отдельные запросы для профиля `default` и затем для активных профилей. [Config Client](https://docs.spring.io/spring-cloud-config/reference/4.3/client.html)
+
 ## Q8. (!) Как настроить `Config Server` и `Config Client`?
 
 **Config Server** (`application.yml`):
+
+```text
+Настройки order-service с профилем prod хранятся в Git, ветка main.
+Сервер конфигурации доступен по адресу http://config-server:8888.
+Какие настройки потребуются серверу и клиенту?
+```
+
+**Пример для разбора**
 
 ```yaml
 server:
@@ -329,7 +359,7 @@ spring:
           enabled: true
 
 encrypt:
-  key: my-secret-encryption-key
+  key: ${CONFIG_ENCRYPT_KEY}
 ```
 
 ```java
@@ -381,7 +411,11 @@ implementation 'org.springframework.cloud:spring-cloud-config-server'
 
 // Config Client
 implementation 'org.springframework.cloud:spring-cloud-starter-config'
+implementation 'org.springframework.retry:spring-retry'
+implementation 'org.springframework.boot:spring-boot-starter-aop'
 ```
+
+В примере импорт обязателен. Префикс `optional:` позволяет продолжить запуск при недоступности Config Server. Для retry в Config 4.3 нужны `fail-fast`, Spring Retry и AOP. `max-attempts: 5` включает первую попытку. При размещении импорта в профильном файле параметры retry указывают в URL импорта. [Config Client 4.3](https://docs.spring.io/spring-cloud-config/reference/4.3/client.html)
 
 ## Q9. (!) Что такое `Spring Cloud Bus` и как он обновляет конфигурацию?
 
@@ -389,20 +423,13 @@ implementation 'org.springframework.cloud:spring-cloud-starter-config'
 
 ```mermaid
 sequenceDiagram
-    participant Git as Git Repo
-    participant CS as Config Server
-    participant Bus as Message Broker<br/>(RabbitMQ/Kafka)
-    participant S1 as Service A (inst 1)
-    participant S2 as Service A (inst 2)
-    participant S3 as Service B
-
-    Git->>CS: webhook (push)
-    CS->>CS: /actuator/busrefresh
-    CS->>Bus: RefreshRemoteApplicationEvent
-    Bus->>S1: Refresh
-    Bus->>S2: Refresh
-    Bus->>S3: Refresh
-    Note over S1,S3: Все сервисы перечитывают<br/>конфигурацию из Config Server
+    participant G as Репозиторий Git
+    participant C as Config Server
+    participant B as RabbitMQ
+    participant S1 as order-service 1
+    participant S2 as order-service 2
+    participant S3 as product-service
+    Note over G: Изменён файл конфигурации
 ```
 
 ```yaml
@@ -414,9 +441,13 @@ spring:
   rabbitmq:
     host: rabbitmq
     port: 5672
-    username: guest
-    password: guest
+    username: ${RABBITMQ_USERNAME}
+    password: ${RABBITMQ_PASSWORD}
+```
 
+**Ручной запуск.** На узле, который принимает запрос, экспонируйте эндпоинт Actuator по HTTP и разрешите его вызов.
+
+```yaml
 management:
   endpoints:
     web:
@@ -424,11 +455,41 @@ management:
         include: busrefresh
 ```
 
-Ключевое отличие от обычного `/actuator/refresh`: вызов `POST /actuator/busrefresh` на **любом одном узле** публикует `RefreshRemoteApplicationEvent` в брокер, и все подписанные сервисы перечитывают конфигурацию сами. Типовой сценарий полностью без рук: push в Git → webhook дёргает `busrefresh` на Config Server → событие расходится по всему кластеру.
+Для ручного запуска отправьте `POST /actuator/busrefresh` на один узел с Actuator и включённым Bus. Получатели события выполняют refresh у себя. Для RabbitMQ добавьте `spring-cloud-starter-bus-amqp` всем участникам шины. Для Kafka используется `spring-cloud-starter-bus-kafka`. [Bus Endpoints 4.3](https://docs.spring.io/spring-cloud-bus/reference/4.3/spring-cloud-bus/bus-endpoints.html)
+
+**Запуск от Git.** Webhook вызывает `POST /monitor` на Config Server с `spring-cloud-config-monitor` и включённым Bus. Monitor определяет затронутые приложения, затем событие идёт подписчикам через брокер. На схеме показан случай, когда изменение затрагивает оба сервиса. [Config Monitor и Bus 4.3](https://docs.spring.io/spring-cloud-config/reference/4.3/server/push-notifications-and-bus.html)
+
+```mermaid
+sequenceDiagram
+    participant Git as Git Repo
+    participant CS as Config Server
+    participant Bus as Message Broker<br/>(RabbitMQ/Kafka)
+    participant S1 as Service A (inst 1)
+    participant S2 as Service A (inst 2)
+    participant S3 as Service B
+
+    Git->>CS: Webhook POST /monitor
+    CS->>Bus: RefreshRemoteApplicationEvent
+    Bus->>S1: Refresh
+    Bus->>S2: Refresh
+    Bus->>S3: Refresh
+    Note over S1,S3: Получатели события обновляют конфигурацию
+```
 
 ## Q10. (!) Что такое `Eureka` и как работает service discovery?
 
-`Eureka` — сервер обнаружения сервисов из экосистемы Netflix OSS. Реализует паттерн **Service Registry**: это «телефонная книга» системы. Каждый микросервис при старте регистрируется в Eureka (записывает свой адрес), а когда ему нужно вызвать другой сервис — спрашивает у Eureka список живых инстансов по имени, а не хранит адреса у себя. Так система переживает добавление, удаление и перезапуск инстансов без перенастройки.
+Eureka реализует Service Registry. Сервисы регистрируют адреса и метаданные, а клиенты периодически загружают реестр. Для выбора адреса приложение использует локальное представление реестра. Из-за кэширования и репликации список может отставать от фактического состояния экземпляров.
+
+```mermaid
+flowchart LR
+    E1[Eureka Server 1]
+    E2[Eureka Server 2]
+    A1[Service A, экземпляр 1]
+    A2[Service A, экземпляр 2]
+    B[Service B нужен адрес Service A]
+```
+
+**Разбор.** Сервисы регистрируют экземпляры и продлевают аренду. Клиент Service B читает реестр, выбирает экземпляр и обращается к нему напрямую.
 
 ```mermaid
 graph LR
@@ -452,12 +513,20 @@ graph LR
 1. **Register** — сервис при старте отправляет POST в Eureka с метаданными (имя, хост, порт, health URL)
 2. **Heartbeat** — каждые 30 секунд сервис отправляет PUT, подтверждая «я ещё жив»
 3. **Fetch Registry** — клиенты периодически (каждые 30 сек) скачивают актуальный реестр и кэшируют его локально, поэтому вызовы не ходят в Eureka на каждый запрос
-4. **Eviction** — если heartbeat не приходил 90 секунд, инстанс считается мёртвым и удаляется из реестра
-5. **Self-preservation** — защита от ложного массового удаления: если разом пропало больше ~15% heartbeat'ов, Eureka решает, что проблема не в сервисах, а в сети между ней и ними, и перестаёт удалять инстансы. Лучше отдать чуть устаревший реестр, чем выкинуть из него живые сервисы из-за сетевого сбоя — это прямое следствие AP-природы Eureka.
+4. **Eviction.** Стандартный срок аренды составляет 90 секунд. После истечения аренды инстанс можно удалить при очередном проходе eviction, если сервер разрешает удаление.
+5. **Self-preservation.** Сервер может приостановить eviction, если число получаемых продлений падает относительно расчётного порога. Коэффициент `renewal-percent-threshold` по умолчанию равен 0.85. Это порог частоты продлений. [Spring Cloud Netflix 4.3](https://docs.spring.io/spring-cloud-netflix/reference/4.3/configprops.html)
 
 ## Q11. (!) Как настроить `Eureka Server` и `Client`?
 
 **Eureka Server:**
+
+```text
+В системе есть отдельный реестр и два сервиса Spring Boot.
+Один сервис должен зарегистрировать экземпляр, другой получить его адрес по имени.
+Какие изменения нужны в приложениях?
+```
+
+**Пример для разбора**
 
 ```java
 @SpringBootApplication
@@ -488,7 +557,6 @@ eureka:
       defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
   server:
     enable-self-preservation: true
-    eviction-interval-timer-in-ms: 5000
 ```
 
 **Eureka Client (микросервис):**
@@ -502,11 +570,11 @@ eureka:
   client:
     service-url:
       defaultZone: http://eureka-server:8761/eureka/
-    registry-fetch-interval-seconds: 15
+    registry-fetch-interval-seconds: 30
   instance:
     prefer-ip-address: true
-    lease-renewal-interval-in-seconds: 15
-    lease-expiration-duration-in-seconds: 45
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
     metadata-map:
       version: "1.0.0"
       zone: "zone-a"
@@ -521,41 +589,48 @@ implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-cl
 **Кластер Eureka (production):** для HA два или три инстанса реплицируют реестр друг другу:
 
 ```yaml
-# Eureka Server 1
+# Eureka Server 1. Отдельный профиль для кластера.
 eureka:
+  instance:
+    hostname: eureka-server-1
   client:
+    register-with-eureka: true
+    fetch-registry: true
     service-url:
       defaultZone: http://eureka-server-2:8761/eureka/,http://eureka-server-3:8761/eureka/
 ```
 
+Задайте каждому узлу собственный `hostname` и адреса остальных peers. Ключ карты `defaultZone` регистрозависим. Согласуйте интервалы heartbeat с расчётом порога self-preservation на сервере. [Peer awareness](https://docs.spring.io/spring-cloud-netflix/reference/spring-cloud-netflix.html)
+
 ## Q12. Каким протоколам следует `Eureka`?
 
-Eureka намеренно простая: вся коммуникация строится на обычном HTTP REST, без бинарных протоколов и постоянных соединений. Это делает её легко отлаживаемой (можно дёрнуть API руками через `curl`) и языконезависимой.
+Операции клиента и репликация peers используют REST поверх HTTP(S). JSON и XML поддерживаются API Eureka. HTTP-клиент может переиспользовать соединения.
 
 - **REST over HTTP** — все операции (register, renew, cancel, fetch) через HTTP REST API
 - **JSON** — формат данных для обмена между клиентами и сервером (поддерживается и XML)
-- **DNS** — опционально, Eureka может интегрироваться с DNS для разрешения имён сервисов
+- **DNS.** Клиент Eureka может искать адреса серверов Eureka через DNS. Список экземпляров прикладного сервиса он получает из реестра.
 - **Peer-to-peer replication** — серверы Eureka синхронизируют реестр между собой тем же REST-протоколом
 
+```text
+POST   /eureka/apps/{appId}
+PUT    /eureka/apps/{appId}/{id}
+DELETE /eureka/apps/{appId}/{id}
+GET    /eureka/apps
+GET    /eureka/apps/{appId}
 ```
-# Примеры Eureka REST API
-POST   /eureka/apps/{appId}          — регистрация инстанса
-PUT    /eureka/apps/{appId}/{id}     — heartbeat (renew)
-DELETE /eureka/apps/{appId}/{id}     — де-регистрация
-GET    /eureka/apps                  — получить весь реестр
-GET    /eureka/apps/{appId}          — инстансы конкретного сервиса
-```
+
+Методы и пути соответствуют регистрации, продлению аренды, отмене регистрации и чтению реестра. Последние два запроса читают весь реестр или экземпляры одного сервиса соответственно.
 
 ## Q13. (!) В чём преимущества `Eureka` по сравнению с `Consul` и `Zookeeper`?
 
-Главное различие — выбор в [CAP-теореме](../../architecture/cap-theorem-interview.md). Eureka — **AP** (доступность важнее консистентности): при сетевом разделении она продолжит отдавать реестр, пусть и слегка устаревший. Consul и ZooKeeper — **CP**: они скорее откажут в обслуживании, чем отдадут неконсистентные данные. Для service discovery AP обычно предпочтительнее: лучше получить список инстансов с одним «лишним» мёртвым, чем не получить список вообще.
+Eureka отдаёт локальное представление реестра и реплицирует изменения между peers. Это даёт доступность discovery ценой возможных устаревших адресов. Consul использует Raft для записи в каталог, а поддерживаемые операции чтения могут выбирать режим консистентности. ZooKeeper требует кворум для записи и допускает устаревшие локальные чтения.
 
 | Критерий | `Eureka` | `Consul` | `ZooKeeper` |
 |----------|---------|---------|-------------|
-| Консистентность | AP (eventual) | CP (Raft) | CP (ZAB) |
+| Реестр | Репликация между peers | Raft для записи, режимы чтения | ZAB для записи, локальные чтения |
 | Язык | Java | Go | Java |
 | Health Check | Клиентский heartbeat | Серверный health check | Ephemeral nodes |
-| DNS | Опционально | Встроенный | Нет |
+| Discovery по DNS | DNS для поиска серверов Eureka | Встроенный DNS | Нет |
 | KV Store | Нет | Да | Да |
 | Self-preservation | Да | Нет | Нет |
 | Spring интеграция | Нативная | Spring Cloud Consul | Spring Cloud Zookeeper |
@@ -566,14 +641,26 @@ GET    /eureka/apps/{appId}          — инстансы конкретного
 - Self-preservation защищает от массового удаления при сетевых проблемах
 
 **Когда выбирать Consul:**
-- Нужна консистентность (CP)
+- Нужны строго согласованные чтения там, где API Consul поддерживает режим consistent
 - Multi-datacenter из коробки
 - Key-Value хранилище для конфигурации
 - Не только Java-сервисы (polyglot)
 
+Даже в согласованном реестре статус сервиса отражает последнюю полученную проверку. Клиенту всё равно нужны таймауты и обработка недоступного адреса. [Consul consistency modes](https://developer.hashicorp.com/consul/api-docs/features/consistency) · [ZooKeeper Internals](https://zookeeper.apache.org/doc/r3.9.3/zookeeperInternals.html)
+
 ## Q14. Сколько экземпляров `Eureka` запускать в production?
 
-Рекомендуется **минимум 3 инстанса** для отказоустойчивости. Каждый инстанс размещается в отдельной зоне доступности (Availability Zone).
+Для production с требованиями HA запускают несколько peer-aware серверов в разных доменах отказа. Три зоны на схеме дают пример размещения. Число узлов зависит от требуемой устойчивости, доступных зон и нагрузки. Протокол Eureka допускает и два узла.
+
+```mermaid
+flowchart LR
+    A[Зона доступности 1]
+    B[Зона доступности 2]
+    C[Зона доступности 3]
+    R[Реестр должен пережить отказ одной зоны]
+```
+
+**Схема для разбора**
 
 ```mermaid
 graph TB
@@ -592,19 +679,30 @@ graph TB
     E3 <-->|replication| E1
 ```
 
-При потере одного инстанса два оставшихся продолжают обслуживать запросы. Eureka — AP-система, поэтому при разделении сети каждая часть кластера продолжит отдавать (возможно, устаревший) реестр.
+При потере одного инстанса два оставшихся продолжают обслуживать запросы. При сетевом разделении доступный клиенту peer может вернуть локальный, потенциально устаревший список. Для такого чтения Eureka не требует кворума. [Spring Cloud Netflix](https://docs.spring.io/spring-cloud-netflix/reference/spring-cloud-netflix.html)
 
 ## Q15. (!) Что такое `Spring Cloud Gateway`?
 
-`Spring Cloud Gateway` — реактивный API Gateway: **единая точка входа** в микросервисную систему. Внешний клиент знает один адрес (gateway), а тот уже маршрутизирует запросы к нужным сервисам и попутно выполняет сквозные задачи — аутентификацию, rate limiting, логирование. Это снимает с самих сервисов общую инфраструктурную логику. Построен на `Spring WebFlux` и `Project Reactor`, заменяет устаревший `Zuul`.
+Spring Cloud Gateway Server маршрутизирует запросы и применяет общие правила, например ограничения частоты и обработку заголовков. Server WebFlux использует Spring WebFlux, Reactor и Reactor Netty. Начиная с Gateway 4.1 есть и Server Web MVC для Servlet-стека. Здесь и в примерах маршрутов используется Server WebFlux 4.3.
 
 Основные возможности:
 
 - **Маршрутизация** — направление запросов к нужным сервисам по path, header, host
-- **Фильтры** — модификация запросов/ответов (добавление заголовков, rate limiting, аутентификация)
+- **Фильтры.** Модификация запросов и ответов. Аутентификацию на входе можно настроить через цепочку Spring Security.
 - **Балансировка** — интеграция с `Spring Cloud LoadBalancer` и Eureka (синтаксис `lb://имя-сервиса`)
 - **WebSocket** — поддержка WebSocket-проксирования
-- **Rate Limiting** — встроенный `RequestRateLimiter` через Redis
+- **Rate Limiting.** Вариант `RequestRateLimiter` с общим хранилищем в Redis показан в Q33.
+
+```mermaid
+flowchart LR
+    C[HTTP-клиенты]
+    O[Order Service]
+    P[Product Service]
+    U[User Service]
+    R[Общие требования к доступу и частоте запросов]
+```
+
+**Схема для разбора**
 
 ```mermaid
 graph LR
@@ -619,7 +717,9 @@ graph LR
         F3[Logging Filter]
     end
 
-    C --> F1 --> F2 --> F3 --> GW
+    GW --- F1
+    GW --- F2
+    GW --- F3
 
     style GW fill:#4a9eff,color:#fff
 ```
@@ -630,74 +730,78 @@ graph LR
 
 Маршрут (route) описывается тремя частями, и важно не путать их роли:
 
-- **`predicates`** — *условие срабатывания*: при каких признаках запроса (path, method, header) маршрут вообще выбирается. Отвечают на вопрос «куда?».
+- **`predicates`** задают, при каких признаках запроса (path, method, header) маршрут подходит.
 - **`filters`** — *что сделать* с запросом/ответом, когда маршрут выбран: переписать путь, добавить заголовок, навесить Circuit Breaker, ограничить частоту.
 - **`uri`** — куда проксировать (`lb://имя` — через балансировщик из реестра).
 
 **Конфигурация через YAML:**
 
+```text
+GET и POST /api/orders/** принимает order-service.
+До передачи запроса нужно убрать /api и добавить X-Request-Source: gateway.
+Адрес экземпляра order-service заранее неизвестен.
+```
+
+**Пример для разбора**
+
 ```yaml
 spring:
   cloud:
     gateway:
-      routes:
-        - id: order-service
-          uri: lb://order-service        # lb:// — через Load Balancer
-          predicates:
-            - Path=/api/orders/**
-            - Method=GET,POST
-          filters:
-            - StripPrefix=1              # убирает /api из пути
-            - AddRequestHeader=X-Request-Source, gateway
-            - name: CircuitBreaker
-              args:
-                name: orderServiceCB
-                fallbackUri: forward:/fallback/orders
-            - name: Retry
-              args:
-                retries: 3
-                statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE
+      server:
+        webflux:
+          routes:
+            - id: order-service
+              uri: lb://order-service        # lb:// через LoadBalancer
+              predicates:
+                - Path=/api/orders/**
+                - Method=GET,POST
+              filters:
+                - StripPrefix=1              # убирает /api из пути
+                - AddRequestHeader=X-Request-Source, gateway
+                - name: CircuitBreaker
+                  args:
+                    name: orderServiceCB
+                    fallbackUri: forward:/fallback/orders
+                - name: Retry
+                  args:
+                    retries: 3
+                    methods: GET
+                    statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE
 
-        - id: product-service
-          uri: lb://product-service
-          predicates:
-            - Path=/api/products/**
-          filters:
-            - StripPrefix=1
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter:
-                  replenishRate: 10       # 10 запросов/сек
-                  burstCapacity: 20
+            - id: product-service
+              uri: lb://product-service
+              predicates:
+                - Path=/api/products/**
+              filters:
+                - StripPrefix=1
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 20
 
-      default-filters:
-        - AddResponseHeader=X-Response-Time, ${T(System).currentTimeMillis()}
+          default-filters:
+            - AddResponseHeader=X-Gateway, cloud
 ```
 
 **Кастомный фильтр на Java:**
 
 ```java
 @Component
-public class AuthGatewayFilterFactory extends AbstractGatewayFilterFactory<AuthGatewayFilterFactory.Config> {
+public class RequestSourceGatewayFilterFactory
+        extends AbstractGatewayFilterFactory<RequestSourceGatewayFilterFactory.Config> {
+
+    public RequestSourceGatewayFilterFactory() {
+        super(Config.class);
+    }
 
     @Override
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
-            ServerHttpRequest request = exchange.getRequest();
-            String authHeader = request.getHeaders().getFirst("Authorization");
-
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                return exchange.getResponse().setComplete();
-            }
-
-            // Добавляем userId в заголовок для downstream-сервисов
-            String userId = extractUserId(authHeader);
-            ServerHttpRequest modifiedRequest = request.mutate()
-                    .header("X-User-Id", userId)
+            ServerHttpRequest request = exchange.getRequest().mutate()
+                    .headers(headers -> headers.set("X-Request-Source", "gateway"))
                     .build();
-
-            return chain.filter(exchange.mutate().request(modifiedRequest).build());
+            return chain.filter(exchange.mutate().request(request).build());
         };
     }
 
@@ -707,27 +811,41 @@ public class AuthGatewayFilterFactory extends AbstractGatewayFilterFactory<AuthG
 
 ```groovy
 // build.gradle
-implementation 'org.springframework.cloud:spring-cloud-starter-gateway'
+implementation 'org.springframework.cloud:spring-cloud-starter-gateway-server-webflux'
+implementation 'org.springframework.cloud:spring-cloud-starter-loadbalancer'
+implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-reactor-resilience4j'
+implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
 ```
 
-## Q17. В чём разница между `Spring Cloud Gateway` и `Zuul`?
+Для `lb://` нужен источник экземпляров, например Eureka. Redis-фильтр использует настроенный Redis и по умолчанию разрешает ключ через имя `Principal`. Для маршрута с Circuit Breaker нужен локальный обработчик `/fallback/orders`. Собственную фабрику можно указать как `RequestSource` вместо готового `AddRequestHeader`. Для аутентификации Bearer используйте проверку токена в Spring Security. В Gateway 4.3 стартер и префикс `spring.cloud.gateway.server.webflux` заменили прежние имена. [Spring Cloud 2025.0 Release Notes](https://github.com/spring-cloud/spring-cloud-release/wiki/Spring-Cloud-2025.0-Release-Notes)
 
-Ключевое отличие — модель ввода-вывода. `Zuul 1.x` блокирующий (поток на запрос), `Spring Cloud Gateway` реактивный (event loop). Под высокой нагрузкой блокирующая модель упирается в размер пула потоков: тысячи одновременных подключений требуют тысячи потоков, каждый из которых ест память и простаивает в ожидании ответа downstream. Реактивный gateway обрабатывает те же подключения горсткой потоков, не блокируясь на I/O. Отсюда и остальные различия в таблице.
+## Q17. Чем Gateway Server WebFlux 4.3 отличается от Zuul 1.x в Spring Cloud Netflix?
+
+Zuul 1.x в старой интеграции Spring Cloud Netflix использовал блокирующий Servlet API. Gateway Server WebFlux обрабатывает I/O через реактивный стек и event loop. Spring Cloud Gateway также имеет отдельный вариант Server Web MVC. Сравнение ниже относится к Server WebFlux и Zuul 1.x.
 
 | Критерий | `Spring Cloud Gateway` | `Zuul 1.x` |
 |----------|----------------------|------------|
 | Модель | Реактивная (Netty + WebFlux) | Блокирующая (Servlet) |
 | Потоки | Event loop, мало потоков | Thread per request |
 | WebSocket | Да | Нет |
-| Производительность | Выше при высокой конкуренции | Хуже под нагрузкой |
+| Поведение под нагрузкой | Зависит от неблокирующих фильтров, клиента и нагрузки | Зависит от пула потоков, клиента и нагрузки |
 | Фильтры | `GatewayFilter`, `GlobalFilter` | `ZuulFilter` (pre/route/post) |
-| Статус | Активная разработка | Maintenance mode |
+| Статус интеграции в Spring Cloud | Поддерживается | Удалена в 2020.0 |
 
-**Рекомендация:** для новых проектов всегда используйте `Spring Cloud Gateway`. `Zuul` оставлен только для поддержки legacy-систем.
+Для миграции учитывайте совместимость с release train, используемый веб-стек и эквивалентность фильтров. Более поздние версии Netflix Zuul имеют свою модель I/O. [Spring Cloud 2020.0 Release Notes](https://github.com/spring-cloud/spring-cloud-release/wiki/Spring-Cloud-2020.0-Release-Notes)
 
 ## Q18. (!) Как работает балансировка нагрузки в `Spring Cloud`?
 
-`Spring Cloud` использует **клиентскую балансировку**: нет отдельного балансировщика-посредника — клиент сам берёт из реестра Eureka список инстансов нужного сервиса и сам решает, к какому обратиться (по умолчанию Round Robin). Отличие от серверной балансировки (nginx, k8s Service): там трафик идёт через общий прокси, здесь логика выбора живёт в каждом клиенте. Плюс — нет лишнего сетевого хопа и единой точки отказа; минус — балансировщик размазан по всем клиентам.
+Spring Cloud LoadBalancer выбирает конечный экземпляр на стороне вызывающего приложения. Список даёт `ServiceInstanceListSupplier`, например на основе `DiscoveryClient` и локального реестра Eureka. Стандартная стратегия выбора: Round Robin. При вызове через Kubernetes Service выбор может делать сетевой слой Kubernetes, а при вызове через nginx его делает прокси.
+
+```mermaid
+flowchart LR
+    C[Order Service запрашивает product-service]
+    P1[product-1:8081]
+    P2[product-2:8082]
+```
+
+**Разбор.** На схеме ниже клиент получает список экземпляров через discovery, применяет стратегию выбора и отправляет запрос.
 
 ```mermaid
 sequenceDiagram
@@ -737,13 +855,21 @@ sequenceDiagram
     participant P1 as Product Service (inst 1)
     participant P2 as Product Service (inst 2)
 
-    C->>E: Получить инстансы product-service
-    E-->>C: [inst1:8081, inst2:8082]
-    C->>LB: Выбрать инстанс
+    C->>LB: Выбрать инстанс product-service
+    LB->>E: DiscoveryClient читает локальный реестр Eureka
+    E-->>LB: [inst1:8081, inst2:8082]
     LB-->>C: inst1:8081 (Round Robin)
     C->>P1: GET /products/123
     P1-->>C: Product data
 ```
+
+```text
+Вызов: GET http://product-service/products/123
+Доступные экземпляры: product-1:8081 и product-2:8082
+Где выбирается адрес и какая стратегия действует по умолчанию?
+```
+
+**Пример настройки клиента:**
 
 ```java
 @Configuration
@@ -761,6 +887,10 @@ public class ProductClient {
 
     private final RestTemplate restTemplate;
 
+    public ProductClient(@LoadBalanced RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
+
     public Product getProduct(Long id) {
         // "product-service" — имя из Eureka, не URL
         return restTemplate.getForObject(
@@ -770,18 +900,29 @@ public class ProductClient {
 }
 ```
 
+Пример требует `spring-cloud-starter-loadbalancer` и источник экземпляров. Для блокирующего `RestClient` можно аналогично объявить `@LoadBalanced RestClient.Builder`. Если нужна автоконфигурация трассировки, примените customizer к создаваемому клиенту или его builder. [Spring Cloud Commons](https://docs.spring.io/spring-cloud-commons/reference/spring-cloud-commons/common-abstractions.html)
+
 ## Q19. (!) Что такое `Spring Cloud Load Balancer`?
 
-`Spring Cloud Load Balancer` (SCLB) — современная замена устаревшего `Netflix Ribbon`, реализующая клиентскую балансировку. Главное отличие от Ribbon — реактивный, неблокирующий API (работает и в WebFlux, и в MVC), плюс он интегрирован в ядро Spring Cloud, а не тащит за собой Netflix-зависимости. Из коробки даёт две стратегии:
+Spring Cloud LoadBalancer заменил Ribbon. Для стратегии выбора экземпляра есть реактивный API, с которым интегрируются как блокирующие, так и реактивные HTTP-клиенты.
 
-- **RoundRobinLoadBalancer** (по умолчанию) — последовательный перебор инстансов, равномерная нагрузка
+- **RoundRobinLoadBalancer** (по умолчанию) последовательно перебирает экземпляры. Это выравнивает число выборов в стабильном списке, а фактическая нагрузка зависит от стоимости запросов и состава списка.
 - **RandomLoadBalancer** — случайный выбор инстанса
+
+```text
+У order-service и product-service несколько экземпляров.
+Для обращений к product-service нужна случайная стратегия выбора.
+Для остальных сервисов нужно сохранить стандартную стратегию.
+```
+
+**Пример для разбора**
 
 ```java
 // Кастомная конфигурация Load Balancer для конкретного сервиса
 @LoadBalancerClient(
         name = "product-service",
         configuration = ProductServiceLBConfig.class)
+@Configuration(proxyBeanMethods = false)
 public class LoadBalancerConfig { }
 
 public class ProductServiceLBConfig {
@@ -802,13 +943,14 @@ public class ProductServiceLBConfig {
 spring:
   cloud:
     loadbalancer:
-      ribbon:
-        enabled: false    # отключить Ribbon, если он в classpath
+      configurations: health-check
       cache:
         ttl: 30s          # кэш инстансов
       health-check:
         interval: 10s     # проверка доступности инстансов
 ```
+
+Один интервал проверки не включает health-check supplier. В примере его выбирает `configurations: health-check`. При использовании Eureka обычно отключают дополнительный кэш LoadBalancer, поскольку клиент Eureka уже кэширует реестр. [Spring Cloud LoadBalancer](https://docs.spring.io/spring-cloud-commons/reference/spring-cloud-commons/loadbalancer.html)
 
 ## Q20. (!) Что такое паттерн `Circuit Breaker` и зачем он нужен?
 
@@ -816,18 +958,29 @@ spring:
 
 **Зачем это нужно.** Без предохранителя зависший сервис B забивает все потоки сервиса A ожиданием ответа; A перестаёт отвечать своему вызывающему — и так сбой расползается вверх по цепочке. Circuit Breaker обрывает эту цепную реакцию у источника.
 
-Состояния автомата:
+**Условие:**
+
+```mermaid
+sequenceDiagram
+    participant A as Сервис A
+    participant B as Circuit Breaker
+    Note over A,B: В t=0 состояние OPEN, интервал ожидания 10 с
+    Note over A,B: Остальные настройки Resilience4j по умолчанию
+    A->>B: Следующая попытка в t=12 с
+```
+
+**Состояния автомата Resilience4j:**
 
 ```mermaid
 stateDiagram-v2
     [*] --> CLOSED
-    CLOSED --> OPEN: Превышен порог ошибок<br/>(failureRateThreshold)
-    OPEN --> HALF_OPEN: Истёк таймаут ожидания<br/>(waitDurationInOpenState)
-    HALF_OPEN --> CLOSED: Пробные вызовы успешны
-    HALF_OPEN --> OPEN: Пробные вызовы неуспешны
+    CLOSED --> OPEN: Достигнут порог после минимальной выборки
+    OPEN --> HALF_OPEN: Интервал истёк, проверка при вызове или автоматический переход
+    HALF_OPEN --> CLOSED: Доли в пробной выборке ниже порогов
+    HALF_OPEN --> OPEN: Достигнут порог ошибок или медленных вызовов
 
     CLOSED: Запросы проходят нормально.<br/>Считаются ошибки в sliding window.
-    OPEN: Все запросы сразу отклоняются.<br/>Вызывается fallback-метод.
+    OPEN: Все запросы сразу отклоняются.<br/>Может сработать настроенный fallback.
     HALF_OPEN: Пропускается N пробных<br/>запросов для проверки.
 ```
 
@@ -836,6 +989,8 @@ stateDiagram-v2
 - **Fail fast** — мгновенный отказ вместо долгого ожидания таймаута, потоки вызывающего сервиса не копятся
 - **Graceful degradation** — fallback возвращает кэшированные или дефолтные данные, и пользователь видит деградацию, а не белый экран
 - **Автоматическое восстановление** — состояние HALF_OPEN само пропускает несколько пробных запросов и решает, ожил ли сервис, без ручного вмешательства
+
+У Resilience4j отдельно учитываются доли ошибок и медленных вызовов. По умолчанию переход из OPEN в HALF_OPEN проверяется при следующей попытке вызова после истечения интервала. Автоматический переход без новой попытки включается свойством `automaticTransitionFromOpenToHalfOpenEnabled`. В показанном сценарии при настройках по умолчанию попытка в t=12 с инициирует переход и может стать пробным вызовом. При включённом автоматическом переходе к этому моменту предохранитель уже может находиться в HALF_OPEN. Circuit Breaker учитывает результаты и отказывает новым вызовам, а таймауты и Bulkhead ограничивают ожидание и число параллельных операций. [Resilience4j CircuitBreaker](https://resilience4j.readme.io/docs/circuitbreaker)
 
 ## Q21. (!) Как настроить `Resilience4j` Circuit Breaker в `Spring Cloud`?
 
@@ -846,6 +1001,14 @@ stateDiagram-v2
 - **`failure-rate-threshold`** — процент ошибок, при котором происходит переход в OPEN.
 - **`wait-duration-in-open-state`** — сколько держать цепь разомкнутой перед пробным HALF_OPEN.
 - **`record-exceptions` / `ignore-exceptions`** — какие исключения считать сбоем, а какие игнорировать (бизнес-ошибки вроде «товара нет» — не повод размыкать цепь).
+
+```text
+Вызов productService защищён Circuit Breaker.
+Учитываются последние 10 вызовов, минимум для оценки равен 5.
+Порог ошибок 50%, пауза после открытия 10 с, пробных вызовов до 3.
+```
+
+**Пример для разбора**
 
 ```yaml
 # application.yml
@@ -861,8 +1024,7 @@ resilience4j:
         wait-duration-in-open-state: 10s    # сколько ждать перед HALF_OPEN
         permitted-number-of-calls-in-half-open-state: 3
         record-exceptions:
-          - java.io.IOException
-          - java.util.concurrent.TimeoutException
+          - org.springframework.web.client.ResourceAccessException
         ignore-exceptions:
           - com.example.BusinessException
 
@@ -872,12 +1034,7 @@ resilience4j:
         max-attempts: 3
         wait-duration: 500ms
         retry-exceptions:
-          - java.io.IOException
-
-  timelimiter:
-    instances:
-      productService:
-        timeout-duration: 3s
+          - org.springframework.web.client.ResourceAccessException
 ```
 
 ```java
@@ -886,9 +1043,12 @@ public class ProductService {
 
     private final RestTemplate restTemplate;
 
-    @CircuitBreaker(name = "productService", fallbackMethod = "getProductFallback")
-    @Retry(name = "productService")
-    @TimeLimiter(name = "productService")
+    public ProductService(@LoadBalanced RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
+
+    @Retry(name = "productService", fallbackMethod = "getProductFallback")
+    @CircuitBreaker(name = "productService")
     public Product getProduct(Long id) {
         return restTemplate.getForObject(
                 "http://product-service/products/{id}",
@@ -896,12 +1056,20 @@ public class ProductService {
     }
 
     // Fallback — вызывается при OPEN или при ошибке
-    private Product getProductFallback(Long id, Throwable ex) {
-        log.warn("Fallback for product {}: {}", id, ex.getMessage());
+    private Product getProductFallback(Long id, ResourceAccessException ex) {
+        return unavailable(id, ex);
+    }
+
+    private Product getProductFallback(Long id, CallNotPermittedException ex) {
+        return unavailable(id, ex);
+    }
+
+    private Product unavailable(Long id, RuntimeException ex) {
+        LoggerFactory.getLogger(ProductService.class).warn("Fallback for product {}", id, ex);
         return Product.builder()
                 .id(id)
                 .name("Unavailable")
-                .cached(true)
+                .cached(false)
                 .build();
     }
 }
@@ -909,29 +1077,34 @@ public class ProductService {
 
 ```groovy
 // build.gradle
-implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
 implementation 'io.github.resilience4j:resilience4j-spring-boot3'
+implementation 'org.springframework.boot:spring-boot-starter-aop'
+implementation 'org.springframework.boot:spring-boot-starter-actuator'
 ```
+
+Здесь аннотации Resilience4j AOP применяются при внешнем вызове Spring-бина через прокси. Сетевые таймауты задаются на уровне `RestTemplate` и его request factory. Аннотационный `@TimeLimiter` требует асинхронного контракта, например `CompletableFuture`, либо поддерживаемого реактивного типа с соответствующей интеграцией. По умолчанию Retry охватывает CircuitBreaker. Fallback задан на внешнем Retry, поэтому он не превращает ошибки отдельных попыток в успех до обработки Retry. При явном `record-exceptions` прочие исключения считаются успешными для статистики Circuit Breaker, если они не попали в `ignore-exceptions`. Правила учёта и обработка исключения вызывающим кодом задаются независимо. Для блокирующего Cloud API через `CircuitBreakerFactory` см. Q43. [Resilience4j и Spring Boot 3](https://resilience4j.readme.io/docs/getting-started-3)
 
 ## Q22. В чём разница между `Hystrix` и `Resilience4j`?
 
-Коротко: `Hystrix` — устаревший предшественник, `Resilience4j` — его актуальная замена. Главное архитектурное различие в подходе к изоляции. Hystrix по умолчанию выносил каждый вызов в отдельный thread pool (дорого по памяти и переключениям контекста), а Resilience4j построен на лёгких декораторах-обёртках вокруг функционального вызова — без обязательного выделения потоков. Плюс Resilience4j модульный: берёте только нужные паттерны (Retry, Bulkhead, RateLimiter), а не монолит.
+Hystrix по умолчанию исполнял команды в выделенном пуле, который может обслуживать несколько команд по общему ключу. Декораторы Resilience4j совместимы с выполнением в текущем потоке. Приложение подключает нужные модули, например Retry, Bulkhead или RateLimiter.
 
 | Критерий | `Hystrix` | `Resilience4j` |
 |----------|----------|----------------|
 | Статус | **Deprecated** (maintenance mode) | Активная разработка |
-| Архитектура | Separate thread pool per command | Декораторы (lightweight) |
+| Архитектура | Thread isolation по умолчанию, пулы настраиваются по ключу | Декораторы (lightweight) |
 | Java | Java 6+ | Java 17+ |
 | Реактивность | Ограниченная (RxJava 1) | Полная (Reactor, RxJava 2/3) |
 | Компоненты | CircuitBreaker, thread isolation | CircuitBreaker, RateLimiter, Retry, Bulkhead, TimeLimiter |
 | Конфигурация | Archaius | Spring Boot properties |
 | Метрики | Hystrix Dashboard | Micrometer (Prometheus, Grafana) |
 
-**Вывод:** в новых проектах всегда используйте `Resilience4j`. `Hystrix` остаётся только в legacy-системах.
+При миграции с Hystrix переносите настройки изоляции, таймаутов и fallback раздельно. Семафор Resilience4j сам по себе сохраняет выполнение в потоке вызывающего.
+
+[Изоляция и группы команд Hystrix](https://github.com/netflix/hystrix/wiki/How-To-Use)
 
 ## Q23. (!) Что такое `Spring Cloud OpenFeign`?
 
-`OpenFeign` — декларативный HTTP-клиент. Суть: вы описываете интерфейс с аннотациями (как если бы это был локальный сервис), а Feign на старте сам генерирует реализацию, которая под капотом делает HTTP-вызовы. Это убирает шаблонный код `RestTemplate`/`WebClient` (сборка URL, сериализация, обработка ответа) и делает вызов удалённого сервиса почти неотличимым от вызова обычного бина. Бонусом интеграция с балансировкой по имени сервиса и Circuit Breaker.
+OpenFeign создаёт прокси для декларативного интерфейса и выполняет синхронные блокирующие HTTP-вызовы. Прокси собирает запрос из сигнатуры и аннотаций, кодирует тело и декодирует ответ. Интеграции с LoadBalancer и Circuit Breaker требуют соответствующих зависимостей и настроек.
 
 ```java
 @FeignClient(
@@ -950,7 +1123,6 @@ public interface ProductClient {
     List<Product> getProducts(@RequestParam("category") String category);
 }
 
-// Fallback factory — даёт доступ к исключению
 @Component
 public class ProductClientFallbackFactory
         implements FallbackFactory<ProductClient> {
@@ -960,7 +1132,7 @@ public class ProductClientFallbackFactory
         return new ProductClient() {
             @Override
             public Product getProduct(Long id) {
-                log.warn("Fallback getProduct({}): {}", id, cause.getMessage());
+                LoggerFactory.getLogger(getClass()).warn("Fallback for product {}", id, cause);
                 return Product.defaultProduct(id);
             }
 
@@ -994,14 +1166,24 @@ public class ProductFeignConfig {
 
     @Bean
     public Retryer feignRetryer() {
-        return new Retryer.Default(100, 1000, 3);
+        return Retryer.NEVER_RETRY;
     }
 }
 ```
 
+В этом интерфейсе есть POST. Повторы записи требуют отдельного контракта идемпотентности, поэтому пример сохраняет стандартный для Spring Cloud OpenFeign `Retryer.NEVER_RETRY`. Для `fallbackFactory` требуется включённая интеграция Circuit Breaker из Q24. [OpenFeign 4.3](https://docs.spring.io/spring-cloud-openfeign/reference/4.3/spring-cloud-openfeign.html)
+
 ## Q24. Как настроить `Feign Client` с балансировкой и `Circuit Breaker`?
 
-Балансировка у Feign включается автоматически: если в `@FeignClient(name = "...")` указано имя сервиса (а не URL), Feign резолвит его через Service Discovery + Load Balancer. Circuit Breaker подключается флагом `openfeign.circuitbreaker.enabled: true`, после чего каждый метод клиента становится отдельным инстансом предохранителя. Важная деталь — **имя инстанса в Resilience4j формируется как `FeignClient#method(args)`**, и именно по нему задаётся конфигурация.
+Если клиент объявлен по имени без URL в аннотации и в свойствах, при наличии Spring Cloud LoadBalancer он выбирает экземпляр через настроенный источник. Явный URL используется напрямую. Для Circuit Breaker добавьте стартер реализации и включите `spring.cloud.openfeign.circuitbreaker.enabled`.
+
+```text
+ProductClient вызывает product-service по имени, без фиксированного URL.
+У product-service несколько экземпляров. Таймауты этого клиента равны 3 с.
+Для getProduct(Long) требуется отдельная конфигурация Circuit Breaker.
+```
+
+**Пример для разбора**
 
 ```yaml
 spring:
@@ -1012,18 +1194,18 @@ spring:
       client:
         config:
           default:
-            connect-timeout: 5000
-            read-timeout: 5000
-            logger-level: basic
+            connectTimeout: 5000
+            readTimeout: 5000
+            loggerLevel: basic
           product-service:              # настройки для конкретного клиента
-            connect-timeout: 3000
-            read-timeout: 3000
+            connectTimeout: 3000
+            readTimeout: 3000
 
-# Circuit Breaker для Feign
+# Circuit Breaker для ProductClient#getProduct(Long)
 resilience4j:
   circuitbreaker:
     instances:
-      ProductClient#getProduct(Long):   # имя = FeignClient#method(args)
+      ProductClientgetProductLong:
         sliding-window-size: 10
         failure-rate-threshold: 50
         wait-duration-in-open-state: 5s
@@ -1032,12 +1214,26 @@ resilience4j:
 ```groovy
 // build.gradle
 implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+implementation 'org.springframework.cloud:spring-cloud-starter-loadbalancer'
 implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
 ```
+
+В OpenFeign 4.3 по умолчанию используются буквенно-цифровые ID. Сигнатура `ProductClient#getProduct(Long)` даёт `ProductClientgetProductLong`. При отключении `alphanumeric-ids` используется форма с разделителями. Для своей схемы ID можно объявить `CircuitBreakerNameResolver`. [OpenFeign 4.3](https://docs.spring.io/spring-cloud-openfeign/reference/4.3/spring-cloud-openfeign.html)
 
 ## Q25. (!) Как организовать distributed tracing в `Spring Cloud`?
 
 Distributed tracing — это отслеживание пути одного запроса через всю цепочку микросервисов. Решает главную боль микросервисов: когда запрос проходит через 5–10 сервисов, по логам отдельных сервисов невозможно понять, где он замедлился или упал. Идея — присвоить запросу сквозной `traceId`, который пробрасывается во все вызовы, а каждый отдельный шаг (HTTP-вызов, запрос в БД) получает свой `spanId`. Собрав все спаны с одним `traceId` в трассировщике (Zipkin/Jaeger), вы видите полную картину: дерево вызовов и время каждого шага.
+
+```mermaid
+flowchart LR
+    C[Client] --> GW[Gateway]
+    GW --> OS[Order Service]
+    OS --> PS[Product Service]
+    OS --> IS[Inventory Service]
+    PS --> DB[(Database)]
+```
+
+**Разбор.** При настроенной передаче контекста узлы связывают спаны одним `traceId`. Каждый записанный спан получает свой `spanId`. На схеме отмечены отдельные примеры спанов. Инструментированный HTTP-переход может содержать клиентский и серверный спаны.
 
 ```mermaid
 graph LR
@@ -1045,7 +1241,7 @@ graph LR
     GW -->|traceId=abc123<br/>spanId=s1| OS[Order Service]
     OS -->|traceId=abc123<br/>spanId=s2| PS[Product Service]
     OS -->|traceId=abc123<br/>spanId=s3| IS[Inventory Service]
-    PS -->|traceId=abc123<br/>spanId=s4| DB[(Database)]
+    PS -->|SQL-вызов инструментирован в Product Service| DB[(Database)]
 
     OS -.->|export spans| ZIP[Zipkin / Jaeger]
     PS -.->|export spans| ZIP
@@ -1056,12 +1252,20 @@ graph LR
 **Ключевые понятия:**
 - **Trace** — полный путь запроса (один `traceId` на весь путь)
 - **Span** — единица работы (HTTP-вызов, SQL-запрос, обработка сообщения)
-- **Baggage** — пользовательские данные, пробрасываемые через все сервисы
-- **Sampling** — процент запросов, для которых собираются трассировки (100% для debug, 1-10% для production)
+- **Baggage.** Дополнительные поля контекста, передаваемые через настроенные границы propagation.
+- **Sampling.** Политика отбора трасс для записи и экспорта. Долю выбирают с учётом нагрузки, объёма данных и требований к диагностике.
 
 **Важно:** начиная с Spring Cloud 2022.0 (Spring Boot 3.x), `Spring Cloud Sleuth` заменён на `Micrometer Tracing`. Подробнее в [вопросах по Observability](../../monitoring/observability-interview.md).
 
 ## Q26. (!) Как настроить `Micrometer Tracing` (замена `Sleuth`)?
+
+```text
+Приложение на Spring Boot 3.5 должно экспортировать spans в Zipkin.
+В тестовой среде нужно записывать все трассы и добавлять их ID в журнал.
+Соседние клиенты передают контекст в W3C или B3.
+```
+
+**Пример для разбора**
 
 ```yaml
 # application.yml
@@ -1070,20 +1274,21 @@ management:
     sampling:
       probability: 1.0       # 1.0 = 100% запросов (для dev)
     propagation:
-      type: b3                # формат заголовков (b3, w3c)
+      consume: [W3C, B3, B3_MULTI]
+      produce: [W3C]
   zipkin:
     tracing:
       endpoint: http://zipkin:9411/api/v2/spans
 
 logging:
   pattern:
-    level: "%5p [${spring.application.name},%X{traceId:-},%X{spanId:-}]"
+    correlation: "[${spring.application.name},%X{traceId:-},%X{spanId:-}] "
 ```
 
 ```groovy
 // build.gradle — Spring Boot 3.x
 implementation 'org.springframework.boot:spring-boot-starter-actuator'
-implementation 'io.micrometer:micrometer-tracing-bridge-brave'    // или -otel для OpenTelemetry
+implementation 'io.micrometer:micrometer-tracing-bridge-brave'
 implementation 'io.zipkin.reporter2:zipkin-reporter-brave'        // экспорт в Zipkin
 ```
 
@@ -1094,6 +1299,10 @@ implementation 'io.zipkin.reporter2:zipkin-reporter-brave'        // экспо�
 public class OrderService {
 
     private final ObservationRegistry observationRegistry;
+
+    public OrderService(ObservationRegistry observationRegistry) {
+        this.observationRegistry = observationRegistry;
+    }
 
     public Order processOrder(OrderRequest request) {
         return Observation.createNotStarted("order.processing", observationRegistry)
@@ -1108,41 +1317,30 @@ public class OrderService {
 }
 ```
 
-**Что трассируется автоматически:**
-- HTTP-запросы (входящие и исходящие через `RestTemplate`, `WebClient`, `Feign`)
-- Kafka/RabbitMQ сообщения (через Spring Cloud Stream)
-- JDBC-запросы (с `datasource-micrometer`)
-- Scheduled-методы
+**Границы автоконфигурации.** Boot инструментирует входящие HTTP-запросы и исходящие вызовы через клиенты на основе автоконфигурированных `RestTemplateBuilder`, `RestClient.Builder` и `WebClient.Builder`. Feign требует `feign-micrometer` и активный `MicrometerObservationCapability`. Наблюдаемость сообщений включается в инструментированном клиенте или binder. Для JDBC нужна дополнительная инструментализация. Observation для `@Scheduled` регистрируется при наличии `ObservationRegistry` у планировщика задач. В логах Boot 3.5 добавляет корреляцию при включённом Tracing. [Трассировка Boot 3.5](https://docs.spring.io/spring-boot/3.5/reference/actuator/tracing.html)
 
 ## Q27. (!) Что такое `Spring Cloud Stream`?
 
-`Spring Cloud Stream` — фреймворк для event-driven микросервисов. Главная ценность: он отделяет бизнес-логику обработки сообщений от конкретного брокера. Вы пишете обычную `Function`/`Consumer`/`Supplier`, не зная, Kafka это или RabbitMQ; за подключение к брокеру отвечает **биндер** (binder) — сменная зависимость. Поменять Kafka на RabbitMQ — это замена стартера в `build.gradle` и пары строк конфигурации, без правок кода.
+Spring Cloud Stream отделяет бизнес-обработчик сообщений от подключения к брокеру. Обработчик объявляют как `Function`, `Consumer` или `Supplier`. За связь с брокером отвечает binder. При переходе с Kafka на RabbitMQ обработчик может остаться прежним, если он использует только общую модель. Топология, подтверждение доставки, порядок, партиционирование и обработка ошибок зависят от binder и требуют проверки.
 
 ```mermaid
-graph LR
-    subgraph Producer
-        P[Order Service]
-        O[Function<br/>orderCreated]
+flowchart LR
+    subgraph P[Order Service]
+        O[Бизнес-функция orderCreated]
+        BP[Адаптер Binder отправителя]
     end
-
-    subgraph Binder
-        K[Kafka / RabbitMQ]
+    K[(Брокер Kafka или RabbitMQ)]
+    subgraph C[Notification Service]
+        BC[Адаптер Binder получателя]
+        F[Бизнес-обработчик processOrder]
     end
-
-    subgraph Consumer
-        C[Notification Service]
-        F[Consumer<br/>processOrder]
-    end
-
-    P --> O --> K --> F --> C
-
-    style K fill:#ffd43b,color:#000
+    O --> BP --> K --> BC --> F
 ```
 
 **Ключевые концепции:**
 - **Binder** — адаптер к конкретному брокеру (`spring-cloud-stream-binder-kafka`, `...-rabbit`)
 - **Binding** — связь между logical destination (topic/queue) и функцией приложения
-- **Функциональная модель** (с Spring Cloud Stream 3.x) — `java.util.function.Function`, `Consumer`, `Supplier` вместо аннотаций `@StreamListener`
+- **Функциональная модель** использует `java.util.function.Function`, `Consumer` и `Supplier`. Она появилась в Spring Cloud Stream 2.1 и рекомендована с 3.x (см. Q41).
 
 Подробнее о Kafka в [вопросах по Apache Kafka](../../messaging/kafka-interview.md).
 
@@ -1154,13 +1352,17 @@ graph LR
 @Configuration
 public class StreamConfig {
 
-    // Supplier — генерирует сообщения (producer)
+    private final NotificationService notificationService;
+
+    public StreamConfig(NotificationService notificationService) {
+        this.notificationService = notificationService;
+    }
+
     @Bean
     public Supplier<OrderEvent> orderCreated() {
         return () -> new OrderEvent(UUID.randomUUID(), "CREATED", Instant.now());
     }
 
-    // Function — принимает и трансформирует (processor)
     @Bean
     public Function<OrderEvent, EnrichedOrderEvent> enrichOrder() {
         return event -> EnrichedOrderEvent.builder()
@@ -1170,11 +1372,10 @@ public class StreamConfig {
                 .build();
     }
 
-    // Consumer — обрабатывает сообщения (consumer)
     @Bean
     public Consumer<EnrichedOrderEvent> processOrder() {
         return event -> {
-            log.info("Processing order: {}", event.getOrderId());
+            LoggerFactory.getLogger(StreamConfig.class).info("Processing order: {}", event.getOrderId());
             notificationService.sendNotification(event);
         };
     }
@@ -1185,9 +1386,11 @@ public class StreamConfig {
 spring:
   cloud:
     function:
-      definition: enrichOrder;processOrder    # активные функции
+      definition: orderCreated;enrichOrder;processOrder
     stream:
       bindings:
+        orderCreated-out-0:
+          destination: orders-topic
         enrichOrder-in-0:
           destination: orders-topic
           group: enrichment-group
@@ -1212,28 +1415,33 @@ spring:
 
 ```groovy
 // build.gradle
-implementation 'org.springframework.cloud:spring-cloud-starter-stream-kafka'
+implementation 'org.springframework.cloud:spring-cloud-stream-binder-kafka'
 ```
+
+`start-offset: latest` применяется при отсутствии пригодного сохранённого offset, если не включён принудительный сброс. DLQ требует именованную группу. При создании топика с `replication-factor: 3` нужны как минимум три доступных брокера. Для одного локального брокера задайте фактор 1. [Свойства Kafka Binder](https://docs.spring.io/spring-cloud-stream/reference/4.3/kafka/kafka-binder/config-options.html)
 
 ## Q29. Что такое `Spring Cloud Commons`?
 
-`Spring Cloud Commons` — фундаментный модуль с общими **абстракциями (интерфейсами)**, которые реализуют все остальные проекты `Spring Cloud`. Смысл — развязать ваш код и конкретную реализацию: вы программируете против `DiscoveryClient`, а под ним может быть Eureka, Consul или Kubernetes. Сменить discovery → поменять стартер, код не трогаете. Это тот же принцип «программируй против интерфейса», только на уровне всего Spring Cloud.
+Spring Cloud Commons предоставляет интерфейсы и общие типы для интеграций Spring Cloud. Например, через `DiscoveryClient` приложение получает экземпляры из Eureka, Consul или Kubernetes. При смене реестра можно сохранить код, использующий общий интерфейс, и перенастроить регистрацию, метаданные и проверки.
 
 Ключевые абстракции:
 
 - **`DiscoveryClient`** — общий интерфейс для service discovery (Eureka, Consul, K8s)
 - **`ServiceInstance`** — модель инстанса сервиса
 - **`LoadBalancerClient`** — абстракция клиентской балансировки
-- **`@LoadBalanced`** — аннотация для `RestTemplate`/`WebClient`
-- **`@RefreshScope`** — перечитывание конфигурации
+- **`@LoadBalanced`** помечает `RestTemplate`, `RestClient.Builder` или `WebClient.Builder` для интеграции с клиентской балансировкой
+- **`@RefreshScope`** из Spring Cloud Context задаёт область действия бинов, цели которых пересоздаются после refresh
 - **`CircuitBreaker`** — абстракция для Resilience4j/Sentinel
 
 ```java
-// DiscoveryClient — можно использовать независимо от реализации
 @Service
 public class ServiceLocator {
 
     private final DiscoveryClient discoveryClient;
+
+    public ServiceLocator(DiscoveryClient discoveryClient) {
+        this.discoveryClient = discoveryClient;
+    }
 
     public List<String> getServiceInstances(String serviceId) {
         return discoveryClient.getInstances(serviceId).stream()
@@ -1249,33 +1457,43 @@ public class ServiceLocator {
 
 ## Q30. Что такое `Spring Cloud Netflix` и какие компоненты устарели?
 
-`Spring Cloud Netflix` — историческая основа Spring Cloud: интеграция библиотек Netflix OSS, на которых ранние микросервисы строились почти целиком. Изначально включал `Eureka`, `Ribbon`, `Hystrix`, `Zuul`, `Feign`. Со временем Netflix перестал активно развивать большинство этих проектов, и Spring заменил их собственными реактивными аналогами. Сегодня из всего набора активно поддерживается, по сути, только `Eureka` — остальное переведено в maintenance mode или удалено:
+Spring Cloud Netflix исторически интегрировал библиотеки Netflix OSS. В современном train основная интеграция этого проекта связана с Eureka. Поддержку Ribbon, Hystrix, Zuul, Archaius и Turbine из этой интеграции удалили в Spring Cloud 2020.0. Статус отдельных библиотек Netflix и сторонних версий Zuul может различаться.
 
 | Компонент | Статус | Замена |
 |-----------|--------|--------|
-| `Eureka` | **Активный** | — (по-прежнему рекомендуется) |
-| `Ribbon` | Удалён в 2022.0 | `Spring Cloud LoadBalancer` |
-| `Hystrix` | Удалён в 2022.0 | `Resilience4j` |
-| `Zuul` | Удалён в 2022.0 | `Spring Cloud Gateway` |
+| `Eureka` | **Поддерживается** | По выбору архитектуры |
+| `Ribbon` | Интеграция удалена в 2020.0 | `Spring Cloud LoadBalancer` |
+| `Hystrix` | Интеграция удалена в 2020.0 | `Resilience4j` |
+| `Zuul` | Интеграция удалена в 2020.0 | `Spring Cloud Gateway` |
 | `Feign` | Перенесён | `Spring Cloud OpenFeign` |
 | `Archaius` | Удалён | `Spring Boot Configuration` |
 | `Turbine` | Удалён | `Micrometer` + Prometheus |
 
 **Типичная миграция legacy-проекта:**
 
+```text
+Проект на Spring Cloud Hoxton использует Eureka, Ribbon, Hystrix и Zuul.
+Команда переводит его на Spring Cloud 2025.0.
+Какие интеграции можно оставить, а для каких потребуется замена?
+```
+
+**Пример для разбора**
+
 ```groovy
-// Было (Spring Cloud 2021.x)
+// Было (Spring Cloud Hoxton)
 implementation 'org.springframework.cloud:spring-cloud-starter-netflix-ribbon'
 implementation 'org.springframework.cloud:spring-cloud-starter-netflix-hystrix'
 implementation 'org.springframework.cloud:spring-cloud-starter-netflix-zuul'
 
-// Стало (Spring Cloud 2023.x)
+// Стало (Spring Cloud 2025.0)
 implementation 'org.springframework.cloud:spring-cloud-starter-loadbalancer'
 implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
-implementation 'org.springframework.cloud:spring-cloud-starter-gateway'
+implementation 'org.springframework.cloud:spring-cloud-starter-gateway-server-webflux'
 ```
 
 На собеседовании важно знать и старые, и новые компоненты — многие production-системы до сих пор используют Hystrix/Ribbon, и задача разработчика — планировать миграцию.
+
+Список удалённых модулей и дата перехода приведены в [Spring Cloud 2020.0 Release Notes](https://github.com/spring-cloud/spring-cloud-release/wiki/Spring-Cloud-2020.0-Release-Notes). При миграции Gateway WebFlux использует реактивный стартер Circuit Breaker из Q16. Блокирующий стартер в примере нужен приложению, которое использует соответствующую фабрику.
 
 ## Q31. (!) Как настроить `Retry` и `Bulkhead` через `Resilience4j` в Spring Cloud?
 
@@ -1285,12 +1503,14 @@ implementation 'org.springframework.cloud:spring-cloud-starter-gateway'
 - **Bulkhead** («переборка», по аналогии с отсеками корабля) — ограничивает число одновременных вызовов к ресурсу. Если один медленный сервис начнёт зависать, под него выделена лишь часть «слотов» — остальные потоки приложения остаются свободны для других задач. Так локальная проблема не топит весь сервис.
 - **RateLimiter** — ограничивает частоту вызовов (запросов в секунду), защищая downstream от перегрузки с вашей стороны.
 
-Два вида Bulkhead: **SEMAPHORE** (счётчик параллельных вызовов в текущем потоке, дёшево) и **THREAD_POOL** (отдельный пул потоков, изолирует полностью, но дороже).
+Два вида Bulkhead: **SEMAPHORE** (счётчик параллельных вызовов в текущем потоке, дёшево) и **THREADPOOL** (отдельный пул потоков, изолирует полностью, но дороже).
 
-**Зависимость:**
+**Зависимости для аспектов Resilience4j в Boot 3.5:**
 
 ```groovy
-implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
+implementation 'io.github.resilience4j:resilience4j-spring-boot3'
+implementation 'org.springframework.boot:spring-boot-starter-aop'
+implementation 'org.springframework.boot:spring-boot-starter-actuator'
 ```
 
 **Конфигурация через `application.yml`:**
@@ -1299,7 +1519,7 @@ implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-re
 resilience4j:
   retry:
     instances:
-      paymentService:
+      paymentStatus:
         max-attempts: 3
         wait-duration: 500ms
         retry-exceptions:
@@ -1310,7 +1530,7 @@ resilience4j:
 
   bulkhead:
     instances:
-      paymentService:
+      paymentStatus:
         max-concurrent-calls: 10          # максимум параллельных вызовов
         max-wait-duration: 100ms          # ждать ли свободного слота
 
@@ -1328,25 +1548,35 @@ resilience4j:
 @Service
 public class PaymentService {
 
-    @Retry(name = "paymentService", fallbackMethod = "paymentFallback")
-    @Bulkhead(name = "paymentService", type = Bulkhead.Type.SEMAPHORE)
-    @CircuitBreaker(name = "paymentService", fallbackMethod = "paymentFallback")
-    public PaymentResult processPayment(PaymentRequest request) {
-        return externalPaymentApi.charge(request);
+    private final ExternalPaymentApi externalPaymentApi;
+
+    public PaymentService(ExternalPaymentApi externalPaymentApi) {
+        this.externalPaymentApi = externalPaymentApi;
     }
 
-    private PaymentResult paymentFallback(PaymentRequest request, Exception e) {
-        log.warn("Payment fallback triggered: {}", e.getMessage());
-        return PaymentResult.pending(request.getId());  // отложенная обработка
+    @Retry(name = "paymentStatus", fallbackMethod = "paymentFallback")
+    @Bulkhead(name = "paymentStatus", type = Bulkhead.Type.SEMAPHORE)
+    @CircuitBreaker(name = "paymentStatus")
+    public PaymentResult getPaymentStatus(PaymentRequest request)
+            throws ConnectException, TimeoutException {
+        return externalPaymentApi.getStatus(request.getId());
+    }
+
+    private PaymentResult paymentFallback(PaymentRequest request, TimeoutException e) {
+        return PaymentResult.unknown(request.getId());
+    }
+
+    private PaymentResult paymentFallback(PaymentRequest request, ConnectException e) {
+        return PaymentResult.unknown(request.getId());
     }
 }
 ```
 
-**Порядок применения аннотаций:** `Bulkhead` → `TimeLimiter` → `CircuitBreaker` → `Retry` → `RateLimiter`. Если порядок важен — используйте `@Order` или программный API.
+По умолчанию вложенность от внешнего аспекта к внутреннему: `Retry(CircuitBreaker(RateLimiter(TimeLimiter(Bulkhead(вызов)))))`. Для изменения порядка используйте свойства порядка аспектов Resilience4j или явную композицию декораторов. В примере повторяется чтение статуса платежа, а HTTP-адаптер должен передавать указанные типы ошибок. `max-attempts: 3` включает первый вызов. При повторе записи нужна идемпотентность на стороне получателя. [Порядок аспектов](https://resilience4j.readme.io/docs/getting-started-3#aspect-order)
 
 ## Q32. (!) Как работает `Consul` как Service Discovery в Spring Cloud?
 
-`HashiCorp Consul` — альтернатива `Eureka` для service discovery, но более «всеядная»: помимо реестра сервисов даёт распределённый key-value store (можно использовать как Config Server), серверные health checks, DNS-интерфейс и service mesh (Consul Connect). По CAP это **CP**-система на консенсусе Raft — выбирает консистентность в ущерб доступности. Главные практические причины выбрать Consul вместо Eureka: нужна строгая консистентность реестра, polyglot-окружение (не только Java-сервисы) или встроенное KV-хранилище.
+Consul предоставляет каталог сервисов, health checks через агента, DNS, KV и service mesh. Spring Cloud Consul Discovery использует агент и его HTTP API. Запись состояния каталога опирается на Raft, а гарантии чтения зависят от выбранного режима и API.
 
 **Зависимость:**
 
@@ -1361,6 +1591,8 @@ implementation 'org.springframework.cloud:spring-cloud-starter-consul-config'
 spring:
   application:
     name: order-service
+  config:
+    import: "consul:consul-agent:8500"
   cloud:
     consul:
       host: consul-agent  # адрес Consul agent
@@ -1374,20 +1606,21 @@ spring:
         enabled: true
         prefix: config           # путь в KV-store: config/order-service/data
         default-context: defaults
+        format: YAML
 ```
 
 **Отличия от Eureka:**
 
 | Аспект | Consul | Eureka |
 |--------|--------|--------|
-| Консистентность | CP (Raft-консенсус) | AP (eventual consistency) |
+| Состояние каталога | Raft для записи, выбор режима чтения | Репликация между peers, локальный кэш клиента |
 | Health checks | Агент проверяет сервисы | Сервисы отправляют heartbeat |
 | KV-store | Встроен | Нет |
-| DNS | Поддерживается | Нет |
+| DNS для разрешения имён сервисов | Встроенный интерфейс | Клиентский API реестра |
 | Service Mesh | Consul Connect | Нет |
 | ACL | Встроен | Нет |
 
-**Использование как Config Server:**
+**Загрузка свойств из Consul KV:**
 
 ```
 # Структура ключей в Consul KV:
@@ -1395,21 +1628,24 @@ config/order-service/data   → YAML/Properties для order-service
 config/defaults/data        → общие настройки всех сервисов
 ```
 
+Путь `.../data` используется в примере с `format: YAML`. Для HTTP health check агент должен иметь доступ к `/actuator/health` приложения. Для установки с ACL настройте токены discovery и config согласно правилам кластера. [Spring Cloud Consul](https://docs.spring.io/spring-cloud-consul/docs/current/reference/html/index.html)
+
 ## Q33. (!) Как настроить rate limiting в `Spring Cloud Gateway`?
 
-Spring Cloud Gateway ограничивает частоту запросов фильтром `RequestRateLimiter`. По умолчанию он работает на Redis с алгоритмом **Token Bucket** (бакет токенов). Redis здесь обязателен не случайно: лимит должен быть **общим для всех инстансов** gateway, иначе три реплики по 10 req/s дали бы 30 req/s. Общий счётчик в Redis решает это — все инстансы списывают токены из одного бакета.
+В Gateway Server WebFlux фильтр `RequestRateLimiter` делегирует проверку реализации `RateLimiter`. Redis-вариант использует Token Bucket. Реплики Gateway с общим Redis, одинаковыми ID маршрута и ключами клиента используют общий бюджет.
 
 Параметры алгоритма:
-- **`replenishRate`** — сколько токенов добавляется в бакет в секунду (это и есть устойчивый лимит rps).
+- **`replenishRate`** задаёт число токенов, добавляемых в бакет за секунду. Устойчивая частота равна `replenishRate / requestedTokens`.
 - **`burstCapacity`** — максимальный размер бакета, то есть допустимый кратковременный всплеск сверх среднего.
 - **`requestedTokens`** — сколько токенов «стоит» один запрос (обычно 1).
 
-Идентифицировать клиента, к которому применяется лимит, нужно через бин **`KeyResolver`** — по API-ключу, IP или userId.
+`KeyResolver` определяет ключ лимита. Для ограничения по клиенту берите имя аутентифицированного principal или идентификатор проверенного API-ключа. При использовании IP учитывайте, чей адрес реально видит Gateway за прокси.
 
 **Зависимости:**
 
 ```groovy
-implementation 'org.springframework.cloud:spring-cloud-starter-gateway'
+implementation 'org.springframework.cloud:spring-cloud-starter-gateway-server-webflux'
+implementation 'org.springframework.cloud:spring-cloud-starter-loadbalancer'
 implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
 ```
 
@@ -1419,18 +1655,20 @@ implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive
 spring:
   cloud:
     gateway:
-      routes:
-        - id: api-service
-          uri: lb://api-service
-          predicates:
-            - Path=/api/**
-          filters:
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 10   # токенов/сек
-                redis-rate-limiter.burstCapacity: 20   # максимум токенов
-                redis-rate-limiter.requestedTokens: 1  # токенов на запрос
-                key-resolver: "#{@userKeyResolver}"    # Spring Bean-ссылка
+      server:
+        webflux:
+          routes:
+            - id: api-service
+              uri: lb://api-service
+              predicates:
+                - Path=/api/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 10   # токенов/сек
+                    redis-rate-limiter.burstCapacity: 20   # максимум токенов
+                    redis-rate-limiter.requestedTokens: 1  # токенов на запрос
+                    key-resolver: "#{@userKeyResolver}"    # Spring Bean-ссылка
 ```
 
 **Кастомный `KeyResolver` для идентификации клиента:**
@@ -1438,19 +1676,7 @@ spring:
 ```java
 @Bean
 public KeyResolver userKeyResolver() {
-    // Rate limit по API-ключу из заголовка
-    return exchange -> Mono.justOrEmpty(
-        exchange.getRequest().getHeaders().getFirst("X-API-Key")
-    ).defaultIfEmpty("anonymous");
-}
-
-@Bean
-public KeyResolver ipKeyResolver() {
-    // Rate limit по IP-адресу
-    return exchange -> Mono.just(
-        Objects.requireNonNull(exchange.getRequest().getRemoteAddress())
-               .getAddress().getHostAddress()
-    );
+    return exchange -> exchange.getPrincipal().map(Principal::getName);
 }
 ```
 
@@ -1458,14 +1684,21 @@ public KeyResolver ipKeyResolver() {
 
 ```java
 @Bean
-public RouteLocator routeLocator(RouteLocatorBuilder builder) {
+public RedisRateLimiter redisRateLimiter() {
+    return new RedisRateLimiter(10, 20, 1);
+}
+
+@Bean
+public RouteLocator routeLocator(RouteLocatorBuilder builder,
+                                 RedisRateLimiter redisRateLimiter,
+                                 KeyResolver userKeyResolver) {
     return builder.routes()
         .route("rate-limited-api", r -> r
             .path("/api/**")
             .filters(f -> f
                 .requestRateLimiter(c -> c
-                    .setRateLimiter(redisRateLimiter())
-                    .setKeyResolver(userKeyResolver())
+                    .setRateLimiter(redisRateLimiter)
+                    .setKeyResolver(userKeyResolver)
                 )
                 .stripPrefix(1)
             )
@@ -1475,26 +1708,36 @@ public RouteLocator routeLocator(RouteLocatorBuilder builder) {
 }
 ```
 
-При превышении лимита Gateway возвращает `429 Too Many Requests` с заголовками `X-RateLimit-Remaining` и `X-RateLimit-Burst-Capacity`.
+При превышении лимита по умолчанию возвращается `429 Too Many Requests`. RedisRateLimiter может добавить заголовки с остатком и ёмкостью, если их включение настроено. Если ключ пуст, действует отдельная политика. YAML и DSL показывают альтернативные объявления маршрута. В варианте DSL лимиты задаются в Spring-бине `RedisRateLimiter`. Оставьте параметры YAML только при декларативном варианте. [RequestRateLimiter 4.3](https://docs.spring.io/spring-cloud-gateway/reference/4.3/spring-cloud-gateway-server-webflux/gatewayfilter-factories/requestratelimiter-factory.html)
 
 ## Q34. (!) Как передавать заголовки трассировки между сервисами (propagation)?
 
 Чтобы `traceId` был сквозным, контекст трассировки (trace ID, span ID) нужно **передавать между сервисами** — иначе каждый сервис начнёт собственную трассу, и единой картины не получится. Передача (propagation) идёт через HTTP-заголовки, и обе стороны должны договориться об их формате.
 
-Хорошая новость: в Spring это работает автоматически. Micrometer Tracing перехватывает исходящие вызовы (`RestTemplate`, `WebClient`, Feign) и сам добавляет заголовки трассировки, а на входящей стороне — извлекает их и продолжает трассу. Руками заголовки прописывать не нужно; ваша задача — лишь выбрать формат propagation.
+Инструментированный HTTP-клиент добавляет контекст в исходящий запрос, а инструментированный сервер извлекает его на входе. Для Feign нужен `MicrometerObservationCapability`, для стандартных клиентов Boot используйте автоконфигурированные builder из Q26. Форматы приёма и отправки задаются отдельно.
 
 **Форматы propagation:**
 
 | Формат | Заголовки | Используется |
 |--------|-----------|-------------|
-| B3 (Zipkin) | `X-B3-TraceId`, `X-B3-SpanId`, `X-B3-Sampled` | Spring Cloud Sleuth (legacy) |
-| W3C TraceContext | `traceparent`, `tracestate` | Micrometer Tracing (актуальный) |
-| Baggage | `X-B3-*-baggage-*` | Propagation пользовательских данных |
+| B3 | `b3` или `X-B3-TraceId`, `X-B3-SpanId`, `X-B3-Sampled` | Single или multi-header соответственно |
+| W3C Trace Context | `traceparent`, опциональный `tracestate` | Формат отправки по умолчанию в Boot 3.5 |
+| W3C Baggage | `baggage` | Дополнительные поля контекста |
 
 **Настройка Micrometer Tracing (Spring Boot 3.x):**
 
+```text
+Вызов проходит через Gateway, order-service и вызванный им Feign-клиент.
+На входе получен traceparent, а один из соседей ещё использует B3.
+Нужно передать контекст дальше и экспортировать spans для диагностики.
+```
+
+**Пример для разбора**
+
 ```groovy
+implementation 'org.springframework.boot:spring-boot-starter-actuator'
 implementation 'io.micrometer:micrometer-tracing-bridge-otel'
+implementation 'io.github.openfeign:feign-micrometer'
 implementation 'io.opentelemetry:opentelemetry-exporter-zipkin'
 // или для Jaeger:
 implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
@@ -1504,7 +1747,12 @@ implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
 management:
   tracing:
     sampling:
-      probability: 1.0     # 100% sampling (в prod обычно 0.1)
+      probability: 1.0
+    propagation:
+      consume: [W3C, B3, B3_MULTI]
+      produce: [W3C]
+    baggage:
+      remote-fields: [tenant-id]
   zipkin:
     tracing:
       endpoint: http://zipkin:9411/api/v2/spans
@@ -1513,42 +1761,44 @@ management:
 **Автоматическое propagation через OpenFeign:**
 
 ```java
-// Micrometer Tracing автоматически добавляет заголовки трассировки
-// в исходящие запросы Feign, RestTemplate, WebClient
+// Feign использует Observation при активном MicrometerObservationCapability
 @FeignClient(name = "inventory-service")
 public interface InventoryClient {
     @GetMapping("/inventory/{productId}")
-    InventoryDto getInventory(@PathVariable Long productId);
-    // X-B3-TraceId и traceparent передаются автоматически
+    InventoryDto getInventory(@PathVariable("productId") Long productId);
 }
 ```
 
 **Добавление Baggage (пользовательские данные в контексте трассировки):**
 
 ```java
-@RestController
-public class OrderController {
+void processOrder(Tracer tracer, OrderRequest request, OrderService orderService) {
+    Span span = tracer.currentSpan();
+    if (span != null) {
+        span.tag("order.channel", request.getChannel());
+    }
 
-    private final Tracer tracer;
-
-    @PostMapping("/orders")
-    public ResponseEntity<OrderDto> createOrder(@RequestBody CreateOrderRequest req) {
-        // Добавляем бизнес-данные в контекст трассировки
-        tracer.currentSpan()
-              .tag("order.customerId", req.getCustomerId().toString())
-              .tag("order.channel", req.getChannel());
-
-        Baggage.current().getEntryValue("tenantId"); // читаем из входящего запроса
-        return ResponseEntity.ok(orderService.create(req));
+    try (BaggageInScope scope = tracer.createBaggageInScope("tenant-id", request.tenantId())) {
+        orderService.create(request);
     }
 }
 ```
 
+В примере используются типы Micrometer Tracing. Tag описывает текущий span, а baggage доступен в контексте вызова и может повлиять на исходящие заголовки. Передавайте только допустимые для получателя поля. Для OTLP вместо Zipkin-экспортера укажите OTLP-экспортер и свойства `management.otlp.tracing.*`. [Tracing Boot 3.5](https://docs.spring.io/spring-boot/3.5/reference/actuator/tracing.html)
+
 ## Q35. Как защитить межсервисные вызовы через `OAuth2` в Spring Cloud?
 
-Внутренние вызовы между сервисами тоже нужно защищать — нельзя считать сеть внутри кластера доверенной (принцип zero-trust). Для аутентификации «сервис-сервис» (без участия пользователя) применяют **OAuth2 Client Credentials** grant: вызывающий сервис получает токен у auth-сервера по своему `client-id`/`client-secret`, а принимающий сервис (Resource Server) валидирует этот JWT. Так каждый запрос несёт доказательство, кто его отправил и с какими правами (scope).
+Для вызова от имени сервиса OAuth2 Client Credentials позволяет обменять учётные данные клиента на access token. Пример предполагает, что сервер авторизации выдаёт подписанный JWT с scope `inventory:read` и аудиторией `inventory-service`. Resource Server проверяет токен и применяет правила доступа к маршрутам.
 
 **Настройка Resource Server (принимающий сервис):**
+
+```text
+order-service вызывает inventory-service без участия пользователя.
+В inventory-service доступны маршруты чтения и изменения остатков.
+Есть OAuth2-сервер, который выдаёт JWT с audience и scopes.
+```
+
+**Пример для разбора**
 
 ```yaml
 spring:
@@ -1556,7 +1806,8 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://auth-server/realms/my-realm
+          issuer-uri: https://auth.example.org/realms/my-realm
+          audiences: [inventory-service]
 ```
 
 **Настройка клиента (отправляющий сервис):**
@@ -1574,32 +1825,25 @@ spring:
             scope: inventory:read
         provider:
           inventory-service:
-            token-uri: http://auth-server/realms/my-realm/protocol/openid-connect/token
+            token-uri: https://auth.example.org/realms/my-realm/protocol/openid-connect/token
+  cloud:
+    openfeign:
+      oauth2:
+        enabled: true
+        client-registration-id: inventory-service
 ```
 
 **OAuth2-авторизованный Feign Client:**
 
 ```java
-@FeignClient(
-    name = "inventory-service",
-    configuration = OAuth2FeignConfig.class
-)
+@FeignClient(name = "inventory-service")
 public interface InventoryClient {
     @GetMapping("/inventory/{id}")
-    InventoryDto getInventory(@PathVariable Long id);
-}
-
-@Configuration
-public class OAuth2FeignConfig {
-    @Bean
-    public RequestInterceptor oauth2Interceptor(
-            OAuth2AuthorizedClientManager clientManager) {
-        return new OAuth2FeignRequestInterceptor(clientManager, "inventory-service");
-    }
+    InventoryDto getInventory(@PathVariable("id") Long id);
 }
 ```
 
-В Kubernetes аналогичного результата можно достичь через **mTLS** (Istio Service Mesh) без изменения кода приложения.
+У отправителя нужны OAuth2 Client, OpenFeign и LoadBalancer с discovery для вызова по имени. У получателя нужен OAuth2 Resource Server. В Servlet-цепочке защитите маршрут правилом `hasAuthority("SCOPE_inventory:read")` и включите `oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))`. Feign добавит Bearer-токен через `OAuth2AccessTokenInterceptor`. mTLS может дополнительно аутентифицировать стороны на транспортном уровне. [OpenFeign OAuth2](https://docs.spring.io/spring-cloud-openfeign/reference/4.3/spring-cloud-openfeign.html#oauth2-support)
 
 ## Q36. (!) Как настроить `OpenFeign` с Circuit Breaker и Fallback?
 
@@ -1612,6 +1856,7 @@ OpenFeign интегрируется с Resilience4j: каждый метод Fe
 
 ```groovy
 implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+implementation 'org.springframework.cloud:spring-cloud-starter-loadbalancer'
 implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
 ```
 
@@ -1637,10 +1882,10 @@ spring:
 public interface ProductClient {
 
     @GetMapping("/products/{id}")
-    ProductDto getProduct(@PathVariable Long id);
+    ProductDto getProduct(@PathVariable("id") Long id);
 
     @GetMapping("/products")
-    List<ProductDto> listProducts(@RequestParam String category);
+    List<ProductDto> listProducts(@RequestParam("category") String category);
 }
 
 @Component
@@ -1658,7 +1903,7 @@ public class ProductClientFallback implements ProductClient {
 }
 ```
 
-**Fallback с доступом к причине сбоя (`FallbackFactory`):**
+**Альтернатива с доступом к причине сбоя (`FallbackFactory`).** Объявите фабрику и замените атрибут `fallback` на `fallbackFactory` в том же интерфейсе.
 
 ```java
 @Component
@@ -1666,13 +1911,19 @@ public class ProductClientFallbackFactory implements FallbackFactory<ProductClie
 
     @Override
     public ProductClient create(Throwable cause) {
-        log.error("Feign fallback activated: {}", cause.getMessage());
-        return new ProductClientFallback(cause);
+        LoggerFactory.getLogger(getClass()).warn("Product client fallback", cause);
+        return new ProductClientFallback();
     }
 }
 
 @FeignClient(name = "product-service", fallbackFactory = ProductClientFallbackFactory.class)
-public interface ProductClient { ... }
+public interface ProductClient {
+    @GetMapping("/products/{id}")
+    ProductDto getProduct(@PathVariable("id") Long id);
+
+    @GetMapping("/products")
+    List<ProductDto> listProducts(@RequestParam("category") String category);
+}
 ```
 
 **Тонкая настройка Feign:**
@@ -1689,6 +1940,8 @@ spring:
             loggerLevel: FULL     # для отладки: NONE, BASIC, HEADERS, FULL
 ```
 
+Fallback должен быть Spring-бином. При наличии нескольких реализаций интерфейса Feign-прокси по умолчанию помечается primary. Пустой список подходит только там, где бизнес-контракт допускает такой деградированный ответ. [OpenFeign fallback](https://docs.spring.io/spring-cloud-openfeign/reference/4.3/spring-cloud-openfeign.html)
+
 ## Q37. Что такое `Spring Cloud Contract` и как он помогает при тестировании микросервисов?
 
 `Spring Cloud Contract` — инструмент для **Consumer-Driven Contract Testing**. Идея в том, чтобы зафиксировать договорённость между двумя сервисами в виде машиночитаемого контракта и проверять её с обеих сторон одновременно. Из одного контракта рождаются два артефакта: **stub** (заглушка) для тестов потребителя и **сгенерированный тест** для провайдера. Если провайдер сломает API, его собственный тест упадёт ещё на сборке — задолго до того, как несовместимость доедет до прода.
@@ -1696,19 +1949,6 @@ spring:
 **Проблема, которую это решает:**
 - Полноценные интеграционные тесты требуют поднимать все сервисы — медленно и хрупко.
 - Без контракта изменение API провайдера ломает потребителей незаметно — обнаруживается только при деплое в общее окружение, а не на этапе разработки.
-
-**Как работает Spring Cloud Contract:**
-
-```
-Consumer               Provider
-   |                      |
-   | 1. Пишет контракт ─► |
-   |    (Groovy/YAML)     |
-   | 2. Генерирует ◄───── | 3. Stub (WireMock)
-   |    тест провайдера   |
-   | 4. Использует stub   | 5. Прогоняет
-   |    в своих тестах    |    сгенерированный тест
-```
 
 **Контракт (YAML-формат):**
 
@@ -1718,8 +1958,6 @@ description: "Возвращает продукт по ID"
 request:
   method: GET
   url: /products/1
-  headers:
-    Content-Type: application/json
 response:
   status: 200
   headers:
@@ -1735,18 +1973,30 @@ response:
         value: "[0-9]+\\.[0-9]{2}"
 ```
 
+**Как работает Spring Cloud Contract:**
+
+```
+1. Потребитель и провайдер согласуют контракт (Groovy/YAML).
+2. Сборка провайдера генерирует проверку реализации и WireMock stub.
+3. Тест провайдера проверяет контракт, сборка публикует пакет stubs.
+4. Потребитель направляет клиент на локальный WireMock и проверяет свою интеграцию.
+```
+
 **Тест на стороне потребителя:**
 
 ```java
-@SpringBootTest
+@SpringBootTest(properties = "services.product.url=http://localhost:8100")
 @AutoConfigureStubRunner(
-    ids = "com.example:product-service:+:stubs:8100",
+    ids = "com.example:product-service:1.2.0:stubs:8100",
     stubsMode = StubRunnerProperties.StubsMode.LOCAL
 )
 class OrderServiceTest {
 
+    @Autowired
+    private ProductClient productClient;
+
     @Test
-    void createOrder_callsProductService() {
+    void readsProductFromProviderStub() {
         // WireMock stub автоматически поднят на порту 8100
         ProductDto product = productClient.getProduct(1L);
         assertThat(product.getName()).isEqualTo("Widget");
@@ -1758,39 +2008,51 @@ class OrderServiceTest {
 
 ---
 
-## Q38. (!) Spring Cloud Gateway vs Zuul — актуальность и ключевые отличия?
+Клиент теста использует `url = "${services.product.url:}"`, как в Q42. Для `LOCAL` артефакт `product-service:1.2.0:stubs` должен быть заранее установлен в локальный репозиторий. Контракт задаёт только проверяемые сценарии. [Spring Cloud Contract](https://docs.spring.io/spring-cloud-contract/reference/project-features-stubrunner.html)
 
-Короткий ответ на 2024+: для новых проектов выбор однозначен — **Spring Cloud Gateway**. `Zuul` (Netflix) — первое поколение gateway, оно в maintenance mode и, что критично, **несовместимо с Spring Boot 3** (использует старый Servlet API на `javax`, а не `jakarta`). Gateway же построен на реактивном стеке Reactor Netty / WebFlux и развивается активно.
+## Q38. (!) Что меняется при миграции с Zuul 1.x в Spring Cloud Netflix на Gateway Server WebFlux 4.3 в Boot 3.5 и Cloud 2025.0?
+
+Интеграцию Zuul 1.x со Spring Cloud Netflix удалили в train 2020.0. Spring Cloud Gateway остаётся частью современных train. Server WebFlux использует Reactor Netty, а Server Web MVC появился в Gateway 4.1 и работает на Servlet-стеке. Таблица сравнивает именно исторический Zuul 1.x и Gateway Server WebFlux 4.3.
 
 | Критерий | Zuul 1.x | Spring Cloud Gateway |
 |---------|---------|---------------------|
 | Модель ввода-вывода | Blocking (Servlet API) | Non-blocking (Reactor Netty / WebFlux) |
-| Производительность | Ограничена пулом потоков | Высокая пропускная способность |
+| Параллельность | Потоки Servlet-контейнера | Event loop и неблокирующий I/O |
 | Конфигурация | Java + properties | Java + YAML, Fluent API |
 | Фильтры | ZuulFilter (pre/post/route/error) | GatewayFilter + GlobalFilter |
 | WebSocket | Нет | Да |
-| HTTP/2 | Нет | Да |
-| Статус в Spring Cloud | Maintenance mode | Активная разработка |
-| Spring Boot 3 | Не поддерживается | Полная поддержка |
+| HTTP/2 | В рамках возможностей выбранной среды | Настраивается на транспортном уровне |
+| Статус в Spring Cloud | Интеграция удалена в 2020.0 | Входит в train 2025.0 |
+| Spring Boot 3.5 | Старой интеграции нет | Gateway 4.3 |
 
-**Zuul** переведён в maintenance mode и **несовместим с Spring Boot 3** (использует Servlet API, несовместимый с jakarta). Для новых проектов — только **Spring Cloud Gateway**.
+YAML и DSL ниже показывают два способа объявления маршрута. Для YAML-варианта реализуйте локальный endpoint `/fallback/orders`. Для обеих версий нужны discovery, Cloud LoadBalancer и реактивный стартер Circuit Breaker. [Gateway 4.3](https://docs.spring.io/spring-cloud-gateway/reference/4.3/index.html)
+
+```text
+В Zuul 1.x маршрут /api/orders/** направляется к order-service.
+При миграции на Gateway Server WebFlux 4.3 адреса экземпляров остаются динамическими.
+Нужно сохранить удаление /api из пути и резервный ответ при сбое.
+```
+
+**Пример для разбора**
 
 ```yaml
 # Spring Cloud Gateway — декларативная конфигурация
 spring:
   cloud:
     gateway:
-      routes:
-        - id: order-service
-          uri: lb://order-service          # lb:// — через Load Balancer
-          predicates:
-            - Path=/api/orders/**
-          filters:
-            - StripPrefix=1
-            - name: CircuitBreaker
-              args:
-                name: orderCB
-                fallbackUri: forward:/fallback/orders
+      server:
+        webflux:
+          routes:
+            - id: order-service
+              uri: lb://order-service          # lb:// через LoadBalancer
+              predicates:
+                - Path=/api/orders/**
+              filters:
+                - StripPrefix=1
+                - name: CircuitBreaker
+                  args:
+                    name: orderCB
+                    fallbackUri: forward:/fallback/orders
 ```
 
 ```java
@@ -1811,44 +2073,38 @@ public RouteLocator routes(RouteLocatorBuilder builder) {
 
 ## Q39. (!) Что такое Spring Cloud Kubernetes и как он заменяет Eureka?
 
-**Spring Cloud Kubernetes** позволяет переиспользовать привычные абстракции Spring Cloud (`DiscoveryClient`, загрузка конфигурации), но реализованные поверх нативных механизмов кластера, а не отдельных серверов. Логика проста: если приложение уже живёт в Kubernetes, кластер сам предоставляет discovery (через Service + kube-dns) и конфигурацию (ConfigMap/Secret) — держать рядом ещё Eureka и Config Server избыточно. Этот модуль убирает дублирование.
+Spring Cloud Kubernetes реализует абстракции Spring Cloud на основе Kubernetes. Обычный вызов по DNS-имени Kubernetes Service возможен без дополнительной библиотеки. Если коду нужен `DiscoveryClient` со списком экземпляров, используйте интеграцию с Kubernetes API. Для внешней конфигурации можно загрузить ConfigMap или Secret через Config Data либо смонтировать данные как файлы.
 
 | Spring Cloud | Spring Cloud Kubernetes |
 |-------------|------------------------|
-| Eureka Server/Client | Kubernetes DNS + Service |
-| Config Server | ConfigMap + Secret |
-| Spring Cloud Bus | — |
+| Реестр Eureka и API discovery | Kubernetes Service и API discovery на основе объектов Kubernetes |
+| Источник свойств через Config Server | ConfigMap и Secret при явно настроенном импорте |
 
-**Service Discovery без Eureka:**
+**Discovery и конфигурация через Fabric8 в одном namespace**
+
+```groovy
+implementation 'org.springframework.cloud:spring-cloud-starter-kubernetes-fabric8-all'
+```
 
 ```yaml
-# pom.xml
-<dependency>
-    <groupId>org.springframework.cloud</groupId>
-    <artifactId>spring-cloud-starter-kubernetes-fabric8-all</artifactId>
-</dependency>
-
-# application.yml
 spring:
+  application:
+    name: my-app
+  config:
+    import: "kubernetes:"
   cloud:
     kubernetes:
       discovery:
-        enabled: true
-        all-namespaces: false  # только текущий namespace
+        all-namespaces: false
       config:
-        enabled: true
-        name: my-app-config   # имя ConfigMap
-        namespace: production
+        name: my-app-config
 ```
 
 ```java
-// DiscoveryClient работает через Kubernetes API — находит поды через Labels
-@Autowired
-private DiscoveryClient discoveryClient;
-
 List<ServiceInstance> instances = discoveryClient.getInstances("order-service");
-// Kubernetes сам балансирует через kube-dns: http://order-service/...
 ```
+
+В приложении внедрён `DiscoveryClient`. В используемом примере клиент API находит экземпляры через Service и его Endpoints. Для EndpointSlice предусмотрена настройка `spring.cloud.kubernetes.discovery.use-endpoint-slices` и права на `endpointslices` в группе `discovery.k8s.io`. При прямом обращении к `http://order-service` в том же namespace используется DNS и сетевой слой Service, без этого вызова `DiscoveryClient`.
 
 **ConfigMap как конфигурация:**
 ```yaml
@@ -1865,44 +2121,57 @@ data:
 ```
 
 ```java
-// Spring Boot автоматически загружает ConfigMap как properties
+// Свойство поступает из импортированного ConfigMap
 @Value("${app.feature-flag}")
 private boolean featureFlag;  // из ConfigMap
 ```
 
 **RBAC для доступа к API Kubernetes:**
 ```yaml
-# ServiceAccount с правами на чтение ConfigMaps и Services
+# Role ограничивает чтение текущим namespace
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
+kind: Role
+metadata:
+  name: app-discovery-config
 rules:
   - apiGroups: [""]
     resources: ["configmaps", "pods", "services", "endpoints"]
     verbs: ["get", "list", "watch"]
 ```
 
+Role действует после привязки `RoleBinding` к ServiceAccount приложения. В примере ConfigMap, Role и приложение находятся в одном namespace. Монтирование файлов и API-доступ к Secret имеют разные требования к настройке и правам. [Spring Cloud Kubernetes Config Data](https://docs.spring.io/spring-cloud-kubernetes/reference/property-source-config.html)
+
 ## Q40. (!) Как обновить конфигурацию без рестарта — @RefreshScope и /actuator/refresh?
 
-**Проблема**: бины Spring создаются один раз при старте, и значения `@Value`/`@ConfigurationProperties` в них «застывают». Изменили настройку в Config Server — приложение всё равно работает по старой до перезапуска.
+Изменение в Git само по себе не меняет значения в работающем клиенте. При refresh Cloud обновляет источники свойств, переустанавливает значения у подходящих `@ConfigurationProperties` и очищает кэш целей `RefreshScope`.
 
-**Решение**: `@RefreshScope` + эндпоинт `/actuator/refresh`. Механизм такой: бин с `@RefreshScope` оборачивается в прокси, а при вызове `/actuator/refresh` Spring перечитывает `Environment` из Config Server и **пересоздаёт** такие бины при следующем обращении — уже с новыми значениями. Перезапуск не нужен.
+**Решение**: `@RefreshScope` + эндпоинт `/actuator/refresh`. Механизм такой: бин с `@RefreshScope` оборачивается в прокси, а при вызове `/actuator/refresh` для показанного импорта Config Server перечитываются значения, а целевой экземпляр бина в области refresh создаётся при следующем обращении через прокси.
 
 ```java
-// Бин с @RefreshScope пересоздаётся при вызове /actuator/refresh
+// Все запросы идут в один экземпляр приложения с Config Data Import.
+// 1. GET /feature при feature.new-ui.enabled=false в Config Server.
+// 2. В Config Server значение меняется на true.
+// 3. POST /actuator/refresh успешно завершается.
+// 4. GET /feature. Между этими шагами других обращений к бину нет.
 @RestController
-@RefreshScope                          // ключевая аннотация
+@RefreshScope
 public class FeatureController {
 
     @Value("${feature.new-ui.enabled:false}")
-    private boolean newUiEnabled;      // обновится при refresh
+    private boolean newUiEnabled;
 
     @GetMapping("/feature")
     public boolean isNewUiEnabled() {
         return newUiEnabled;
     }
 }
+```
 
-// @ConfigurationProperties + @RefreshScope
+При успешном refresh старый целевой экземпляр удаляется из кэша scope. Второй `GET /feature` обращается через тот же прокси. При этом создаётся новая цель, в которую внедряется актуальное значение `true`.
+
+**Вариант со связанными свойствами:**
+
+```java
 @Configuration
 @ConfigurationProperties(prefix = "app")
 @RefreshScope
@@ -1934,8 +2203,8 @@ management:
 
 **Массовое обновление через Spring Cloud Bus:**
 
-```yaml
-# Добавить зависимость
+```xml
+<!-- Добавить зависимость -->
 <dependency>
     <groupId>org.springframework.cloud</groupId>
     <artifactId>spring-cloud-starter-bus-kafka</artifactId>
@@ -1943,57 +2212,53 @@ management:
 ```
 
 ```bash
-# Один POST обновляет ВСЕ инстансы через Kafka/RabbitMQ
-curl -X POST http://gateway:8080/actuator/busrefresh
+# Config Server участвует в Bus и экспонирует busrefresh
+curl -X POST http://config-server:8888/actuator/busrefresh
 
 # Обновить только конкретный сервис:
-curl -X POST http://gateway:8080/actuator/busrefresh/order-service:**
+curl -X POST http://config-server:8888/actuator/busrefresh/order-service:**
 ```
 
-**Ограничения `@RefreshScope`:**
-- Не работает с `@Bean` в `@Configuration` без `@RefreshScope` на самом классе
-- Прокси-объект пересоздаётся — вызовы в полёте могут завершиться по старой конфигурации
-- `Environment` обновляется атомарно, но `@Scheduled` бины не перезапускаются
+**Границы refresh**
+
+- `@RefreshScope` на `@Configuration` не помещает в эту область каждый объявленный в ней `@Bean`. Где нужна отдельная обновляемая цель, scope задают на самом bean definition.
+- Прокси сохраняется, а его целевой объект заменяется лениво. Это не даёт общей атомарной смены состояния всех зависимостей и всех инстансов.
+- Удаление ключа из источника конфигурации не гарантирует сброс ранее связанного значения. `HikariDataSource` по умолчанию исключён из refresh. Для AOT и native image refresh scope не поддерживается.
+- Для ручного HTTP-вызова требуется экспозиция endpoint и разрешение на изменение состояния. Для Bus дополнительно нужны подписка получателей и настроенный брокер.
+
+[Spring Cloud Context и Refresh Scope](https://docs.spring.io/spring-cloud-commons/reference/4.3/spring-cloud-commons/application-context-services.html)
 
 ## Q41. (!) Как устроена модель программирования Spring Cloud Stream на основе функций?
 
-С версии 3.x Spring Cloud Stream отказался от аннотаций (`@StreamListener`, `@EnableBinding`) в пользу **функциональной модели**: вы объявляете обычный бин из `java.util.function.*`, а фреймворк сам подключает его к топику. Это и проще (нет проприетарных аннотаций), и позволяет компоновать обработку из стандартных функций.
+В Cloud Stream 4.3 приложение объявляет бины `Supplier`, `Function` и `Consumer`. Binder связывает входы и выходы этих бинов с destination. Поддержка функциональных бинов появилась в 2.1. Начиная с 3.x документация рекомендует функциональный подход. `@StreamListener` и `@EnableBinding` относятся к старому аннотационному API.
 
 Роль бина определяется его типом — это ключевая идея:
-- `Supplier<T>` — только выход, **источник** (producer); по умолчанию вызывается по таймеру (polling)
+- `Supplier<T>` имеет только выход. Императивный supplier вызывается poller по расписанию, по умолчанию раз в секунду. Для непрерывного `Supplier<Flux<T>>` фреймворк получает поток одним вызовом.
 - `Function<T, R>` — вход и выход, **трансформатор** (processor): прочитал из одного топика, записал в другой
 - `Consumer<T>` — только вход, **потребитель** (терминальная обработка, без выхода)
 
 ```java
-// Producer — отправляет сообщения
 @Bean
 public Supplier<OrderCreatedEvent> orderProducer() {
     return () -> new OrderCreatedEvent(UUID.randomUUID(), LocalDateTime.now());
-    // вызывается по умолчанию каждую секунду (polling)
 }
 
-// Processor — трансформирует сообщения
 @Bean
 public Function<OrderCreatedEvent, OrderConfirmedEvent> orderProcessor() {
-    return event -> {
-        // обработка: валидация, обогащение
-        return new OrderConfirmedEvent(event.orderId(), "CONFIRMED");
-    };
+    return event -> new OrderConfirmedEvent(event.orderId(), "CONFIRMED");
 }
 
-// Consumer — получает сообщения
 @Bean
-public Consumer<OrderConfirmedEvent> orderConsumer() {
-    return event -> {
-        log.info("Order confirmed: {}", event.orderId());
-        notificationService.send(event);
-    };
+public Consumer<OrderConfirmedEvent> orderConsumer(NotificationService notificationService) {
+    return notificationService::send;
 }
 ```
 
 ```yaml
 spring:
   cloud:
+    function:
+      definition: orderProducer;orderProcessor;orderConsumer
     stream:
       bindings:
         # Naming: <functionName>-in-<index>, <functionName>-out-<index>
@@ -2014,8 +2279,8 @@ spring:
 ```
 
 **Chaining функций:**
-```java
-// Композиция через pipe: function1|function2
+```yaml
+# Композиция через pipe
 spring:
   cloud:
     function:
@@ -2028,42 +2293,49 @@ spring:
 public Function<Flux<OrderEvent>, Flux<ProcessedEvent>> reactiveProcessor() {
     return flux -> flux
         .filter(e -> e.amount() > 0)
-        .map(e -> new ProcessedEvent(e.id(), "processed"))
-        .onErrorResume(e -> Flux.empty());
+        .map(e -> new ProcessedEvent(e.id(), "processed"));
 }
 ```
 
+При композиции через `|` результат предыдущего этапа поступает на вход следующего, а binder видит вход и выход всей композиции, а `;` перечисляет независимые определения. У реактивного процессора `Function<Flux<T>, Flux<R>>` операция связывает потоки. Для ошибок внутри потока используйте операторы Reactor согласно политике приложения. Поштучные retry и DLQ для императивного обработчика не переносятся автоматически на произвольную реактивную цепочку. [Функциональная модель 4.3](https://docs.spring.io/spring-cloud-stream/reference/4.3/spring-cloud-stream/producing-and-consuming-messages.html)
+
 ## Q42. (!) Что такое Spring Cloud OpenFeign и как он работает?
 
-**Spring Cloud OpenFeign** — декларативный HTTP-клиент. Принцип работы: на интерфейс с `@FeignClient` Spring на старте создаёт динамический прокси (через `@EnableFeignClients`), который превращает вызов метода в HTTP-запрос — собирает URL по `@GetMapping`/`@PostMapping`, сериализует тело, парсит ответ. Вы используете этот клиент как обычный `@Autowired` бин, а под капотом идёт сетевой вызов с балансировкой по имени сервиса и опциональным Circuit Breaker.
+Spring Cloud OpenFeign регистрирует декларативные блокирующие HTTP-клиенты через `@EnableFeignClients`. При вызове прокси преобразует аннотации интерфейса в запрос. Без явного URL настроенный LoadBalancer может выбрать экземпляр по имени сервиса. Circuit Breaker подключается отдельно.
 
 ```java
-// Клиент — только интерфейс, реализацию генерирует Feign
 @FeignClient(
-    name = "product-service",          // имя для Service Discovery
-    url = "${services.product.url:}",  // опционально: фиксированный URL
-    fallback = ProductClientFallback.class  // fallback при ошибке
+    name = "product-service",
+    url = "${services.product.url:}",
+    fallback = ProductClientFallback.class
 )
 public interface ProductClient {
 
     @GetMapping("/products/{id}")
-    ProductDto getProduct(@PathVariable Long id);
+    ProductDto getProduct(@PathVariable("id") Long id);
 
     @PostMapping("/products")
     ProductDto createProduct(@RequestBody CreateProductRequest request);
 
     @GetMapping("/products")
-    Page<ProductDto> findAll(@RequestParam int page, @RequestParam int size);
+    Page<ProductDto> findAll(@RequestParam("page") int page, @RequestParam("size") int size);
 }
 
-// Fallback
 @Component
 public class ProductClientFallback implements ProductClient {
     @Override
     public ProductDto getProduct(Long id) {
-        return ProductDto.empty(id);  // возвращаем заглушку
+        return ProductDto.empty(id);
     }
-    // ...
+    @Override
+    public ProductDto createProduct(CreateProductRequest request) {
+        throw new IllegalStateException("Product service is unavailable");
+    }
+
+    @Override
+    public Page<ProductDto> findAll(int page, int size) {
+        throw new IllegalStateException("Product service is unavailable");
+    }
 }
 ```
 
@@ -2095,43 +2367,50 @@ spring:
           product-service:             # имя клиента
             connectTimeout: 5000
             readTimeout: 10000
-            loggerLevel: full          # NONE, BASIC, HEADERS, FULL
+            loggerLevel: basic         # NONE, BASIC, HEADERS, FULL
       circuitbreaker:
         enabled: true                  # Resilience4j Circuit Breaker
 ```
 
-**Кастомная конфигурация:**
+**Кастомная конфигурация.** Подключите класс через `configuration = FeignConfig.class` у нужного клиента. Сервис `ServiceTokenProvider` здесь обозначает бин приложения, который получает access token. Для стандартной интеграции OAuth2 см. Q35.
 ```java
-@Configuration
 public class FeignConfig {
     @Bean
-    public RequestInterceptor authInterceptor() {
-        return template -> template.header("Authorization", "Bearer " + getToken());
+    public RequestInterceptor authInterceptor(ServiceTokenProvider tokens) {
+        return template -> template.header("Authorization", "Bearer " + tokens.accessToken());
     }
 
     @Bean
     public Retryer retryer() {
-        return new Retryer.Default(100, 1000, 3);  // delay, maxDelay, maxAttempts
+        return Retryer.NEVER_RETRY;
     }
 }
 ```
 
+Для `Page<T>` в OpenFeign 4.3 нужны Spring Data Commons и Jackson Databind. Fallback применяется при включённом Circuit Breaker и зарегистрированном fallback-бине. Список зависимостей для балансировки и Circuit Breaker приведён в Q24. [OpenFeign 4.3](https://docs.spring.io/spring-cloud-openfeign/reference/4.3/spring-cloud-openfeign.html)
+
 ## Q43. (!) Что такое Spring Cloud Circuit Breaker — абстракция над Resilience4j и Sentinel?
 
-**Spring Cloud Circuit Breaker** — это абстракция, а не реализация. Она даёт единый API (`CircuitBreakerFactory`), под которым может стоять любая из реализаций: Resilience4j, Sentinel, Spring Retry. Смысл — отвязать ваш код от конкретной библиотеки: вы пишете `cb.run(вызов, fallback)`, а сменить Resilience4j на Sentinel — это замена стартера, без правок бизнес-логики. Тот же принцип «программируй против интерфейса», что и в `Spring Cloud Commons`. По умолчанию используется Resilience4j.
+Spring Cloud Circuit Breaker задаёт общий API для разных реализаций. Для блокирующего кода используется `CircuitBreakerFactory`, для реактивного `ReactiveCircuitBreakerFactory`. В train 2025.0 проект Spring Cloud CircuitBreaker поставляет адаптеры Resilience4j и Spring Retry. Sentinel подключается через совместимый адаптер экосистемы Spring Cloud Alibaba. Стартер выбирает реализацию, а её настройки, исключения и поведение таймаутов проверяются при миграции отдельно.
 
 ```java
-// Без привязки к конкретной реализации
 @Service
 public class ProductService {
 
     private final CircuitBreakerFactory<?, ?> circuitBreakerFactory;
+    private final ProductClient productClient;
+
+    public ProductService(CircuitBreakerFactory<?, ?> circuitBreakerFactory,
+                          ProductClient productClient) {
+        this.circuitBreakerFactory = circuitBreakerFactory;
+        this.productClient = productClient;
+    }
 
     public ProductDto getProduct(Long id) {
         CircuitBreaker cb = circuitBreakerFactory.create("product-service");
         return cb.run(
-            () -> productClient.getProduct(id),          // защищённый вызов
-            throwable -> ProductDto.empty(id)            // fallback
+            () -> productClient.getProduct(id),
+            throwable -> ProductDto.empty(id)
         );
     }
 }
@@ -2148,6 +2427,7 @@ public class CircuitBreakerConfig {
             new Resilience4JConfigBuilder(id)
                 .circuitBreakerConfig(io.github.resilience4j.circuitbreaker.CircuitBreakerConfig.custom()
                     .slidingWindowSize(10)
+                    .minimumNumberOfCalls(5)
                     .failureRateThreshold(50)
                     .waitDurationInOpenState(Duration.ofSeconds(30))
                     .permittedNumberOfCallsInHalfOpenState(3)
@@ -2166,9 +2446,12 @@ public class CircuitBreakerConfig {
             builder.circuitBreakerConfig(
                 io.github.resilience4j.circuitbreaker.CircuitBreakerConfig.custom()
                     .slidingWindowSize(20)
+                    .minimumNumberOfCalls(10)
                     .failureRateThreshold(30)
                     .build()
-            ), "product-service"
+            ).timeLimiterConfig(TimeLimiterConfig.custom()
+                .timeoutDuration(Duration.ofSeconds(5))
+                .build()), "product-service"
         );
     }
 }
@@ -2179,17 +2462,21 @@ public class CircuitBreakerConfig {
 spring:
   cloud:
     gateway:
-      routes:
-        - id: product-route
-          uri: lb://product-service
-          filters:
-            - name: CircuitBreaker
-              args:
-                name: productCB
-                fallbackUri: forward:/fallback/product
-                statusCodes:
-                  - 500
-                  - 503
+      server:
+        webflux:
+          routes:
+            - id: product-route
+              uri: lb://product-service
+              predicates:
+                - Path=/products/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: productCB
+                    fallbackUri: forward:/fallback/product
+                    statusCodes:
+                      - 500
+                      - 503
 ```
 
 **Сравнение реализаций:**
@@ -2198,9 +2485,9 @@ spring:
 |-----------|------------|
 | Resilience4j | Lightweight, reactive-friendly, метрики через Micrometer |
 | Sentinel | Alibaba, богатый UI, rate limiting, flow control |
-| Spring Retry | Простой retry без state machine Circuit Breaker |
+| Spring Retry | CircuitBreakerRetryPolicy со stateful retry |
 
-**По умолчанию** Spring Cloud использует **Resilience4j** (Hystrix устарел).
+Для блокирующего примера добавьте `spring-cloud-starter-circuitbreaker-resilience4j`. Gateway WebFlux использует `spring-cloud-starter-circuitbreaker-reactor-resilience4j`, а fallback обрабатывается локальным маршрутом `/fallback/product`. Spring Cloud Circuit Breaker делегирует реализацию выбранному стартеру. [Spring Cloud CircuitBreaker 3.3](https://docs.spring.io/spring-cloud-circuitbreaker/reference/3.3/) · [Настройка Spring Retry Circuit Breaker](https://docs.spring.io/spring-cloud-circuitbreaker/reference/3.3/spring-cloud-circuitbreaker-spring-retry.html)
 
 ---
 
