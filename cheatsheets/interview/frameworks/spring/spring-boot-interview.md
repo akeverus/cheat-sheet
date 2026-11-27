@@ -78,7 +78,7 @@ updated: "2026-05-08"
 
 **Actuator и мониторинг**
 - [Q20. (!) Что такое `Spring Boot Actuator`?](#q20--что-такое-spring-boot-actuator)
-- [Q21. (!) Полный список `Actuator` endpoints и их категории](#q21--полный-список-actuator-endpoints-и-их-категории)
+- [Q21. (!) Какие эндпоинты Actuator дают дамп потоков, дамп кучи и управление уровнями логирования?](#q21--какие-эндпоинты-actuator-дают-дамп-потоков-дамп-кучи-и-управление-уровнями-логирования)
 - [Q22. Как создать custom `Actuator` endpoint?](#q22-как-создать-custom-actuator-endpoint)
 - [Q23. (!) Как настроить мониторинг и метрики (`Micrometer`)?](#q23--как-настроить-мониторинг-и-метрики-micrometer)
 - [Q24. Как настроить health check для `Kubernetes`?](#q24-как-настроить-health-check-для-kubernetes)
@@ -152,14 +152,25 @@ DI, AOP, транзакции и MVC остаются механизмами Spr
 
 ## Q3. Что делает аннотация `@SpringBootApplication`?
 
-`@SpringBootApplication` — это мета-аннотация-«ярлык», которая в одной строке заменяет три аннотации `Spring`:
-
 ```java
-@SpringBootConfiguration   // == @Configuration — класс является источником бинов
-@EnableAutoConfiguration    // запускает механизм автоконфигурации
-@ComponentScan              // сканирует текущий пакет и вложенные
-public @interface SpringBootApplication { }
+package com.example.orders;
+
+/*
+com.example
+├── orders
+│   ├── OrdersApplication
+│   └── service.OrderService (@Service)
+└── audit.AuditService (@Service)
+*/
+@SpringBootApplication
+class OrdersApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(OrdersApplication.class, args);
+    }
+}
 ```
+
+`@SpringBootApplication` объединяет три аннотации.
 
 Что делает каждая из трёх:
 - **`@SpringBootConfiguration`** — помечает класс как источник определений бинов (это специализация `@Configuration`).
@@ -172,7 +183,15 @@ public @interface SpringBootApplication { }
 - `exclude` — отключить ненужную автоконфигурацию: `@SpringBootApplication(exclude = DataSourceAutoConfiguration.class)`
 - `scanBasePackages` — задать другой корень сканирования, если структура пакетов нестандартная
 
+В примере стандартное сканирование охватывает `OrderService`. Соседний пакет `com.example.audit` находится вне этого дерева. [Аннотация SpringBootApplication](https://docs.spring.io/spring-boot/3.5/reference/using/using-the-springbootapplication-annotation.html).
+
 ## Q4. Как настроить `Spring Boot` с помощью `Maven` / `Gradle`?
+
+```text
+Один модуль собирается Maven с обязательным корпоративным parent POM.
+Другой модуль собирается Gradle. Оба используют Spring Boot 3.3.0
+и должны получать согласованные версии зависимостей без версии у каждого стартера.
+```
 
 Ключевая ценность здесь — управление версиями. `Spring Boot` поставляет BOM (Bill of Materials), который держит согласованные версии сотен библиотек, поэтому в проекте версии у стартеров можно не указывать вообще.
 
@@ -222,6 +241,14 @@ plugins {
 
 ## Q6. (!) Что такое `Starters` и как они устроены?
 
+```mermaid
+flowchart LR
+    A["Команда добавляет HTTP API"]
+    B["Нужны MVC и JSON"]
+    C["Нужен встроенный сервер"]
+    D["Зависимости объявлены в одном проекте"]
+```
+
 Стартер даёт одну зависимость для подключения набора библиотек. BOM `spring-boot-dependencies` задаёт управляемые версии, а автоконфигурация регистрирует бины, когда выполняются её условия. Подключение стартера может добавить классы, которые удовлетворяют условиям, но само по себе не гарантирует регистрацию всех бинов.
 
 ```mermaid
@@ -261,6 +288,13 @@ graph LR
 
 ## Q8. (!) Как создать свой `Starter`?
 
+```text
+Командам нужно подключать my-library одной зависимостью в Spring Boot 3.5.
+При наличии MyService в classpath библиотека должна предоставить его бин
+с URL и таймаутом из свойств приложения. Если приложение уже объявило
+свой MyService, он должен остаться единственным бином этого типа.
+```
+
 Стартер и автоконфигурацию удобно держать в двух модулях, если конфигурацию нужно подключать независимо. Для небольшой библиотеки допустим один модуль.
 
 **1. Модуль автоконфигурации** (`my-spring-boot-autoconfigure`):
@@ -298,30 +332,25 @@ Spring Boot 2.7 уже поддерживает `AutoConfiguration.imports`. В 
 
 **3. Зависимости стартера.** Если модули разделены, `my-spring-boot-starter` подтягивает модуль автоконфигурации и библиотеки.
 
-```mermaid
-graph TD
-    A["my-spring-boot-starter<br/>(пустой POM)"] --> B["my-spring-boot-autoconfigure"]
-    A --> C["my-library"]
-    B --> D["spring-boot-autoconfigure"]
-    B -.->|"@ConditionalOnClass"| C
-```
+Стартер объявляет зависимости от `my-library` и `my-spring-boot-autoconfigure`. Модуль автоконфигурации использует `spring-boot-autoconfigure` и проверяет наличие библиотечного класса через `@ConditionalOnClass`. [Создание автоконфигурации и стартера](https://docs.spring.io/spring-boot/3.5/reference/features/developing-auto-configuration.html).
 
 ---
 
 ## Q9. (!) Как работает auto-configuration — полный поток?
 
+```text
+Spring Boot 3.5. Три кандидата автоконфигурации из подключённых библиотек.
+CacheAutoConfiguration требует CacheClient. Класс есть в classpath,
+но конфигурация указана в списке исключений.
+MailAutoConfiguration требует MailClient. Этого класса в classpath нет.
+ClockAutoConfiguration объявляет бин Clock только при его отсутствии.
+Пользовательская конфигурация не регистрирует Clock.
+Как Boot обработает этих кандидатов?
+```
+
 Spring Boot 3.5 загружает кандидатов автоконфигурации из `AutoConfiguration.imports`. Условия отбора могут зависеть от classpath, свойств, зарегистрированных определений и типа приложения.
 
-```mermaid
-graph TD
-    A["SpringApplication.run()"] --> B["Создание ApplicationContext"]
-    B --> C["@EnableAutoConfiguration<br/>через @SpringBootApplication"]
-    C --> D["AutoConfigurationImportSelector"]
-    D --> E["Кандидаты из AutoConfiguration.imports"]
-    E --> F["Исключения, фильтры и порядок автоконфигураций"]
-    F --> G["Условия при обработке конфигураций и определений"]
-    G --> H["Регистрация подходящих определений"]
-```
+Вызов `SpringApplication.run()` создаёт контекст. При разборе конфигурации `@EnableAutoConfiguration` подключает `AutoConfigurationImportSelector`, который отбирает кандидатов для импорта. В этом примере `CacheAutoConfiguration` исключена, `MailAutoConfiguration` не проходит условие по классу, а `ClockAutoConfiguration` может зарегистрировать `Clock` при выполнении заданного условия.
 
 Ключевые этапы:
 
@@ -332,6 +361,13 @@ graph TD
 **Отладка:** запуск с `--debug` или `debug=true` выводит отчёт `CONDITIONS EVALUATION REPORT` — какие автоконфигурации включены/пропущены и почему.
 
 ## Q10. (!) Какие `@Conditional`-аннотации существуют?
+
+```text
+Библиотека может предоставить бин DataSource при трёх условиях:
+класс DataSource доступен, свойство spring.datasource.url задано,
+приложение ещё не предоставило собственный DataSource.
+Какие условия нужно выразить на классе и на фабричном методе?
+```
 
 | Аннотация | Условие |
 |-----------|---------|
@@ -350,10 +386,11 @@ graph TD
 Пример комбинации:
 
 ```java
-@AutoConfiguration
+@AutoConfiguration(before = DataSourceAutoConfiguration.class)
+@EnableConfigurationProperties(DataSourceProperties.class)
 @ConditionalOnClass(DataSource.class)
 @ConditionalOnProperty(prefix = "spring.datasource", name = "url")
-public class DataSourceAutoConfiguration {
+public class CustomDataSourceAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
@@ -363,11 +400,23 @@ public class DataSourceAutoConfiguration {
 }
 ```
 
+В примере по-прежнему нужны JDBC-драйвер и подходящая реализация `DataSource`.
+
 `@ConditionalOnMissingBean` учитывает определения, обработанные к моменту проверки. При зависимости от другой автоконфигурации важен порядок обработки. Общего порядка для всех видов условий нет (Q38). [Creating Your Own Auto-configuration](https://docs.spring.io/spring-boot/3.5/reference/features/developing-auto-configuration.html).
 
 ## Q11. Как отключить конкретную автоконфигурацию?
 
-Иногда автоконфигурация мешает: например, в classpath есть `DataSource`, но БД нужна не всегда (тесты, batch-задача), и `Spring Boot` падает на старте, не найдя URL. На этот случай есть три способа точечно выключить конкретную конфигурацию.
+```java
+// Spring Boot 3.5. Нужно отключить только DataSourceAutoConfiguration.
+@SpringBootApplication
+class MyApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(MyApplication.class, args);
+    }
+}
+```
+
+Иногда автоконфигурация мешает: например, в classpath есть стартер JDBC, но приложение запускается без БД. Если нет настроенного подключения и встроенной БД, попытка автоконфигурации `DataSource` может привести к ошибке запуска. На этот случай есть три способа точечно выключить конкретную конфигурацию.
 
 **1. Через аннотацию:**
 
@@ -393,6 +442,13 @@ public class MyConfiguration { }
 
 ## Q12. (!) Как зарегистрировать пользовательскую автоконфигурацию?
 
+```text
+Spring Boot 3.5. В JAR библиотеки уже есть классы
+com.example.MyAutoConfiguration и com.example.AnotherAutoConfiguration.
+Пакет библиотеки находится вне component scan приложения.
+Как сделать эти классы кандидатами на автоконфигурацию?
+```
+
 Чтобы `Spring Boot` подхватил вашу автоконфигурацию автоматически (как библиотечную), её мало пометить аннотацией — класс нужно зарегистрировать в специальном файле. `Spring Boot` читает этот файл на старте и добавляет перечисленные классы в список кандидатов автоконфигурации, после чего к ним применяются `@Conditional`-проверки.
 
 **Spring Boot 2.7 и 3.x:** создать файл `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` с полным именем класса (по одному на строку):
@@ -416,13 +472,20 @@ org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
 
 ## Q13. (!) Какие встроенные серверы поддерживает `Spring Boot`?
 
-В Spring Boot 3.5 Tomcat — сервер по умолчанию для Servlet-стека, Reactor Netty — для WebFlux. В зависимости от стека поддерживаются альтернативы, например Tomcat и Jetty для WebFlux. [Embedded Web Servers](https://docs.spring.io/spring-boot/3.5/how-to/webserver.html).
+```groovy
+// Spring Boot 3.5, Servlet-приложение. Нужно перейти на Undertow.
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+}
+```
+
+В Spring Boot 3.5 Servlet-стартер по умолчанию подключает Tomcat, а WebFlux-стартер подключает Reactor Netty. В Boot 3.5 доступны альтернативы, среди которых Jetty и Undertow для Servlet и WebFlux. В Boot 4.0 поддержку Undertow убрали. [Серверы Boot 3.5](https://docs.spring.io/spring-boot/3.5/how-to/webserver.html) · [Руководство по миграции на Boot 4.0](https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-4.0-Migration-Guide#undertow).
 
 | Сервер | Starter | Когда выбирать |
 |--------|---------|-------------|
 | **Tomcat** | `spring-boot-starter-tomcat` (по умолчанию в `starter-web`) | Дефолт. Самый зрелый, широкое комьюнити, NIO-коннектор — берите, если нет причин не брать |
 | **Jetty** | `spring-boot-starter-jetty` | HTTP/2 из коробки, хорош для WebSocket |
-| **Undertow** | `spring-boot-starter-undertow` | Низкое потребление памяти, высокая производительность |
+| **Undertow** | `spring-boot-starter-undertow` | Альтернатива Tomcat в Boot 3.5 |
 | **Reactor Netty** | `spring-boot-starter-reactor-netty` (по умолчанию в `starter-webflux`) | Неблокирующий runtime для WebFlux |
 
 `Tomcat` идёт по умолчанию вместе с `starter-web`, поэтому отдельно его подключать не нужно. Чтобы сменить сервер, исключают `Tomcat` и добавляют альтернативу:
@@ -451,20 +514,18 @@ public WebServerFactoryCustomizer<TomcatServletWebServerFactory> customizer() {
 
 ## Q14. (!) Архитектура встроенного сервера — как `Spring Boot` запускает `Tomcat`?
 
+```text
+Spring Boot 3.5. Servlet-приложение запускается через java -jar.
+В classpath есть spring-boot-starter-web и встроенный Tomcat.
+В приложении есть MVC-контроллер, пользовательская фабрика сервера не объявлена.
+Какие компоненты создадут сервер и подключат к нему обработку MVC-запросов?
+```
+
 Процесс запуска Tomcat в Servlet-приложении Spring Boot 3.5:
 
-```mermaid
-graph TD
-    A["SpringApplication.run()"] --> B["Определение типа приложения:<br/>SERVLET / REACTIVE / NONE"]
-    B --> C["Для SERVLET: создание<br/>ServletWebServerApplicationContext"]
-    C --> D["Refresh контекста"]
-    D --> E["ServletWebServerFactory bean<br/>(TomcatServletWebServerFactory)"]
-    E --> F["factory.getWebServer(initializers)"]
-    F --> G["Создание Tomcat instance"]
-    G --> H["Регистрация DispatcherServlet<br/>как Servlet"]
-    H --> I["Tomcat.start()"]
-    I --> J["Приложение слушает порт"]
-```
+1. `SpringApplication.run()` определяет тип приложения. Для `SERVLET` Boot создаёт `ServletWebServerApplicationContext`.
+2. В ходе `refresh()` контекст получает бин `ServletWebServerFactory`. В заданной конфигурации это `TomcatServletWebServerFactory`. Контекст вызывает `getWebServer(...)` с инициализаторами Servlet-контейнера.
+3. Boot создаёт сервер и выполняет регистрации Servlet-компонентов, включая `DispatcherServlet`. При завершении обновления контекста lifecycle-компонент запускает web server, и тот начинает слушать порт.
 
 Ключевые классы:
 
@@ -479,28 +540,29 @@ graph TD
 
 ## Q15. (!) Иерархия внешней конфигурации (`Externalized Configuration`)
 
-Spring Boot читает настройки из упорядоченных источников. Схема показывает обычный запуск без дополнительных тестовых источников и глобальных настроек DevTools, от более высокого приоритета к низкому:
-
-```mermaid
-graph TD
-    A["1. Аргументы командной строки<br/>--server.port=9090"] --> B
-    B["2. SPRING_APPLICATION_JSON"] --> C
-    C["3. Свойства ServletConfig /<br/>ServletContext"] --> D
-    D["4. JNDI-атрибуты<br/>java:comp/env"] --> E
-    E["5. System.getProperties()"] --> F
-    F["6. Переменные окружения ОС<br/>SPRING_DATASOURCE_URL"] --> G
-    G["7. RandomValuePropertySource<br/>random.*"] --> H
-    H["8. Profile-specific файлы<br/>вне JAR: application-prod.yml"] --> I
-    I["9. application.yml вне JAR"] --> J
-    J["10. Profile-specific файлы<br/>внутри JAR"] --> K
-    K["11. application.yml внутри JAR"] --> L
-    L["12. @PropertySource<br/>на @Configuration"] --> M
-    M["13. SpringApplication<br/>.setDefaultProperties()"]
-
-    style A fill:#ff6b6b,color:#fff
-    style F fill:#ffa07a,color:#fff
-    style H fill:#98fb98,color:#000
+```text
+Spring Boot 3.5. Обычный запуск с включённой обработкой аргументов CLI.
+application.yml: server.port: 8081
+Переменная окружения: SERVER_PORT=8082
+Команда: java -jar app.jar --server.port=8083
+Какой порт выберет приложение?
 ```
+
+Spring Boot читает настройки из упорядоченных источников. Для обычного запуска без дополнительных тестовых источников и глобальных настроек DevTools порядок от более высокого приоритета к низкому выглядит так.
+
+1. Аргументы командной строки.
+2. `SPRING_APPLICATION_JSON`.
+3. Инициализационные параметры `ServletConfig`, затем `ServletContext`.
+4. JNDI-атрибуты из `java:comp/env`.
+5. Системные свойства JVM.
+6. Переменные окружения ОС.
+7. `RandomValuePropertySource` для `random.*`.
+8. Внешние профильные файлы, затем обычные внешние файлы.
+9. Профильные файлы внутри JAR, затем обычные файлы внутри JAR.
+10. `@PropertySource` на классе конфигурации.
+11. Значения, заданные через `SpringApplication.setDefaultProperties()`.
+
+В приведённом запуске аргумент `--server.port=8083` имеет приоритет над переменной окружения и YAML. Сервер использует порт `8083`.
 
 **Правило:** источник с более высоким приоритетом перезаписывает значение того же свойства из источника с более низким. То есть значение из `application.yml` — это лишь дефолт, который любой более приоритетный источник может переопределить.
 
@@ -513,6 +575,13 @@ graph TD
 Секреты не хранить в Git — использовать переменные окружения, [Spring Cloud Config](spring-cloud-interview.md), `Vault`. В `Kubernetes` — `ConfigMap` для несекретных настроек, `Secrets` для паролей.
 
 ## Q16. Что такое `application.properties` и `application.yml`?
+
+```text
+Одни и те же настройки нужно записать в двух поддерживаемых форматах:
+HTTP-порт 8080, контекст /api, URL jdbc:postgresql://localhost/app
+и имя пользователя из DB_USER со значением admin при отсутствии переменной.
+Как каждый формат представляет вложенные свойства?
+```
 
 Это два основных файла конфигурации `Spring Boot` в `src/main/resources`, где задаются настройки приложения — порт, БД, логирование и т.д. Форматы взаимозаменяемы: выбор между ними — вопрос вкуса. `.properties` плоский и привычный, `.yml` иерархический и компактнее для вложенных свойств. Если оба формата лежат в одной локации, `.properties` имеет приоритет над YAML. При сравнении файлов из разных локаций учитывайте их порядок и группы.
 
@@ -537,11 +606,20 @@ spring:
 server.port=8080
 server.servlet.context-path=/api
 spring.datasource.url=jdbc:postgresql://localhost/app
+spring.datasource.username=${DB_USER:admin}
+spring.profiles.active=${SPRING_PROFILES_ACTIVE:dev}
 ```
 
-Подстановка переменных: `${ENV_VAR:default}` — значение из переменной окружения или default.
+Подстановка `${имя:значение}` разрешает имя через `Environment` и использует указанное значение по умолчанию, если свойство отсутствует. В примере `DB_USER` можно передать через переменную окружения.
 
 ## Q17. (!) Как использовать профили (`profiles`)?
+
+```text
+Один JAR запускается в окружениях dev и prod.
+При выборе dev нужны настройки разработки и devtools.
+При выборе prod нужны настройки production, мониторинг и security.
+Оба окружения используют общую настройку db. Как описать эти наборы?
+```
 
 **Профили** — это именованные наборы настроек и бинов, которые включаются по окружению. Одна сборка, разное поведение: в `dev` — in-memory БД и debug-логи, в `prod` — внешняя БД и security. Код при этом не меняется — переключается только активный профиль.
 
@@ -570,8 +648,8 @@ spring:
 @Profile("prod")
 public class ProdCacheConfig {
     @Bean
-    public CacheManager cacheManager() {
-        return new RedisCacheManager(/* ... */);
+    public CacheManager cacheManager(RedisConnectionFactory factory) {
+        return RedisCacheManager.builder(factory).build();
     }
 }
 ```
@@ -584,7 +662,14 @@ public class ProdCacheConfig {
 
 ## Q18. (!) Как использовать `@ConfigurationProperties`?
 
-`@ConfigurationProperties` привязывает группу свойств из `application.yml` к полям обычного POJO — типобезопасно и целым блоком. В отличие от `@Value("${...}")`, который тянет по одному свойству строкой, здесь весь префикс (`app.mail.*`) маппится на класс, типы (`int`, `Duration`, вложенные объекты) разбираются автоматически, а через `@Validated` можно проверить значения на старте.
+```text
+Приложение читает настройки почты с префиксом app.mail.
+Нужны непустой host, числовой port, timeout типа Duration
+и вложенные настройки retry с числом попыток и задержкой.
+Как связать эти свойства с классом и проверить их при запуске?
+```
+
+`@ConfigurationProperties` типобезопасно привязывает группу свойств из `Environment` к классу. Например, свойства из `application.yml` с префиксом `app.mail` можно привязать к `MailProperties` с полями типов `int`, `Duration` и вложенным объектом. Через `@Validated` можно проверить значения на старте. `@Value("${...}")` обычно используют для отдельных значений.
 
 ```java
 @ConfigurationProperties(prefix = "app.mail")
@@ -625,6 +710,12 @@ app:
 
 ## Q19. Как изменить порт по умолчанию?
 
+```text
+Встроенный сервер слушает 8080. В проекте нужен порт 9090.
+Один раз то же приложение нужно запустить на 9191 без пересборки.
+Как задать постоянный порт и разово выбрать другой при запуске?
+```
+
 По умолчанию встроенный сервер слушает порт `8080`. Сменить его можно тремя способами — выбор зависит от того, фиксированная это настройка или разовая:
 
 1. **`application.yml`** (постоянная настройка проекта): `server.port: 9090`
@@ -643,13 +734,20 @@ public WebServerFactoryCustomizer<ConfigurableWebServerFactory> customizer() {
 
 ## Q20. (!) Что такое `Spring Boot Actuator`?
 
-Actuator добавляет инфраструктуру диагностики и управления. Наличие эндпоинта зависит от настроек и необходимых компонентов. Экспозиция определяет, доступен ли он по HTTP или JMX, а авторизация — кто может его вызвать.
+```mermaid
+flowchart LR
+    A["Kubernetes проверяет состояние приложения"]
+    B["Оператор исследует отдельное измерение"]
+    C["Prometheus регулярно собирает метрики"]
+    D["Grafana показывает временные ряды"]
+    E["Оператор меняет уровень логирования"]
+```
+
+Actuator добавляет инфраструктуру диагностики и управления. Наличие эндпоинта зависит от необходимых компонентов и разрешённых операций (`management.endpoint.<id>.access`). Экспозиция определяет, доступен ли он по HTTP или JMX. Авторизация определяет, кто может его вызвать.
 
 Подключение:
 
-```groovy
-implementation 'org.springframework.boot:spring-boot-starter-actuator'
-```
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
 Основные возможности:
 - **Health checks** — состояние приложения и зависимостей (например, БД и Redis при подходящей автоконфигурации)
@@ -657,22 +755,32 @@ implementation 'org.springframework.boot:spring-boot-starter-actuator'
 - **Информация об окружении** — конфигурация, переменные, бины
 - **Управление** — изменение уровня логирования, thread dump, heap dump
 
+При стандартном HTTP-префиксе `/actuator` задачи распределяются по разным маршрутам:
+
+- `/actuator/health` показывает состояние приложения и зарегистрированных проверок. Для Kubernetes используют группы `/actuator/health/liveness` и `/actuator/health/readiness`, если группы доступны (Q24).
+- `/actuator/metrics` перечисляет имена метрик Micrometer. Через `/actuator/metrics/{name}` оператор читает измерения выбранной метрики для диагностики (Q21).
+- `/actuator/prometheus` отдаёт данные в формате для scrape. Нужны реестр Prometheus, разрешённый endpoint, HTTP-экспозиция и доступ для сборщика. Prometheus опрашивает экземпляры приложения, а Grafana может читать собранные данные из Prometheus (Q23).
+
 ```mermaid
-graph LR
-    A["Spring Boot App"] --> B["Actuator"]
-    B --> C["/health"]
-    B --> D["/metrics"]
-    B --> E["/info"]
-    B --> F["/env"]
-    B --> G["/loggers"]
-    C --> H["Prometheus /<br/>Grafana"]
-    D --> H
-    C --> I["Kubernetes<br/>probes"]
+flowchart LR
+    K["Kubernetes"] --> H["/actuator/health/{group}"]
+    O["Оператор"] --> M["/actuator/metrics"]
+    P["Prometheus"] -->|scrape| S["/actuator/prometheus"]
+    G["Grafana"] -->|запросы к источнику данных| P
 ```
+
+Информацию о приложении и окружении, дампы и настройки логгеров предоставляют отдельные эндпоинты (Q21). [Метрики Spring Boot 3.5](https://docs.spring.io/spring-boot/3.5/reference/actuator/metrics.html#actuator.metrics.export.prometheus).
 
 Spring Boot 3.5 по HTTP по умолчанию экспонирует только `health`. Для остальных эндпоинтов список задают в `management.endpoints.web.exposure.include`. Разграничение доступа настраивают отдельно. [Actuator Endpoints](https://docs.spring.io/spring-boot/3.5/reference/actuator/endpoints.html).
 
-## Q21. (!) Полный список `Actuator` endpoints и их категории
+## Q21. (!) Какие эндпоинты Actuator дают дамп потоков, дамп кучи и управление уровнями логирования?
+
+```text
+Spring Boot 3.5. Нужные Actuator-эндпоинты доступны по HTTP,
+и у инженера есть права на чтение и изменение уровней логирования.
+Нужно снять дамп потоков и дамп кучи, затем изменить уровень логирования
+одного логгера без перезапуска приложения.
+```
 
 В Boot 3.5 по HTTP по умолчанию экспонируется только `health`. Остальные строки таблицы показывают возможные эндпоинты. Для доступа могут понадобиться дополнительные бины или зависимости, разрешение операций, экспозиция и подходящее правило авторизации.
 
@@ -715,6 +823,12 @@ management:
 
 ## Q22. Как создать custom `Actuator` endpoint?
 
+```text
+Операторам нужны две возможности: видеть состояние базы в общем
+ответе о здоровье приложения и читать или менять feature flags
+через отдельный management-ресурс. Как расширить Actuator для каждой задачи?
+```
+
 Actuator расширяется двумя способами в зависимости от задачи: если нужно добавить свою проверку в `/health` — реализуют `HealthIndicator`; если нужен совершенно новый endpoint со своими данными и операциями — пишут класс с `@Endpoint`.
 
 **Custom Health Indicator** (добавляет компонент в `/actuator/health`):
@@ -724,12 +838,15 @@ Actuator расширяется двумя способами в зависим�
 public class DatabaseHealthIndicator implements HealthIndicator {
     private final DataSource dataSource;
 
+    public DatabaseHealthIndicator(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
+
     @Override
     public Health health() {
         try (Connection conn = dataSource.getConnection()) {
             return Health.up()
                 .withDetail("database", conn.getMetaData().getDatabaseProductName())
-                .withDetail("pool.active", getActiveConnections())
                 .build();
         } catch (SQLException e) {
             return Health.down(e).build();
@@ -764,6 +881,13 @@ public class FeaturesEndpoint {
 
 ## Q23. (!) Как настроить мониторинг и метрики (`Micrometer`)?
 
+```text
+В приложении Spring Boot 3.5 уже подключён Actuator.
+Нужно периодически собирать JVM-метрики в Prometheus и добавить
+измерение длительности создания заказа. Сейчас Prometheus
+ещё не настроен для этого приложения.
+```
+
 `Micrometer` — фасад для метрик (аналог SLF4J для логирования). `Spring Boot Actuator` интегрирует `Micrometer` автоматически.
 
 **Подключение Prometheus:**
@@ -782,6 +906,8 @@ management:
     tags:
       application: ${spring.application.name}
 ```
+
+В `prometheus.yml` укажите `metrics_path: /actuator/prometheus` и адрес каждого экземпляра или настройте обнаружение экземпляров. Сборщик должен иметь сетевой доступ и права на этот эндпоинт. В примере выше также экспонированы `health` для проверок состояния и `metrics` для диагностики отдельных измерений. Они обслуживают другие задачи (Q20–Q21). [Prometheus в Spring Boot 3.5](https://docs.spring.io/spring-boot/3.5/reference/actuator/metrics.html#actuator.metrics.export.prometheus).
 
 **Типы метрик:**
 
@@ -812,6 +938,13 @@ public class OrderService {
 > **Подводный камень:** держите под контролем кардинальность тегов. Каждое уникальное сочетание значений тегов — это отдельный временной ряд в хранилище. Тег `userId` при миллионах пользователей породит миллионы рядов и положит мониторинг-систему. Подробнее — в [Метрики и трейсинг](../../monitoring/metrics-tracing-interview.md) и [Observability](../../monitoring/observability-interview.md).
 
 ## Q24. Как настроить health check для `Kubernetes`?
+
+```text
+Spring Boot 3.5, управление доступно на порту контейнера 8080.
+Запуск может занять до двух минут. Kubernetes должен различать
+ожидание старта, временную неготовность принимать трафик и сбой,
+после которого нужно перезапустить контейнер. Какие проверки настроить?
+```
 
 Actuator предоставляет health-группы `liveness` и `readiness`. Kubernetes может использовать путь liveness и для `startupProbe`. Ниже настройка Spring Boot 3.5:
 
@@ -856,9 +989,9 @@ startupProbe:
 
 | Probe | Назначение | При провале |
 |-------|-----------|-------------|
-| **Readiness** | Готово ли принимать трафик? | Под исключается из `Service` |
-| **Liveness** | Живо ли приложение? | Под перезапускается |
-| **Startup** | Завершился ли старт? | Другие probes не запускаются |
+| **Readiness** | Готово ли принимать трафик? | Pod перестаёт считаться готовой целью для обычного трафика Service |
+| **Liveness** | Живо ли приложение? | kubelet завершает контейнер, затем применяется политика перезапуска |
+| **Startup** | Завершился ли старт? | kubelet откладывает liveness и readiness до успеха startup-проверки |
 
 Пока `startupProbe` не прошла, kubelet откладывает liveness и readiness. После исчерпания порога ошибок startup-проверки kubelet завершает контейнер, после чего применяется политика перезапуска. [Kubernetes Probes](https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/).
 
@@ -870,27 +1003,22 @@ startupProbe:
 
 Тонкость в том, что обычный JAR не умеет грузить классы из вложенных JAR — спецификация Java этого не предусматривает. Поэтому `Spring Boot` использует свою структуру и собственный загрузчик (`JarLauncher`):
 
-```
+```text
+Spring Boot 3.5, запуск: java -jar my-app.jar
+
 my-app.jar
 ├── META-INF/
-│   └── MANIFEST.MF        (Main-Class: JarLauncher)
-├── org/springframework/boot/loader/
-│   └── JarLauncher.class   (Spring Boot Launcher)
-├── BOOT-INF/
-│   ├── classes/             (код приложения)
-│   ├── lib/                 (зависимости как вложенные JAR)
-│   └── classpath.idx        (порядок classpath)
-└── BOOT-INF/layers.idx     (если включены layers)
+│   └── MANIFEST.MF
+├── org/springframework/boot/loader/launch/
+│   └── JarLauncher.class
+└── BOOT-INF/
+    ├── classes/
+    ├── lib/
+    ├── classpath.idx
+    └── layers.idx
 ```
 
-```mermaid
-graph TD
-    A["java -jar app.jar"] --> B["JarLauncher<br/>(Main-Class из MANIFEST.MF)"]
-    B --> C["Настройка ClassLoader<br/>для вложенных JAR"]
-    C --> D["Загрузка BOOT-INF/lib/*.jar"]
-    D --> E["Запуск Start-Class<br/>(ваш @SpringBootApplication)"]
-    E --> F["SpringApplication.run()"]
-```
+При запуске `java -jar` JVM берёт точку входа из `Main-Class`. В манифесте executable JAR Boot 3.5 это `org.springframework.boot.loader.launch.JarLauncher`. Он настраивает загрузчик классов для `BOOT-INF/classes/` и вложенных зависимостей из `BOOT-INF/lib/`, затем вызывает `main()` класса из `Start-Class`. В типичном приложении этот метод вызывает `SpringApplication.run()`. Файл `classpath.idx` задаёт порядок добавления вложенных JAR в classpath, а `layers.idx` описывает слои, если слоение включено. [Запуск executable JAR](https://docs.spring.io/spring-boot/3.5/specification/executable-jar/launching.html).
 
 **Layers** (для оптимизации Docker-образов):
 
@@ -904,6 +1032,12 @@ graph TD
 Порядок слоёв от стабильных к изменчивым позволяет `Docker` кэшировать нижние слои.
 
 ## Q26. Как развернуть `Spring Boot` в виде `JAR` и `WAR`?
+
+```text
+Один экземпляр Servlet-приложения должен запускаться самостоятельно
+из архива. Второй нужно установить во внешний совместимый Tomcat.
+Как различаются упаковка, запускающий компонент и зависимости?
+```
 
 **JAR (рекомендуется)** — встроенный сервер, запуск через `java -jar`:
 
@@ -943,7 +1077,15 @@ dependencies {
 
 ## Q27. Как упаковать `Spring Boot` в `Docker` образ?
 
-**Multi-stage Dockerfile:**
+```text
+Spring Boot 3.5, Java 21. На входе исходники и Gradle Wrapper.
+Нужно собрать executable JAR при сборке Docker-образа.
+В итоговом образе нужны Java runtime и приложение.
+В итоговом образе не должно быть Gradle, компилятора или исходников.
+Контейнер должен запускать приложение от непривилегированного пользователя.
+```
+
+**Multi-stage Dockerfile.** Пример предполагает, что в `build/libs` попадает только один JAR. Если сборка также выпускает обычный JAR, укажите точное имя артефакта `bootJar` в `COPY`.
 
 ```dockerfile
 FROM eclipse-temurin:21-jdk-alpine AS build
@@ -963,16 +1105,24 @@ EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
 ```
 
-**Оптимизация с layers:**
+**Оптимизация с layers.** Ниже вариант, который использует стадию `build` из первого примера и добавляет отдельную стадию извлечения. [Spring Boot Dockerfiles](https://docs.spring.io/spring-boot/3.5/reference/packaging/container-images/dockerfiles.html).
 
 ```dockerfile
+FROM eclipse-temurin:21-jre-alpine AS extract
+WORKDIR /app
+COPY --from=build /app/build/libs/*.jar app.jar
+RUN java -Djarmode=tools -jar app.jar extract --layers --destination extracted
+
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 RUN adduser -D appuser
-COPY --from=build /app/build/libs/*.jar app.jar
-RUN java -Djarmode=tools -jar app.jar extract --layers --launcher
+COPY --from=extract /app/extracted/dependencies/ ./
+COPY --from=extract /app/extracted/spring-boot-loader/ ./
+COPY --from=extract /app/extracted/snapshot-dependencies/ ./
+COPY --from=extract /app/extracted/application/ ./
 USER appuser
-ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
 ```
 
 **Buildpacks** (без Dockerfile):
@@ -991,6 +1141,12 @@ ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]
 
 ## Q28. Что такое `Spring Boot DevTools`?
 
+```text
+Разработчик запускает Spring Boot локально из IDE.
+После изменения и компиляции класса хочется быстрее увидеть результат.
+В развёрнутом приложении автоматический перезапуск из-за изменений файлов не нужен.
+```
+
 `DevTools` — модуль, который сокращает цикл «изменил код → увидел результат» при локальной разработке. Главная фишка — автоматический перезапуск контекста при изменении классов, который заметно быстрее полного рестарта приложения.
 
 ```groovy
@@ -1003,8 +1159,8 @@ developmentOnly 'org.springframework.boot:spring-boot-devtools'
 |---------|----------|
 | **Automatic Restart** | Перезапуск при изменении классов (два ClassLoader: base + restart) |
 | **LiveReload** | Автоматическое обновление браузера при изменении ресурсов |
-| **Property Defaults** | Отключение кэширования шаблонов, `DEBUG`-логирование |
-| **Remote DevTools** | Удалённая отладка (не для production!) |
+| **Property Defaults** | Отключение кэширования поддерживаемых шаблонизаторов и дополнительные настройки для разработки |
+| **Remote DevTools** | Удалённое обновление приложения в среде разработки |
 
 **Почему рестарт быстрый.** `DevTools` делит загрузку на два ClassLoader: `base` держит сторонние зависимости (они в сессии не меняются), а `restart` — ваш код. При правке пересоздаётся только `restart`-ClassLoader, библиотеки не перечитываются с диска — отсюда выигрыш по сравнению с полным перезапуском JVM.
 
@@ -1019,9 +1175,20 @@ spring.devtools.restart.enabled=false
 
 ## Q29. (!) Как отключить автоконфигурацию для тестов?
 
-Поднимать полный контекст в каждом тесте дорого и часто бессмысленно. Чтобы не тащить лишнюю автоконфигурацию, есть два подхода: использовать **тестовый срез** (он сам грузит только один слой) либо точечно исключить ненужные автоконфигурации в `@SpringBootTest`.
+```java
+// Требуется сохранить полный контекст Spring Boot 3.5
+// и убрать только автоконфигурацию DataSource и Spring Security.
+@SpringBootTest
+class MyIntegrationTest {
+    @Test
+    void contextLoads() {
+    }
+}
+```
 
-**Тестовые срезы** загружают только нужный слой и автоматически отключают всё остальное:
+Поднимать полный контекст в каждом тесте дорого и часто бессмысленно. Чтобы не тащить лишнюю автоконфигурацию, есть два подхода: использовать **тестовый срез** с ограниченной конфигурацией либо точечно исключить ненужные автоконфигурации в `@SpringBootTest`.
+
+**Тестовые срезы** ограничивают сканирование и подключают набор автоконфигураций для выбранного слоя.
 
 | Аннотация | Что загружает |
 |-----------|--------------|
@@ -1034,13 +1201,15 @@ spring.devtools.restart.enabled=false
 **Исключение автоконфигурации в `@SpringBootTest`:**
 
 ```java
-@SpringBootTest
-@EnableAutoConfiguration(exclude = {
-    DataSourceAutoConfiguration.class,
-    SecurityAutoConfiguration.class
+@SpringBootTest(properties = {
+    "spring.autoconfigure.exclude="
+        + "org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,"
+        + "org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration"
 })
 class MyIntegrationTest { }
 ```
+
+Свойство исключает указанные классы автоконфигурации из контекста теста. Если приложение объявляет собственные бины `DataSource` или `SecurityFilterChain`, они по-прежнему обрабатываются как пользовательская конфигурация. Пример предполагает, что оставшиеся бины могут запуститься без исключённых настроек. [Исключение автоконфигурации](https://docs.spring.io/spring-boot/3.5/api/java/org/springframework/boot/autoconfigure/EnableAutoConfiguration.html).
 
 В Boot 3.5 для подмены бина используйте `@MockitoBean` из Spring Framework 6.2. Прежняя `@MockBean` устарела с Boot 3.4. `@TestPropertySource` меняет свойства тестового контекста.
 
@@ -1067,7 +1236,13 @@ class MyIntegrationTest { }
 
 ## Q31. Как использовать `Spring Boot` как приложение командной строки?
 
-Не каждое `Spring Boot`-приложение — это веб-сервис. Для batch-задач, утилит и крон-джоб удобно использовать `Spring Boot` как обычную консольную программу: получить весь DI-контекст, выполнить работу и завершиться. Для этого реализуют `CommandLineRunner` или `ApplicationRunner` — их метод `run` вызывается один раз после готовности контекста:
+```text
+Команда java -jar batch.jar --days=7 input.csv должна обработать
+файл и завершиться. Приложению нужны Spring-бины, имена и значения
+параметров командной строки и запуск без HTTP-сервера.
+```
+
+Для batch-задач и консольных утилит можно использовать Spring Boot без веб-сервера. Работу выполняет бин `CommandLineRunner` или `ApplicationRunner`. Boot вызывает его метод `run` после обновления контекста и до `ApplicationReadyEvent` (Q35).
 
 ```java
 @SpringBootApplication
@@ -1085,11 +1260,17 @@ public class BatchApp implements CommandLineRunner {
 }
 ```
 
-**`ApplicationRunner`** — получает `ApplicationArguments` вместо `String[]`, поддерживает `--key=value` парсинг.
+**`ApplicationRunner`** получает разобранные `ApplicationArguments`. Для команды из условия `getOptionValues("days")` возвращает список с `"7"`, а `getNonOptionArgs()` содержит `"input.csv"`. `CommandLineRunner` получает исходный массив строк.
 
 Для отключения встроенного сервера: `spring.main.web-application-type=none` или `WebApplicationType.NONE` в `SpringApplication`.
 
 ## Q32. Как настроить логирование?
+
+```text
+Нужно оставить общий уровень INFO, включить DEBUG для com.example,
+сохранить логи в logs/app.log и предусмотреть возможность временно
+изменить уровень одного логгера без перезапуска приложения.
+```
 
 `Spring Boot` из коробки настраивает `Logback` как реализацию через SLF4J, поэтому в простых случаях достаточно задать уровни и формат прямо в `application.yml` — отдельный `logback.xml` не нужен:
 
@@ -1156,24 +1337,19 @@ Spring AOT анализирует конфигурацию и подготавл
 
 ## Q35. (!) Жизненный цикл `Spring Boot` приложения
 
-Понимание жизненного цикла нужно, чтобы знать, в какой момент срабатывают ваши хуки: где читать конфигурацию, когда контекст уже готов, а когда приложение начинает принимать трафик. Полный путь от запуска до остановки:
-
-```mermaid
-graph TD
-    A["main() → SpringApplication.run()"] --> B["Подготовка Environment<br/>(загрузка property sources)"]
-    B --> C["Публикация<br/>ApplicationEnvironmentPreparedEvent"]
-    C --> D["Создание ApplicationContext"]
-    D --> E["Загрузка @Configuration,<br/>Auto-configuration"]
-    E --> F["Refresh контекста<br/>(создание бинов)"]
-    F --> G["ApplicationStartedEvent<br/>Сервер уже запущен при refresh"]
-    G --> H["Вызов CommandLineRunner /<br/>ApplicationRunner"]
-    H --> I["Публикация<br/>ApplicationReadyEvent"]
-    I --> J["Приложение работает"]
-    J --> K["Получение SIGTERM"]
-    K --> L["Начало закрытия ApplicationContext"]
-    L --> M["Graceful shutdown сервера,<br/>затем callbacks разрушения бинов"]
-    M --> N["Остановка"]
+```text
+Spring Boot 3.5. Servlet-приложение с встроенным Tomcat.
+ApplicationRunner выполняет инициализацию в течение 30 секунд.
+Readiness Actuator включена. Других задержек и ошибок нет.
+Во время работы runner проверьте, слушает ли сервер порт, опубликовано ли
+ApplicationReadyEvent и какое состояние readiness видит проверка.
 ```
+
+Понимание жизненного цикла нужно, чтобы знать, в какой момент срабатывают ваши хуки: где читать конфигурацию, когда контекст уже готов, а когда приложение начинает принимать трафик. Этапы запуска и остановки важны для выбора подходящего хука.
+
+`SpringApplication.run()` подготавливает `Environment`, создаёт контекст и загружает определения бинов. При обновлении контекста создаются необходимые бины и запускается встроенный сервер. Затем Boot публикует `ApplicationStartedEvent` и вызывает `ApplicationRunner` и `CommandLineRunner`. После них следует `ApplicationReadyEvent`, а за ним состояние readiness меняется на `ACCEPTING_TRAFFIC`.
+
+В заданном сценарии сервер уже слушает порт, пока runner выполняется. Событие `ApplicationReadyEvent` ещё не опубликовано, а readiness остаётся в состоянии `REFUSING_TRAFFIC`. При `SIGTERM` срабатывает штатное закрытие контекста с остановкой его lifecycle-компонентов.
 
 **Ключевые события (listeners):**
 
@@ -1201,18 +1377,24 @@ spring:
 
 ## Q36. (!) Что такое тестовые срезы (`@WebMvcTest`, `@DataJpaTest`)?
 
+```text
+Нужно проверить GET /users/1 на уровне MVC, подставив ответ
+UserService. Отдельно нужно проверить метод репозитория findByEmail
+с сохранённой записью. Полный контекст приложения для этих тестов не требуется.
+```
+
 Тестовые срезы — специализированные аннотации Spring Boot Test, которые загружают **только часть** контекста приложения, необходимую для тестирования конкретного слоя. Это ускоряет тесты и снижает связанность.
 
-| Аннотация | Что загружает | Что мокируется |
+| Аннотация | Что загружает | Что можно подменить |
 |-----------|---------------|----------------|
 | `@WebMvcTest` | MVC-слой: контроллеры, фильтры, `DispatcherServlet` | Сервисы (`@MockitoBean`) |
-| `@DataJpaTest` | JPA: сущности, репозитории, `EntityManager`, тестовая настройка DataSource | Сервисный слой |
+| `@DataJpaTest` | JPA: сущности, репозитории, `EntityManager`, тестовая настройка DataSource | Сервисный слой обычно вне среза |
 | `@DataMongoTest` | MongoDB репозитории | — |
 | `@WebFluxTest` | WebFlux: контроллеры на реактивном стеке | Сервисы |
 | `@JsonTest` | JSON-сериализация (`@JsonComponent`, Jackson) | — |
 | `@RestClientTest` | `RestTemplate` / `RestClient` + mock server | — |
 
-**Пример `@WebMvcTest`:**
+**Пример `@WebMvcTest`.** Предполагается, что запрос `GET /users/1` разрешён действующими фильтрами. Зависимость контроллера можно подменить через `@MockitoBean` или добавить нужную конфигурацию через `@Import`. [Тестирование Spring Boot 3.5](https://docs.spring.io/spring-boot/3.5/reference/testing/spring-boot-applications.html).
 
 ```java
 @WebMvcTest(UserController.class)
@@ -1267,7 +1449,13 @@ class UserRepositoryTest {
 
 ## Q37. (!) Как работает `@SpringBootTest` и какие режимы запуска контекста существуют?
 
-`@SpringBootTest` загружает **полный** контекст приложения. Управляется параметром `webEnvironment`:
+```text
+Нужны четыре теста: MVC без сетевого сервера, настоящий HTTP
+на случайном порту, настоящий HTTP на заданном порту и контекст
+без веб-окружения. Какие режимы SpringBootTest подходят?
+```
+
+`@SpringBootTest` загружает контекст выбранной конфигурации с учётом профилей, условий и тестовых подмен. Параметр `webEnvironment` определяет веб-окружение:
 
 | Режим | Описание |
 |-------|----------|
@@ -1313,6 +1501,14 @@ abstract class BaseIntegrationTest {
 
 ## Q38. (!) Как устроены `@ConditionalOnProperty`, `@ConditionalOnMissingBean` и другие условные аннотации?
 
+```text
+В Boot 3.5 оба класса Redis доступны, app.cache.enabled=true,
+RedisAutoConfiguration предоставляет единственную RedisConnectionFactory.
+Сравните запуск без пользовательского CacheManager и запуск,
+при котором приложение уже объявило собственный CacheManager.
+Когда библиотека должна предоставить свой бин?
+```
+
 Условные аннотации — механизм тонкой настройки автоконфигурации. Каждая реализует `Condition` и вычисляется во время загрузки контекста.
 
 | Аннотация | Условие регистрации бина |
@@ -1354,6 +1550,13 @@ public class RedisCacheAutoConfiguration {
 
 ## Q39. (!) Что такое AOT-обработка в Spring Boot 3.x?
 
+```text
+Собирается приложение Spring Boot 3.5 для двух вариантов запуска:
+на JVM и как нативный бинарник. Библиотека использует рефлексию,
+а профили влияют на набор бинов. Что Spring может подготовить
+заранее и что дополнительно требуется для нативного бинарника?
+```
+
 Spring AOT анализирует определения бинов при сборке и генерирует код регистрации и создания бинов, ресурсы и runtime hints. Это сокращает часть работы при запуске. Сгенерированные артефакты можно использовать на JVM, а при нативной сборке их использует GraalVM Native Image (Q34).
 
 ```bash
@@ -1368,7 +1571,18 @@ Spring AOT анализирует определения бинов при сб�
 
 ## Q40. (!) Как настроить кастомный `HealthIndicator` для Actuator?
 
-`HealthIndicator` — интерфейс для добавления собственных проверок здоровья в `/actuator/health`. Spring Boot автоматически обнаруживает все бины, реализующие этот интерфейс.
+```java
+interface ExternalApiClient {
+    // true: API откликнулся, false: не откликнулся.
+    // При сбое запроса возможен RuntimeException.
+    boolean ping();
+}
+
+// В /actuator/health нужен компонент externalApi,
+// отражающий доступность API по результату ping().
+```
+
+Интерфейс `HealthIndicator` позволяет добавить собственную проверку в `/actuator/health`. Spring Boot включает бины этого типа в реестр проверок. В примере успешный `ping()` означает `UP`, а `false` или исключение означают `DOWN`. Имя бина `externalApiHealthIndicator` даёт идентификатор `externalApi`. [Пользовательские HealthIndicator](https://docs.spring.io/spring-boot/3.5/reference/actuator/endpoints.html#actuator.endpoints.health.writing-custom-health-indicators).
 
 **Простой HealthIndicator:**
 
@@ -1404,7 +1618,7 @@ public class ExternalApiHealthIndicator implements HealthIndicator {
 }
 ```
 
-**Результат в `/actuator/health`:**
+**Пример ответа `/actuator/health`**, когда политика отображения разрешает компоненты и детали.
 
 ```json
 {
@@ -1451,6 +1665,14 @@ public class ReactiveDbHealthIndicator implements ReactiveHealthIndicator {
 `ConnectionFactory.create()` возвращает Publisher. `Mono.usingWhen` подписывается на него и закрывает полученное соединение при завершении, ошибке или отмене. Группировка проверок настраивается через `management.endpoint.health.group.*`. [R2DBC ConnectionFactory](https://r2dbc.io/spec/1.0.0.RELEASE/api/io/r2dbc/spi/ConnectionFactory.html).
 
 ## Q41. (!) Как работает Spring Boot с несколькими профилями одновременно?
+
+```text
+Обычный запуск Boot 3.5. В одной локации находятся application.yml,
+application-dev.yml и application-metrics.yml. Во всех трёх файлах
+задано app.sample-rate: 10, 20 и 30 соответственно.
+Оба профиля должны быть активны в порядке dev, metrics.
+Как активировать этот набор и какое значение будет действовать?
+```
 
 Spring Boot поддерживает **активацию нескольких профилей** одновременно. Каждый профиль добавляет/переопределяет конфигурацию поверх базовой.
 
@@ -1524,6 +1746,14 @@ class ServiceTest { ... }
 
 ## Q42. Как ограничить экспозицию Actuator endpoints в production?
 
+```text
+Spring Boot 3.5, Spring Security и Prometheus registry подключены.
+Публичный health check должен работать без учётных данных и показывать только статус.
+Prometheus работает во внутренней сети и использует отдельную учётную запись.
+Доступ к диагностике нужен только операторам. /actuator/env публиковать не требуется.
+Какие настройки экспозиции, маршрутизации и авторизации выполнят эти требования?
+```
+
 В Spring Boot 3.5 по HTTP по умолчанию экспонируется только `health`. На доступ влияют наличие эндпоинта, список экспозиции и авторизация. `/env` чувствителен даже при маскировании значений по умолчанию. Необходимость его публикации оценивают отдельно. [Actuator Endpoints](https://docs.spring.io/spring-boot/3.5/reference/actuator/endpoints.html).
 
 **Конфигурация экспозиции:**
@@ -1533,17 +1763,15 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus  # белый список
-        # exclude: env,beans,heapdump           # или чёрный список
+        include: health,prometheus,metrics,threaddump
   endpoint:
     health:
-      show-details: when-authorized              # детали только авторизованным
-      show-components: when-authorized
-    # Защита отдельного endpoint
+      show-details: never
+      show-components: never
     shutdown:
-      access: none                              # отключить полностью
+      access: none
   server:
-    port: 9090                                   # отдельный порт для management
+    port: 9090
 ```
 
 **Защита через Spring Security:**
@@ -1554,15 +1782,16 @@ management:
 public class ActuatorSecurityConfig {
 
     @Bean
+    @Order(1)
     public SecurityFilterChain actuatorSecurity(HttpSecurity http) throws Exception {
         return http
             .securityMatcher(EndpointRequest.toAnyEndpoint())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(EndpointRequest.to(HealthEndpoint.class, InfoEndpoint.class))
+                .requestMatchers(EndpointRequest.to(HealthEndpoint.class))
                     .permitAll()
-                .requestMatchers(EndpointRequest.toAnyEndpoint())
-                    .hasRole("ACTUATOR_ADMIN")
-                .anyRequest().authenticated()
+                .requestMatchers(EndpointRequest.to("prometheus"))
+                    .hasRole("METRICS_SCRAPER")
+                .anyRequest().hasRole("ACTUATOR_ADMIN")
             )
             .httpBasic(Customizer.withDefaults())
             .build();
@@ -1570,20 +1799,18 @@ public class ActuatorSecurityConfig {
 }
 ```
 
-**Вынесение на отдельный порт** (рекомендуется для production):
-
-```yaml
-management:
-  server:
-    port: 9090
-    # Этот порт закрыт в Ingress/LoadBalancer — доступен только внутри кластера
-```
-
-Если объявлена своя цепочка только для Actuator, настройте отдельную цепочку для остальных URL приложения.
+**Маршрутизация.** На внешнем прокси направьте только `/actuator/health` на management-порт. Prometheus и операторы обращаются к нему по внутренней сети с назначенными им ролями. Сам по себе отдельный порт не ограничивает сетевой доступ. Если объявлена своя цепочка только для Actuator, настройте отдельную цепочку для остальных URL приложения с более низким приоритетом, например `@Order(2)`.
 
 ---
 
 ## Q43. (!) Что такое SSL Bundles в Spring Boot и зачем они нужны?
+
+```text
+Spring Boot 3.5. Есть готовые PEM-сертификат и закрытый ключ.
+Нужно задать именованный набор материалов и применить его
+к встроенному серверу. Что понадобится для обновления файлов
+без перезапуска приложения?
+```
 
 SSL Bundles (`Spring Boot 3.1+`) — способ сгруппировать связанные TLS-материалы (keystore, truststore, сертификат, ключ) в именованный «бандл» и переиспользовать его и на сервере, и в клиентах, не дублируя конфигурацию.
 
