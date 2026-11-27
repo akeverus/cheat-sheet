@@ -32,9 +32,14 @@
 диапазона, включая Notification System и Java Functional Interface, не входят
 в счётчик 55. Для учёта достаточно путей и записей о передаче полного файла.
 
-Из 55 файлов партии 54 восстановлены в `master`. Вне этой партии уже
+Из 55 файлов партии 55 восстановлено в `master`. Вне этой партии уже
 закоммичены Notification System, Java Functional Interface, Vector Databases
 и JDBC и пулы соединений.
+
+- **Design Uber**. MCQ-чат передал полный JSON в ходе
+  `01a21ea6-b777-7e81-952a-0b6d6c79e044`. Использованы исходный JSON из `b28a1c807` и согласованный Markdown (SHA-256 `698cb781d962f4708cdd22357ce3959db54bdbdc0046dda3ec4669f6c8f5f939`).
+  Полный JSON перенесён как есть из
+  `work/design-uber-recovery-full-regeneration/design-uber-interview.json`.
 
 - **Design Google Maps**. MCQ-чат передал полный JSON в ходе
   `01a21e9c-6d2e-78e2-8039-c99c48caa296`. Использованы исходный JSON из `b28a1c807` и согласованный Markdown (SHA-256 `7dd7f337156082ca011b7e043b0d065a6c9d6d8140be189be30fab12508528cb`).
