@@ -32,9 +32,15 @@
 диапазона, включая Notification System и Java Functional Interface, не входят
 в счётчик 55. Для учёта достаточно путей и записей о передаче полного файла.
 
-Из 55 файлов партии 29 восстановлены в `master`. Вне этой партии уже
+Из 55 файлов партии 30 восстановлены в `master`. Вне этой партии уже
 закоммичены Notification System, Java Functional Interface, Vector Databases
 и JDBC и пулы соединений.
+
+- **MongoDB**. MCQ-чат передал полный JSON в ходе
+  `01a21d91-256e-7283-9a49-950b1c9a0c69`. Использованы согласованная теория
+  из `8d65aa08d` (SHA-256 `4494fa1b373e4d51ad4c6e3a27bc1464914e11db20e056b9472273dd3770f3d2`)
+  и исходный JSON темы из `b28a1c807`. Полный файл перенесён как есть из
+  `work/mongodb-recovery-full-regeneration/mongodb-interview.json`.
 
 - **Cassandra**. Автор шпаргалок передал полную теорию с правками формулировок
   Q2/Q8/Q16/Q22/Q42, SHA-256 `c16044222d9b735813b1c9b3faf2ffec2f5dacea283c1d11a4e7e804a5ef091a`.
