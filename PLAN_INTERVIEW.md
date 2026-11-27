@@ -32,9 +32,14 @@
 диапазона, включая Notification System и Java Functional Interface, не входят
 в счётчик 55. Для учёта достаточно путей и записей о передаче полного файла.
 
-Из 55 файлов партии 52 восстановлены в `master`. Вне этой партии уже
+Из 55 файлов партии 53 восстановлены в `master`. Вне этой партии уже
 закоммичены Notification System, Java Functional Interface, Vector Databases
 и JDBC и пулы соединений.
+
+- **Design Digital Wallet**. MCQ-чат передал полный JSON в ходе
+  `01a21e99-af8b-7850-8de1-438b4504130d`. Использованы исходный JSON из `b28a1c807` и согласованный Markdown (SHA-256 `dd06625a7fa3c1e4fd288895d6a51b1dfee2e5b01a5912174a0eb58fe9980679`).
+  Полный JSON перенесён как есть из
+  `work/design-digital-wallet-recovery-full-regeneration/design-digital-wallet-interview.json`.
 
 - **Go Concurrency**. MCQ-чат передал полный JSON в ходе
   `01a21e8e-9a88-7b01-a592-8ee7de01dad4`. Использованы исходный JSON из `b28a1c807` и согласованный Markdown (SHA-256 `457120fb8a5592f53e7eb18ee5140571a0dee35756cf0ed5ce67d4e0d2a61560`).
