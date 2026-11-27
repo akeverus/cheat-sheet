@@ -69,19 +69,66 @@ assert isnan(measurement)
 
 ## Q2. Что меняют присваивание, shallow copy и deep copy?
 
+```python
+from copy import copy, deepcopy, replace
+from dataclasses import dataclass
+
+source = [[1]]
+alias = source
+shallow = copy(source)
+deep = deepcopy(source)
+source[0].append(2)
+
+
+@dataclass(frozen=True)
+class ClientConfig:
+    timeout_seconds: int
+    regions: tuple[str, ...]
+
+
+default = ClientConfig(3, ("eu", "us"))
+for_export = replace(default, timeout_seconds=15)
+
+# Какие списки изменились после append?
+# В Python 3.13+ что меняет replace в этом примере?
+# Сравните timeout_seconds и проверьте идентичность regions.
+```
+
 `b = a` привязывает имя `b` к тому же объекту. Для обычного списка `copy.copy(a)` создаёт новый список со ссылками на прежние элементы. Поэтому замена элемента в копии меняет только копию, а изменение общего вложенного объекта видно через оба списка. `copy.deepcopy(a)` обходит вложенные объекты и использует словарь `memo`, чтобы сохранять общие ссылки между копиями и обрабатывать циклы.
 
 ```python
 from copy import copy, deepcopy
 source = [[1]]
+alias = source
 shallow, deep = copy(source), deepcopy(source)
 source[0].append(2)
+assert alias is source
 assert shallow == [[1, 2]] and deep == [[1]]
 ```
 
 Поведение зависит от типа объекта. Для функций и классов обе операции возвращают исходный объект. Файл или сокет таким способом скопировать нельзя. Пользовательский класс может определить `__copy__` и `__deepcopy__`, например чтобы сохранить общую ссылку на объект конфигурации. Если `__deepcopy__` копирует отдельный компонент, ему нужно передать в рекурсивный вызов тот же `memo`.
 
 На границе API явно решайте, можно ли передавать изменяемый объект по общей ссылке. Копируйте лишь нужный слой данных и учитывайте стоимость полной копии. [copy](https://docs.python.org/3/library/copy.html).
+
+**Обновление отдельных полей.** Для dataclass, named tuple и типов с `__replace__` в Python 3.13+ есть `copy.replace(obj, **changes)`. Например, можно заменить таймаут в конфигурации, сохранив общую ссылку на неизменяемый набор регионов.
+
+```python
+from copy import replace
+from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class ClientConfig:
+    timeout_seconds: int
+    regions: tuple[str, ...]
+
+default = ClientConfig(3, ("eu", "us"))
+for_export = replace(default, timeout_seconds=15)
+assert default.timeout_seconds == 3
+assert for_export.timeout_seconds == 15
+assert for_export.regions is default.regions
+```
+
+В этом примере прежний кортеж безопасно использовать совместно. Если бы поле содержало список, изменение списка было бы видно в обеих конфигурациях. Для dataclass на Python 3.11–3.12 тот же сценарий поддерживает `dataclasses.replace()`. [`copy.replace`](https://docs.python.org/3.14/library/copy.html#copy.replace), [`dataclasses.replace`](https://docs.python.org/3.14/library/dataclasses.html#dataclasses.replace).
 
 ## Q3. Как выбрать list, tuple, set, dict и frozendict?
 
@@ -307,13 +354,17 @@ assert cache[BatchKey("shop", (1, 2))] == "ready"
 
 В Python 3.15 режим UTF-8 включён по умолчанию. При включённом режиме текстовый `open(path)` без `encoding` использует UTF-8 независимо от системной локали. Если режим отключён при запуске, выбор кодировки снова зависит от локали. На системе с локалью UTF-8 разницы при этом может не быть. В Python 3.11–3.14 кодировка без явного аргумента могла зависеть от локали, если режим UTF-8 не был включён. Кодировка исходного `.py` файла уже была UTF-8 раньше; изменение касается прежде всего текстового ввода-вывода. [What's New in Python 3.15](https://docs.python.org/3.15/whatsnew/3.15.html#other-language-changes), [PEP 686](https://peps.python.org/pep-0686/).
 
-Для файлов с известным форматом задавайте кодировку явно: `encoding="utf-8"` для UTF-8, конкретную legacy-кодировку для старого обменного файла. Если контракт действительно требует кодировку текущей локали, используйте `encoding="locale"` (доступно с Python 3.10). Так поведение не меняется неожиданно при смене версии, ОС или настроек запуска. UTF-8 по умолчанию **не** распознаёт кодировку файла автоматически: старый файл может вызвать `UnicodeDecodeError`, а ошибка декодирования не становится допустимой только потому, что версия новая. [Python 3.15 What's New](https://docs.python.org/3.15/whatsnew/3.15.html#other-language-changes), [io: Text Encoding](https://docs.python.org/3.15/library/io.html#text-encoding).
+Для файлов с известным форматом задавайте кодировку явно: `encoding="utf-8"` для UTF-8, конкретную legacy-кодировку для старого обменного файла. Если формат файла следует текущей локали, укажите `encoding="locale"`. Этот аргумент появился в Python 3.10. Начиная с 3.11 он выбирает кодировку локали даже при включённом режиме UTF-8. В 3.10 при включённом режиме UTF-8 он мог выбрать UTF-8 вместо кодировки локали. Явное имя кодировки фиксирует формат файла, а `encoding="locale"` сохраняет зависимость от окружения. UTF-8 по умолчанию **не** распознаёт кодировку файла автоматически: старый файл может вызвать `UnicodeDecodeError`, а ошибка декодирования не становится допустимой только потому, что версия новая. [Python 3.15 What's New](https://docs.python.org/3.15/whatsnew/3.15.html#other-language-changes), [io: Text Encoding](https://docs.python.org/3.15/library/io.html#text-encoding).
+
+В Python 3.11+ для диагностики сравните `sys.flags.utf8_mode`, `locale.getencoding()` и `f.encoding` у открытого файла. Например, на Windows с локальной кодировкой Windows-1251 и включённым режимом UTF-8 вызов `open(path)` использует UTF-8, а `open(path, encoding="locale")` — Windows-1251. При этом `locale.getpreferredencoding(False)` учитывает режим UTF-8 и вернёт UTF-8. [PEP 686 — кодировка локали](https://peps.python.org/pep-0686/#locale-getencoding).
 
 При обновлении сервиса найдите чтение и запись текста без `encoding`, включив `-X warn_default_encoding` или `PYTHONWARNDEFAULTENCODING=1`, и проверьте реальные входные файлы в окружении запуска. `PYTHONUTF8=0` или `-X utf8=0` временно возвращает прежнее поведение для диагностики; устойчивое исправление — явный контракт кодировки на границе данных. Закрытие файлов через `with` разобрано в [Q8](#q8-как-обеспечивать-освобождение-ресурса-при-исключении). [What's New in Python 3.15](https://docs.python.org/3.15/whatsnew/3.15.html#other-language-changes), [io: EncodingWarning](https://docs.python.org/3.15/library/io.html#opt-in-encodingwarning).
 
+**Вывод дочернего процесса.** То же изменение затрагивает текстовые каналы `subprocess`. Если внешняя утилита пишет Windows-1252, то `subprocess.run(cmd, capture_output=True, text=True)` при активном режиме UTF-8 может завершиться ошибкой декодирования. При известном контракте задайте `encoding="cp1252"`. Если выбор кодировки зависит от формата ответа, получите байты без текстового режима и декодируйте их после определения формата. Кодировка канала у родителя сама по себе не меняет байты, которые пишет утилита. [PEP 686 — совместимость](https://peps.python.org/pep-0686/#backward-compatibility), [Python 3.15 — subprocess](https://docs.python.org/3.15/library/subprocess.html#frequently-used-arguments).
+
 ## Q11. Как lazy import в Python 3.15 влияет на старт сервиса и первый запрос?
 
-В Python 3.15 `lazy import module` откладывает загрузку модуля до **первого использования импортированного имени**. Если тяжёлая зависимость нужна лишь редкому маршруту, процесс может стартовать быстрее. Но работа не исчезает: первый запрос к этому маршруту заплатит за импорт. Измеряйте и время старта, и задержку первого обращения, а не только одну метрику. [Python 3.15 What's New](https://docs.python.org/3.15/whatsnew/3.15.html#pep-810-explicit-lazy-imports), [PEP 810](https://peps.python.org/pep-0810/).
+В Python 3.15 `lazy import module` откладывает разрешение имени до **первого использования**, если отложенный режим разрешён. Если тяжёлая зависимость нужна лишь редкому маршруту, процесс может стартовать быстрее. Первый запрос заплатит за загрузку, если к этому моменту модуль ещё не импортирован. Измеряйте и время старта, и задержку первого обращения, а не только одну метрику. [Python 3.15 What's New](https://docs.python.org/3.15/whatsnew/3.15.html#pep-810-explicit-lazy-imports), [PEP 810](https://peps.python.org/pep-0810/).
 
 ```python
 lazy import report_renderer  # Python 3.15+, только на уровне модуля
@@ -322,7 +373,10 @@ def render_report(data):
     return report_renderer.render(data)  # здесь модуль загрузится впервые
 ```
 
-Ошибка импорта и побочные эффекты верхнего уровня модуля тоже переходят к первому использованию. Это опасно для регистрации обработчиков или плагинов, которая должна завершиться до приёма запросов: такой модуль импортируйте обычным способом либо явно вызывайте его инициализацию на старте. Отложенная загрузка не гарантирована при любом запуске: глобальный режим и фильтр импортов могут сделать такой импорт немедленным. `lazy` допускается на уровне модуля, но не внутри функции, класса или блока `try`; `lazy import` также не работает с `*` и `__future__`. Python 3.11–3.14 не разбирает синтаксис `lazy import`. Если один исходник рассчитан на обе ветки, в начале модуля задайте `__lazy_modules__ = ["report_renderer"]` и оставьте обычный `import report_renderer` на уровне модуля. Python 3.15 учитывает этот список для подходящих импортов, а 3.11–3.14 выполняют импорт сразу. Для относительного импорта в списке нужно полное имя модуля. [Python 3.15 Language Reference](https://docs.python.org/3.15/reference/simple_stmts.html#compatibility-via-lazy-modules). [Python 3.15 What's New](https://docs.python.org/3.15/whatsnew/3.15.html#pep-810-explicit-lazy-imports), [PEP 810](https://peps.python.org/pep-0810/).
+Если модуль ещё не загружен, первое использование может вызвать ошибку импорта или запустить код верхнего уровня. Если другой участок программы уже импортировал `report_renderer` в том же интерпретаторе, первое обращение разрешит отложенное имя через существующий модуль из `sys.modules`. Обычный импорт в другом месте сам по себе не разрешает эту привязку. [PEP 810 — разрешение имён](https://peps.python.org/pep-0810/#reification), [Python 3.15 — кэш модулей](https://docs.python.org/3.15/reference/import.html#the-module-cache).
+
+Это важно для регистрации обработчиков или плагинов, которая должна завершиться до приёма запросов: такой модуль импортируйте обычным способом либо явно вызывайте его инициализацию на старте. Отложенная загрузка не гарантирована при любом запуске: глобальный режим и фильтр импортов могут сделать такой импорт немедленным. `lazy` допускается на уровне модуля, но не внутри функции, класса или блока `try`; `lazy import` также не работает с `*` и `__future__`. Python 3.11–3.14 не разбирает синтаксис `lazy import`. Если один исходник рассчитан на обе ветки, в начале модуля задайте `__lazy_modules__ = ["report_renderer"]` и оставьте обычный `import report_renderer` на уровне модуля. Python 3.15 учитывает этот список для подходящих импортов, а 3.11–3.14 выполняют импорт сразу. Для относительного импорта в списке нужно полное имя модуля. [Python 3.15 Language Reference](https://docs.python.org/3.15/reference/simple_stmts.html#compatibility-via-lazy-modules). [Python 3.15 What's New](https://docs.python.org/3.15/whatsnew/3.15.html#pep-810-explicit-lazy-imports), [PEP 810](https://peps.python.org/pep-0810/).
+
 **Граница первого использования.** При `lazy from renderers import PdfRenderer, HtmlRenderer` обращение к `PdfRenderer` загружает модуль целиком и разрешает только имя `PdfRenderer`. Привязка `HtmlRenderer` может остаться отложенной, хотя модуль уже загружен. Проверка имён через `globals()` или `vars(module)` тоже может увидеть прокси вместо класса. Поэтому проверка словаря на старте не доказывает, что оба класса готовы к использованию. Если они нужны сразу, обратитесь к ним по имени или через атрибут модуля до того, как сервис объявит себя готовым. [PEP 810, Reification](https://peps.python.org/pep-0810/#reification).
 
 
@@ -336,6 +390,18 @@ python3.15 -m profiling.sampling attach --flamegraph -d 30 -o profile.html 12345
 ```
 
 Режим `wall` по умолчанию включает ожидание I/O и блокировок; `--mode=cpu` оставляет время исполнения на CPU. По умолчанию снимается основной поток; для сервиса с рабочими потоками добавьте `--all-threads`. Для короткого процесса или точного числа вызовов используйте `profiling.tracing` (совместимый интерфейс `cProfile`) при запуске программы: статистическая выборка может оказаться слишком малой. `run` запускает новый процесс, `attach` подключается к существующему, а `dump` даёт один снимок стека, не профиль за интервал. Для `attach` нужны права доступа к памяти целевого процесса; в многопроцессном сервисе выберите нужный worker или профилируйте несколько PID. Профайлер и целевой процесс должны использовать одну minor-версию Python и одинаковый тип сборки — обычный или free-threaded. Для alpha/beta/RC должна совпадать точная версия. Поэтому команда выше рассчитана на совместимый процесс Python 3.15, а не на произвольный Python PID. [Совместимость версий профайлера](https://docs.python.org/3.15/library/profiling.sampling.html#version-compatibility). [Python `profiling.sampling`: commands and modes](https://docs.python.org/3.15/library/profiling.sampling.html), [Python `profiling.tracing`](https://docs.python.org/3.15/library/profiling.tracing.html).
+
+**Если задержка возникает в сервисе на `asyncio`.** Обычный профиль может показывать главным образом цикл событий. Когда обработчики ждут соединения из пула, снимите логические стеки задач с учётом цепочек `await`:
+
+```bash
+python3.15 -m profiling.sampling attach --async-aware --async-mode=all -d 30 12345
+```
+
+Целевой процесс должен уже загрузить `asyncio`. Режим `all` включает приостановленные задачи, а режим `running`, который используется при `attach` по умолчанию с `--async-aware`, показывает выполняющиеся задачи. Если в выборке много задач в ожидании соединения, сопоставьте её с метриками пула. Несколько задач могут ждать одновременно и попасть в один сэмпл, поэтому их число само по себе не измеряет задержку отдельного запроса. [Python 3.15: Async-aware profiling](https://docs.python.org/3.15/library/profiling.sampling.html#async-aware-profiling).
+
+Такой замер проводите отдельно от профиля с `--all-threads` или `--native`: эти параметры несовместимы с `--async-aware`. Используйте режим `wall` для наблюдения за ожиданиями. [Ограничения режима asyncio](https://docs.python.org/3.15/library/profiling.sampling.html#option-restrictions).
+
+**Если в профиле встречается противоречивый стек.** По умолчанию профайлер считывает память без остановки процесса. Если coroutine сменила состояние во время чтения, один сэмпл может объединить кадры из разных состояний. На воспроизводимой нагрузке можно повторить короткий замер с `attach --blocking`: процесс приостанавливается на время каждого сэмпла, поэтому стек считывается согласованно. Сравните задержку запросов с обычным замером, поскольку эти паузы сами влияют на поведение сервиса. [Режим блокирующего сэмплирования](https://docs.python.org/3.15/library/profiling.sampling.html#blocking-mode).
 
 Если подозреваете работу внутри C-расширения или нативной библиотеки, `profiling.sampling --native` покажет синтетические кадры `<native>` в выборке. Для **полного стека C-вызовов** нужен системный профайлер. CPython 3.15 на поддерживаемых платформах собирается с frame pointers по умолчанию: это помогает `perf`, eBPF-инструментам и отладчикам разворачивать стек. Для имён Python-функций в выводе `perf` одного наличия frame pointers недостаточно — отдельно включите поддержку perf map (`-X perf` или `PYTHONPERFSUPPORT=1` при старте процесса). Проверяйте фактическую сборку интерпретатора и расширений: сборка с `--without-frame-pointers` или нативный модуль без соответствующих флагов могут разорвать цепочку развёртки. На Windows x64 развёртка опирается на unwind metadata, а не на эту цепочку. Встроенный `profiling.sampling attach` решает другую задачу и не требует включения perf map. [Python `profiling.sampling`](https://docs.python.org/3.15/library/profiling.sampling.html), [Python 3.15 What's New](https://docs.python.org/3.15/whatsnew/3.15.html#pep-831-frame-pointers-enabled-by-default), [perf profiling HOWTO](https://docs.python.org/3/howto/perf_profiling.html), [PEP 831](https://peps.python.org/pep-0831/).
 
