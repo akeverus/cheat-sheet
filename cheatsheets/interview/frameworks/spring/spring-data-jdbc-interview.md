@@ -21,6 +21,8 @@ updated: "2026-10-05"
 
 `Spring Data JDBC` — простой persistence-фреймворк без ORM-магии: нет lazy loading, нет first-level cache, нет dirty checking. Опирается на концепции DDD (aggregate root). На собеседованиях проверяют понимание отличий от JPA, модели агрегатов и работы с кастомными запросами.
 
+Примеры описывают Spring Data JDBC 4.1.3. Для возможностей, появившихся в других версиях, версия указана отдельно.
+
 Дата последнего обновления: 2026-10-05
 
 ## Полезные ссылки
@@ -75,9 +77,9 @@ updated: "2026-10-05"
 | First-level cache | Нет | Есть (Session) |
 | Dirty checking | Нет | Есть |
 | JPQL / HQL | Нет — только SQL | Есть |
-| Схема БД | Создаётся вручную | Может генерировать |
+| Схема БД | Таблицы должны соответствовать маппингу. Схему можно подготовить SQL-скриптами или миграциями | Hibernate может генерировать схему |
 
-Практический смысл этих различий: меньше скрытого поведения и неожиданных запросов, но и меньше «удобств» — придётся самому писать схему, миграции и сложные выборки на SQL.
+Запись изменений начинается с явной операции. При этом чтение и запись одного агрегата могут выполнять несколько SQL-команд. Для сложных выборок можно использовать SQL из Q14.
 
 **Формулировка на собеседовании:** Spring Data JDBC — это «what you see is what you get»: сохранение вызывается явно, а SQL генерируется по маппингу агрегата. Число запросов и стоимость операции зависят от структуры агрегата и способа загрузки.
 
@@ -85,9 +87,7 @@ updated: "2026-10-05"
 
 ## Q2. Что означает "нет lazy loading" на практике?
 
-На практике это значит, что **весь агрегат загружается целиком и сразу** при первом же запросе. В JPA связи грузятся лениво: первый доступ к коллекции выполняет отдельный SELECT, и для этого нужна открытая Session. В Spring Data JDBC Session нет вообще, поэтому ленивой загрузки тоже нет — при `findById` все дочерние объекты подтягиваются eager (через JOIN или дополнительные SELECT), а в объекте уже всё на месте.
-
-При обычном чтении через `findById` Spring Data JDBC загружает корень и принадлежащие ему объекты до возврата из репозитория. Ссылка `AggregateReference` содержит идентификатор другого агрегата. Чтение этого агрегата требует отдельного вызова.
+При обычном чтении через `findById` Spring Data JDBC загружает корень и принадлежащие ему объекты до возврата из репозитория. При обычной загрузке одиночные связи внутри агрегата могут читаться в запросе корня, а коллекции сущностей загружаются отдельными запросами. Ссылка `AggregateReference` содержит идентификатор другого агрегата. Чтение этого агрегата требует отдельного вызова.
 
 **Что это даёт:**
 - Нет `LazyInitializationException` — той самой ошибки JPA при обращении к коллекции вне транзакции, когда Session уже закрыта.
@@ -97,9 +97,8 @@ updated: "2026-10-05"
 **Подводный камень:** большой агрегат с объёмными коллекциями каждый раз грузится полностью, и это может быть дорого. Отсюда правило: проектируйте агрегаты компактными, не складывая в один корень всё подряд.
 
 ```java
-// При findById загружается ВСЯ структура агрегата:
 Order order = orderRepository.findById(id).orElseThrow();
-// order.getItems() — уже загружен, никакого SELECT
+Set<OrderItem> items = order.getItems();
 ```
 
 ---
@@ -122,7 +121,7 @@ Order order = orderRepository.findById(id).orElseThrow();
 - Нужен second-level cache (L2) Hibernate.
 - Уже есть большой проект на Hibernate — переписывать дороже, чем продолжать.
 
-**Итог:** Spring Data JDBC — сильный выбор для новых микросервисов с чистой DDD-архитектурой, где ценят прозрачность. JPA — для legacy-систем и сложных объектных графов, где удобства ORM перевешивают его сложность.
+**Итог:** проверьте размер агрегатов, частоту изменений дочерних строк и требования к выборкам. Эти свойства определяют, окупится ли простая модель Spring Data JDBC или полезнее возможности JPA.
 
 ---
 
@@ -130,7 +129,7 @@ Order order = orderRepository.findById(id).orElseThrow();
 
 **Aggregate Root** (корень агрегата) — главная сущность группы связанных объектов и **единственная точка входа** для их сохранения и чтения. Идея пришла из DDD, и Spring Data JDBC встроил её в саму модель работы: репозиторий заводят только для корня, а всё, что внутри агрегата, живёт и обновляется через него.
 
-Агрегат — это не просто «сущность со связями», а граница консистентности: объекты внутри неё всегда сохраняются и удаляются как единое целое, в одной транзакции.
+Агрегат задаёт границу согласованности. Обычный CRUD-репозиторий с транзакциями по умолчанию записывает и удаляет корень и принадлежащие ему строки в одной транзакции. Если вызываете `JdbcAggregateTemplate` напрямую, обеспечьте транзакционную границу в вызывающем коде (Q16).
 
 ```mermaid
 graph TD
@@ -153,13 +152,17 @@ public class Order {        // Aggregate Root
     
     @Embedded.Nullable
     private DeliveryAddress address;
+
+    public Set<OrderItem> getItems() {
+        return items;
+    }
 }
 ```
 
 **Правила агрегата:**
 - Весь агрегат сохраняется и удаляется только через корень: `orderRepository.save(order)` запишет и сам заказ, и его `OrderItem`.
-- Отдельного `OrderItemRepository` нет и быть не должно — элементы управляются исключительно через `Order`. Это и есть «единственная точка входа».
-- При `deleteById` все вложенные `OrderItem` удаляются каскадно — граница агрегата не оставляет «висячих» дочерних строк.
+- В этой модели позиции управляются через `Order`. Отдельный репозиторий для независимой записи позиций обходил бы границу агрегата.
+- При `deleteById` Spring Data JDBC удаляет и вложенные `OrderItem`. Для этого схема может использовать обычный FK без `ON DELETE CASCADE`.
 - Ссылка на **другой** агрегат делается через `AggregateReference` (хранит только ID и не загружает чужой объект), чтобы не нарушать его границу.
 
 ---
@@ -201,13 +204,13 @@ public class Order {
     ShippingInfo shippingInfo;
 }
 ```
-В миграции создайте `shipping_info.order_id` как `NOT NULL UNIQUE REFERENCES orders(id)`. Внешний ключ связывает строку с заказом, а `UNIQUE` ограничивает связь одной строкой доставки на заказ. Собственное поле `@Id` у `ShippingInfo` необязательно. Без `idColumn` имя обратной колонки по умолчанию берётся из имени таблицы владельца (`orders`).
+В миграции создайте `shipping_info.order_id` как `NOT NULL UNIQUE REFERENCES orders(id)`. Внешний ключ связывает строку с заказом, а `UNIQUE` ограничивает связь одной строкой доставки на заказ. Собственное поле `@Id` у `ShippingInfo` необязательно. Для простого ID и стандартной стратегии в 4.1.3 имя обратной колонки без `idColumn` берётся из имени таблицы владельца (`orders`).
 
 ---
 
 ## Q6. (!) Как маппировать связь один-ко-многим через @MappedCollection?
 
-Связь один-ко-многим оформляется коллекцией (`Set`, `List` или `Map`) в корне агрегата, помеченной `@MappedCollection`. Аннотация говорит, **в какой колонке дочерней таблицы лежит FK на родителя** (`idColumn`), а для упорядоченных коллекций — ещё и колонку порядка/ключа (`keyColumn`). У самой дочерней сущности поля с FK быть не должно: связью управляет родитель.
+Связь один-ко-многим оформляется полем `Set`, `List` или `Map` в агрегате. По умолчанию имена колонок выводятся через `NamingStrategy`. `@MappedCollection` позволяет задать имя обратной колонки `idColumn` и для `List` или `Map` имя колонки `keyColumn`. Обратную ссылку и ключ коллекции маппит родитель.
 
 ```java
 @Table("orders")
@@ -215,12 +218,8 @@ public class Order {
     @Id
     private Long id;
     
-    @MappedCollection(idColumn = "order_id")
-    private Set<OrderItem> items;
-    
-    // Для List с порядком:
     @MappedCollection(idColumn = "order_id", keyColumn = "position")
-    private List<OrderItem> orderedItems;
+    private List<OrderItem> items;
 }
 
 @Table("order_items")
@@ -228,20 +227,23 @@ public class OrderItem {
     @Id Long id;
     String productName;
     int quantity;
-    // Нет поля orderId — управляется через idColumn в @MappedCollection
 }
 ```
 
-**SQL DDL:**
+Пример DDL для PostgreSQL. Таблица `orders` уже существует и содержит первичный ключ `id BIGINT`:
+
 ```sql
 CREATE TABLE order_items (
-    id SERIAL PRIMARY KEY,
+    id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
     order_id BIGINT NOT NULL REFERENCES orders(id),
-    position INT,  -- для List с keyColumn
+    position INT NOT NULL,
     product_name VARCHAR,
-    quantity INT
+    quantity INT,
+    UNIQUE (order_id, position)
 );
 ```
+
+Для варианта с `Set<OrderItem>` замените поле `items` и оставьте в `@MappedCollection` только `idColumn`. В схеме этого варианта колонка `position` и её ограничение уникальности не нужны. [Spring Data JDBC 4.1: Mapping](https://docs.spring.io/spring-data/relational/reference/4.1/jdbc/mapping.html)
 
 **Ключевые параметры `@MappedCollection`:**
 - `idColumn` — имя FK-колонки в дочерней таблице, по которой строки привязываются к родителю.
@@ -257,17 +259,14 @@ CREATE TABLE order_items (
 
 `AggregateReference<T, ID>` — это **типобезопасная ссылка на корень другого агрегата по его ID**, без загрузки самого объекта. Нужна, чтобы выразить связь между агрегатами, не нарушая их границы: `Order` ссылается на `Customer`, но не тянет его в память и не управляет его жизненным циклом.
 
-Это прямое следствие правила агрегатов из Q4: внутри агрегата объекты вкладывают через `@MappedCollection`/`@Embedded`, а на чужой агрегат ссылаются только по ID.
+Ссылку на другой агрегат можно хранить и как скалярный ID. `AggregateReference` дополнительно указывает тип целевого корня в Java. Для объекта внутри агрегата доступны собственные варианты маппинга, показанные в Q5 и Q6.
 
 ```java
-// Customer — отдельный агрегат
 @Table("orders")
-public class Order {
-    @Id Long id;
-
-    // Ссылка на Customer без загрузки Customer
-    AggregateReference<Customer, Long> customerId;  // хранит только Long
-}
+public record Order(
+    @Id Long id,
+    AggregateReference<Customer, Long> customerId
+) {}
 ```
 
 В БД это просто колонка `customer_id` типа `BIGINT`. При загрузке `Order` данные `Customer` не подгружаются — в поле лежит обёртка над идентификатором. Ссылку создают через `AggregateReference.to(customerId)`. Если БД должна проверять существование клиента, добавьте внешний ключ в миграции.
@@ -275,7 +274,7 @@ public class Order {
 **Зачем он нужен:**
 - Граница агрегата остаётся непересечённой: `Order` не тянет за собой `Customer`.
 - Ссылка типобезопасна — `AggregateReference<Customer, Long>` выразительнее и надёжнее, чем «голый» `Long customerId`: из типа видно, на какой агрегат указываем.
-- Когда `Customer` всё-таки нужен, его грузят явно через его собственный репозиторий: `customerRepository.findById(order.getCustomerId().getId())`.
+- Когда `Customer` всё-таки нужен, его грузят явно через его собственный репозиторий: `customerRepository.findById(order.customerId().getId())`.
 
 **Итог — где что применять:** `@MappedCollection` — для сущностей **внутри** агрегата; `AggregateReference` — для ссылок **между** агрегатами.
 
@@ -326,7 +325,7 @@ id, name, street, city, zip, billing_street, billing_city
 | `@Table("name")` | Указать имя таблицы |
 | `@Id` | Идентификатор сущности. Нужен корню агрегата. Дочерний объект может храниться без отдельного `@Id` |
 | `@Column("name")` | Указать имя колонки |
-| `@MappedCollection` | Коллекция дочерних сущностей (1:N) |
+| `@MappedCollection` | Настройка обратной ссылки для 1:1 и 1:N, а для `List` и `Map` также колонки ключа |
 | `@Embedded` | Вложенный объект в той же таблице |
 | `@Version` | Версия для оптимистичной блокировки |
 | `@ReadOnlyProperty` | Поле читается из БД, не пишется |
@@ -365,11 +364,11 @@ public class JdbcNamingConfig {
 
 ## Q11. Как создать иммутабельную сущность?
 
-Иммутабельность здесь работает естественно, потому что Spring Data JDBC не делает dirty checking и не правит объект «на лету» — он лишь читает данные через конструктор и пишет их обратно. Поэтому поля можно объявить `final` и не давать сеттеров. Главное — указать, **через какой конструктор фреймворку создавать объект при чтении из БД**: это и есть роль `@PersistenceCreator`.
+Spring Data JDBC может создавать сущности через конструктор и сохранять неизменяемые объекты.
 
 Сделайте сохраняемые поля `final` и передавайте их в конструктор. При чтении Spring Data связывает параметры конструктора с именами свойств. Для обычного Java-класса сохраните имена параметров с помощью `-parameters` либо задайте их через `@ConstructorProperties`.
 
-У `Product` один конструктор, поэтому Spring Data выбирает его автоматически. Для явного выбора среди нескольких конструкторов пометьте нужный `@PersistenceCreator`. Этой же аннотацией можно обозначить статический фабричный метод. Для Java record Spring Data умеет выбирать канонический конструктор.
+В показанном `Product` Spring Data использует канонический конструктор record. В обычном классе единственный конструктор выбирается автоматически. Среди нескольких конструкторов можно явно указать один через `@PersistenceCreator`. Этой же аннотацией можно обозначить статический фабричный метод.
 
 ```java
 @Table("products")
@@ -395,7 +394,7 @@ public class Account {
     BigDecimal balance;
     
     @Version
-    long version;  // автоматически инкрементируется при каждом UPDATE
+    long version;
 }
 ```
 
@@ -419,7 +418,7 @@ WHERE id = ? AND version = ?  -- проверяет версию
 
 ## Q13. Какие репозитории использует Spring Data JDBC?
 
-Те же базовые интерфейсы Spring Data, что и в JPA: вы наследуете `CrudRepository` (или его варианты), а реализацию генерирует фреймворк. Доступны три способа задать запрос: готовые CRUD-методы, derived query methods (запрос выводится из имени метода вроде `findByNameContaining`) и явный `@Query` с SQL.
+Те же базовые интерфейсы Spring Data, что и в JPA: вы наследуете `CrudRepository` (или его варианты), а реализацию генерирует фреймворк. Типичные варианты: готовые CRUD-методы, derived query methods (запрос выводится из имени метода вроде `findByNameContaining`) и SQL из `@Query` или именованного запроса. В примере `name`, `categoryId` и `price` являются свойствами корня `Product`. Для `Optional<Product>` запрос должен находить максимум одну строку.
 
 ```java
 @Repository
@@ -427,7 +426,7 @@ public interface ProductRepository extends CrudRepository<Product, Long> {
     
     // Derived query methods
     List<Product> findByNameContaining(String keyword);
-    Optional<Product> findByNameAndCategory(String name, String category);
+    Optional<Product> findByNameAndCategoryId(String name, Long categoryId);
     
     // Custom SQL
     @Query("SELECT * FROM products WHERE price < :maxPrice ORDER BY price")
@@ -453,7 +452,7 @@ public interface ProductRepository extends CrudRepository<Product, Long> {
 
 ## Q14. (!) Как написать кастомный SQL-запрос в Spring Data JDBC?
 
-В `@Query` пишут **обычный SQL вашей СУБД**, а не JPQL — никакого слоя абстракции над диалектом нет, имена таблиц и колонок указываются как в базе. Параметры передаются **только именованными** (`:name` + `@Param`), позиционные `?1`/`?2` не поддерживаются.
+В `org.springframework.data.jdbc.repository.query.Query` пишут SQL с именами таблиц и колонок из схемы. Spring Data JDBC поддерживает только именованные параметры вида `:name`. Имя задаётся через `@Param` или берётся из параметра метода при компиляции с `-parameters`.
 
 ```java
 @Query("SELECT p.* FROM products p " +
@@ -468,12 +467,12 @@ List<Product> findByCategoryAndPriceRange(
 
 При возврате `Product` стандартный `RowMapper` ожидает колонки для всех свойств, используемых конструктором. Если у корня есть связь один-к-одному, стандартный маппинг ожидает колонки с префиксом свойства связи, например `details_description`. Коллекции дочерних сущностей загружаются отдельными запросами.
 
-**Проекция в DTO.** Для агрегированного результата можно явно задать `RowMapper`. Например, запрос вернёт одну строку на товар и покажет ноль для товара без позиций заказа:
+**Проекция в DTO.** Для агрегированного результата можно явно задать `RowMapper`. В примере схема дополнена колонкой `order_items.product_id`, которая ссылается на товар. Запрос вернёт одну строку на товар и посчитает его позиции заказов. `COUNT(oi.id)` даёт ноль при отсутствии позиций. Количество разных заказов можно посчитать через `COUNT(DISTINCT oi.order_id)`.
 
 ```java
 @Query(
     value = """
-        SELECT p.name, COUNT(oi.id) AS order_count
+        SELECT p.name, COUNT(oi.id) AS order_item_count
         FROM products p
         LEFT JOIN order_items oi ON p.id = oi.product_id
         GROUP BY p.id, p.name
@@ -482,12 +481,12 @@ List<Product> findByCategoryAndPriceRange(
 )
 List<ProductStats> getProductStats();
 
-record ProductStats(String name, long orderCount) {}
+record ProductStats(String name, long orderItemCount) {}
 
 public static class ProductStatsRowMapper implements RowMapper<ProductStats> {
     @Override
     public ProductStats mapRow(ResultSet rs, int rowNum) throws SQLException {
-        return new ProductStats(rs.getString("name"), rs.getLong("order_count"));
+        return new ProductStats(rs.getString("name"), rs.getLong("order_item_count"));
     }
 }
 ```
@@ -503,13 +502,15 @@ public static class ProductStatsRowMapper implements RowMapper<ProductStats> {
 `INSERT`/`UPDATE`/`DELETE` через `@Query` нужно дополнительно помечать `@Modifying`. Эта аннотация говорит фреймворку, что запрос **меняет данные и не возвращает результирующий набор**, — иначе Spring Data JDBC попытается прочитать выборку и упадёт.
 
 ```java
+@Transactional
 @Modifying
 @Query("UPDATE products SET price = :price WHERE id = :id")
 int updatePrice(@Param("id") Long id, @Param("price") BigDecimal price);
 
+@Transactional
 @Modifying
-@Query("DELETE FROM products WHERE category = :category")
-void deleteByCategory(@Param("category") String category);
+@Query("DELETE FROM products WHERE category_id = :categoryId")
+void deleteByCategoryId(@Param("categoryId") Long categoryId);
 ```
 
 **Возвращаемые типы** modifying-метода:
@@ -517,13 +518,15 @@ void deleteByCategory(@Param("category") String category);
 - `int` — количество затронутых строк (удобно проверить, что обновилось ровно то, что ждали);
 - `boolean` — было ли затронуто хоть что-то.
 
-Запрос выполняет указанный SQL напрямую. Spring Data JDBC не вызывает для него callbacks агрегата и не обновляет поля аудита. Если запись должна обновлять `updated_at`, задайте это в SQL или на уровне БД. Для проверки версии в таком запросе добавьте условие по ожидаемой версии, её увеличение и обработку нулевого числа обновлённых строк. Объявленный метод запроса не получает транзакцию автоматически от CRUD-реализации. Задайте границу через `@Transactional` на сервисе или на методе репозитория. [Spring Data JDBC: modifying queries](https://docs.spring.io/spring-data/relational/reference/jdbc/query-methods.html#jdbc.query-methods.modifying-query).
+Запрос выполняет указанный SQL напрямую. На удаление зависимых строк влияют сам SQL и ограничения БД. Spring Data JDBC не вызывает для такого запроса callbacks агрегата и не обновляет поля аудита. Если запись должна обновлять `updated_at`, задайте это в SQL или на уровне БД. Для проверки версии в таком запросе добавьте условие по ожидаемой версии, её увеличение и обработку нулевого числа обновлённых строк. Объявленный метод запроса не получает транзакцию автоматически от CRUD-реализации. Задайте границу через `@Transactional` на сервисе или на методе репозитория. [Spring Data JDBC: modifying queries](https://docs.spring.io/spring-data/relational/reference/jdbc/query-methods.html#jdbc.query-methods.modifying-query).
 
 ---
 
 ## Q16. Как работает транзакционность в Spring Data JDBC?
 
 При стандартной конфигурации у унаследованных CRUD-методов есть транзакционные настройки базовой реализации. Чтение помечено `readOnly = true`, запись использует обычную транзакцию. Для собственных объявленных методов запроса границу задают явно (Q15).
+
+Прямой вызов `JdbcAggregateTemplate` проходит мимо репозиторного перехватчика. Если несколько команд шаблона должны фиксироваться и откатываться вместе, задайте общую транзакцию на сервисе.
 
 При сохранении существующего заказа через `save(order)` обновление корня и замена дочерних строк из Q6 входят в одну JDBC-транзакцию. Если вставка позиции нарушит ограничение и транзакция откатится, в базе сохранятся прежние позиции. Конкретный порядок SQL зависит от операций над агрегатом и реализации. [Spring Data JDBC: transactionality](https://docs.spring.io/spring-data/relational/reference/jdbc/transactions.html).
 
@@ -532,10 +535,17 @@ void deleteByCategory(@Param("category") String category);
 @Service
 @Transactional
 public class OrderService {
-    
+    private final OrderRepository orderRepository;
+    private final InventoryService inventoryService;
+
+    public OrderService(OrderRepository orderRepository, InventoryService inventoryService) {
+        this.orderRepository = orderRepository;
+        this.inventoryService = inventoryService;
+    }
+
     public void processOrder(Order order) {
         orderRepository.save(order);
-        inventoryService.reserveItems(order.getItems()); // запись через тот же DataSource
+        inventoryService.reserveItems(order.getItems());
     }
 }
 ```
@@ -548,7 +558,7 @@ public class OrderService {
 
 ## Q17. Когда использовать JdbcAggregateTemplate.upsert и каковы его ограничения?
 
-В **Spring Data JDBC 4.1** `JdbcAggregateTemplate.upsert(instance)` сохраняет корень агрегата одним нативным SQL upsert: вставляет строку, если первичного ключа ещё нет, либо обновляет существующую. Это полезно, когда ID известен заранее и приложение хочет обойти предварительную проверку существования. В отличие от `save`, выбор INSERT/UPDATE делает СУБД по ключу, а не проверка признака «новый объект» в Spring Data.
+Начиная со **Spring Data JDBC 4.1**, `JdbcAggregateTemplate.upsert(instance)` записывает строку корня одной нативной SQL-командой. Например, в PostgreSQL `ON CONFLICT` по первичному ключу позволяет вставить строку либо обновить существующую. Решение принимает СУБД. Обычный `save()` выбирает INSERT или UPDATE по состоянию объекта (Q12 и Q13).
 
 ```java
 // template внедрён как Spring bean; product.id уже назначен
@@ -557,12 +567,12 @@ Product saved = template.upsert(product);
 
 Ограничения важнее краткости вызова:
 
-- **ID должен быть установлен** до вызова; сценарий с ещё не выданным автоинкрементным ключом сюда не подходит.
-- **Диалект должен поддерживать однокомандный upsert.** Reference перечисляет PostgreSQL, H2, MySQL, MariaDB, SQL Server, Oracle, DB2 и HSQLDB; SQL-синтаксис зависит от СУБД (`MERGE`, `INSERT ... ON CONFLICT` и др.).
+- **ID должен быть установлен** до вызова. Сценарий с ещё не выданным автоинкрементным ключом сюда не подходит.
+- **Диалект должен поддерживать однокомандный upsert.** Reference перечисляет PostgreSQL, H2, MySQL, MariaDB, SQL Server, Oracle, DB2 и HSQLDB. Синтаксис зависит от СУБД, например `MERGE` или `INSERT ... ON CONFLICT`. В MySQL диалект использует `ON DUPLICATE KEY UPDATE`. Там конфликт по другому уникальному ключу может направить обновление в строку с другим ID. Для агрегата с дочерними строками убедитесь, что конфликт при записи корня относится к переданному ID. [Spring Data Relational: UpsertRenderContexts](https://docs.spring.io/spring-data/relational/docs/4.1.x/api/org/springframework/data/relational/core/sql/render/UpsertRenderContexts.html) · [MySQL 8.4: ON DUPLICATE KEY UPDATE](https://dev.mysql.com/doc/refman/8.4/en/insert-on-duplicate.html)
 - **Optimistic locking пока не поддерживается.** Если корректность изменения зависит от `@Version` и обнаружения конфликтов, не подменяйте `save` вызовом `upsert`.
 - **Один upsert относится к строке корня.** В Spring Data JDBC 4.1.3 фреймворк затем отдельными командами удаляет прежние строки дочерних сущностей и вставляет строки из переданного агрегата. Например, если у существующего заказа две позиции, а в переданном заказе осталась одна, сохранённая коллекция будет состоять из этой одной позиции. Для атомарной записи корня и позиций вызов должен выполняться в общей транзакции.
 
-[Spring Data JDBC reference: Upsert](https://docs.spring.io/spring-data/relational/reference/jdbc/entity-persistence.html#upsert) · [Javadoc `JdbcAggregateOperations.upsert`](https://docs.spring.io/spring-data/relational/reference/api/java/org/springframework/data/jdbc/core/JdbcAggregateOperations.html#upsert(T)) · [WritingContext в Spring Data Relational 4.1.3](https://github.com/spring-projects/spring-data-relational/blob/4.1.3/spring-data-relational/src/main/java/org/springframework/data/relational/core/conversion/WritingContext.java).
+[Spring Data JDBC reference: Upsert](https://docs.spring.io/spring-data/relational/reference/jdbc/entity-persistence.html#upsert) · [Javadoc JdbcAggregateOperations.upsert](https://docs.spring.io/spring-data/relational/reference/api/java/org/springframework/data/jdbc/core/JdbcAggregateOperations.html#upsert(T)) · [WritingContext в Spring Data Relational 4.1.3](https://github.com/spring-projects/spring-data-relational/blob/4.1.3/spring-data-relational/src/main/java/org/springframework/data/relational/core/conversion/WritingContext.java).
 
 ---
 
@@ -574,7 +584,7 @@ Product saved = template.upsert(product);
 - [Spring Boot](spring-boot-interview.md) — автоконфигурация Spring Data JDBC
 - [Транзакции БД](../../databases/database-transactions-interview.md) — изоляция, оптимистичная блокировка
 - [SQL](../../databases/sql-interview.md) — plain SQL в @Query Spring Data JDBC
-- [Flyway / Liquibase](../../databases/flyway-liquibase-interview.md) — миграции схемы (обязательны для Spring Data JDBC)
+- [Flyway / Liquibase](../../databases/flyway-liquibase-interview.md) · инструменты миграции схемы
 - [DDD](../../architecture/ddd-interview.md) — агрегаты, bounded contexts, aggregate root
 - [Шпаргалка: Spring Data JDBC: Полное руководство по](../../../frameworks/java-frameworks/spring/spring-data-jdbc.md) — теория
 - [jOOQ](../../databases/jooq-interview.md) — type-safe SQL-DSL поверх plain SQL, более мощная альтернатива `@Query` в Spring Data JDBC
