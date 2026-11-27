@@ -1,19 +1,1025 @@
-{"topic_slug":"spring-retry-interview","questions":[
-{"q_number":1,"blocks":[{"block_idx":0,"question_text":"Что такое Spring Retry и для каких задач он предназначен?","options":[{"order":0,"label":"A","text":"Повторяет операции при выбранных временных ошибках по ограниченной политике","correct":true,"sections":{"explanation":"Spring Retry повторно вызывает операцию по политике попыток и задержек.","example":"Чтение из временно недоступного сервиса можно повторить.","when_to_apply":"Для сбоев, исчезающих без изменения входа.","edge_cases":"Записи с побочными эффектами требуют идемпотентности.","related":"Исчерпание политики может перевести вызов в recovery."}},{"order":1,"label":"B","text":"Повторяет операции при временных ошибках через постоянное хранение задачи в брокере","correct":false,"sections":{"what_actually":"Библиотека не сохраняет задачи в брокере.","source_of_confusion":"Брокеры тоже предоставляют redelivery.","if_it_were_true":"Повторы переживали бы перезапуск автоматически.","how_it_should_be":"Отдельно проектировать устойчивую очередь."}},{"order":2,"label":"C","text":"Повторяет операции при ошибках, восстанавливая потерянные данные из БД","correct":false,"sections":{"what_actually":"Retry не восстанавливает данные.","source_of_confusion":"Повтор может пройти после восстановления зависимости.","if_it_were_true":"Повтор исправлял бы необратимое состояние.","how_it_should_be":"Повторять операции при временных сбоях."}},{"order":3,"label":"D","text":"Повторяет отказавшие операции без лимита, пока зависимость не восстановится","correct":false,"sections":{"what_actually":"Политика может ограничивать число попыток.","source_of_confusion":"Зависимость может восстановиться позже.","if_it_were_true":"Вызов мог бы не завершиться.","how_it_should_be":"Ограничивать попытки и время."}}]}]}
-,{"q_number":2,"blocks":[{"block_idx":0,"question_text":"Как подключить Spring Retry?","options":[{"order":0,"label":"A","text":"Добавить spring-retry и поставить @EnableScheduling для обработки @Retryable","correct":false,"sections":{"what_actually":"Scheduling включает задачи по расписанию.","source_of_confusion":"Оба механизма используют конфигурационные аннотации.","if_it_were_true":"Планировщик автоматически перехватывал бы ошибки.","how_it_should_be":"Включить @EnableRetry."}},{"order":1,"label":"B","text":"Добавить spring-retry, обеспечить поддержку AOP и включить @EnableRetry","correct":true,"sections":{"explanation":"EnableRetry регистрирует прокси-обработку retry-аннотаций.","example":"Конфигурация включает @EnableRetry, а сервис отмечает метод @Retryable.","when_to_apply":"Для декларативной политики повторов.","edge_cases":"Для RetryTemplate активация аннотаций не нужна.","related":"В Boot поддержку AOP можно подключить стартером."}},{"order":2,"label":"C","text":"Добавить spring-retry и поставить @EnableAsync для обработки @Retryable","correct":false,"sections":{"what_actually":"Async управляет выполнением в executor.","source_of_confusion":"Обе аннотации используют advice.","if_it_were_true":"Асинхронный вызов получал бы retry по умолчанию.","how_it_should_be":"Включить поддержку retry отдельно."}},{"order":3,"label":"D","text":"Добавить spring-retry и аннотировать методы @Retryable без конфигурации AOP","correct":false,"sections":{"what_actually":"Зависимость предоставляет API, но не активирует аннотирование сама.","source_of_confusion":"Аннотация выглядит самодостаточной.","if_it_were_true":"Каждое приложение с библиотекой получало бы retry advice.","how_it_should_be":"Установить @EnableRetry."}}]}]}
-,{"q_number":3,"blocks":[{"block_idx":0,"question_text":"Как работает @Retryable?","options":[{"order":0,"label":"A","text":"Повторяет вызов после возврата любого результата","correct":false,"sections":{"what_actually":"Успешный возврат заканчивает retry.","source_of_confusion":"Ошибка может передаваться в бизнес-результате.","if_it_were_true":"Успех тоже вызывал бы повтор.","how_it_should_be":"Настроить подходящие исключения."}},{"order":1,"label":"B","text":"Выполняет maxAttempts повторов сверх первого вызова","correct":false,"sections":{"what_actually":"MaxAttempts включает начальный вызов.","source_of_confusion":"Термин retry часто считают дополнительным вызовом.","if_it_were_true":"Попыток было бы на одну больше.","how_it_should_be":"Считать начальный вызов частью бюджета."}},{"order":2,"label":"C","text":"Повторяет вызов для подходящих исключений с учётом заданной политики","correct":true,"sections":{"explanation":"Advice применяет классификацию исключений, число попыток и backoff.","example":"maxAttempts=3 даёт до трёх вызовов всего.","when_to_apply":"Для повторяемой операции с временными сбоями.","edge_cases":"Внутренний вызов через this обходит прокси.","related":"Совместимый recover может обработать терминальный сбой."}},{"order":3,"label":"D","text":"Вызывает @Recover перед каждым повтором","correct":false,"sections":{"what_actually":"Recovery следует за исчерпанием политики.","source_of_confusion":"Он получает сведения о сбое.","if_it_were_true":"Fallback мог бы исполниться перед успешной попыткой.","how_it_should_be":"Разделять повтор и восстановление."}}]}]}
-,{"q_number":4,"blocks":[{"block_idx":0,"question_text":"Что такое @Recover и каковы требования к сигнатуре?","options":[{"order":0,"label":"A","text":"Обработчик терминального сбоя с совместимым результатом, опциональным Throwable первым и аргументами исходного вызова","correct":true,"sections":{"explanation":"Spring ищет совместимый recover в классе операции.","example":"Для IOException можно объявить обработчик с IOException первым параметром.","when_to_apply":"Для fallback после неуспешного повтора.","edge_cases":"Аргументы исходного метода берутся в исходном порядке, начиная с первого.","related":"При нескольких обработчиках тип исключения влияет на выбор."}},{"order":1,"label":"B","text":"Обработчик терминального сбоя с произвольным результатом, обязательным Throwable первым и аргументами исходного вызова","correct":false,"sections":{"what_actually":"Результат должен подходить вызывающему контракту.","source_of_confusion":"Fallback может возвращать другое значение.","if_it_were_true":"Оригинальный метод получал бы несовместимый тип.","how_it_should_be":"Сохранить тип результата."}},{"order":2,"label":"C","text":"Обработчик терминального сбоя с совместимым результатом, обязательным Throwable последним и аргументами исходного вызова","correct":false,"sections":{"what_actually":"Throwable допускается первым.","source_of_confusion":"Некоторые API передают контекст последним.","if_it_were_true":"Подбор не распознал бы ожидаемую сигнатуру.","how_it_should_be":"Указать Throwable первым при необходимости."}},{"order":3,"label":"D","text":"Обработчик терминального сбоя с совместимым результатом и обязательным RetryContext вместо исходных аргументов","correct":false,"sections":{"what_actually":"RetryContext не подменяет аргументы recover.","source_of_confusion":"RetryTemplate предоставляет контекст callback.","if_it_were_true":"Аннотированный fallback обязан был бы зависеть от внутреннего API.","how_it_should_be":"Использовать поддерживаемую сигнатуру @Recover."}}]}]}
-,{"q_number":5,"blocks":[{"block_idx":0,"question_text":"Какие backoff-стратегии поддерживает Spring Retry?","options":[{"order":0,"label":"A","text":"Фиксированную и случайную паузу, а рост интервала задаёт maxAttempts","correct":false,"sections":{"what_actually":"MaxAttempts ограничивает число запусков.","source_of_confusion":"Рост попыток увеличивает полное время.","if_it_were_true":"Каждая пауза росла бы без настройки множителя.","how_it_should_be":"Задать multiplier."}},{"order":1,"label":"B","text":"Фиксированную, случайную и экспоненциальную паузу, в том числе с разбросом","correct":true,"sections":{"explanation":"Политика backoff управляет паузой между попытками.","example":"Multiplier увеличивает задержку до заданного предела.","when_to_apply":"Когда нужно снизить нагрузку на зависимость.","edge_cases":"Паузы входят в полный бюджет времени.","related":"Jitter снижает синхронизацию клиентов."}},{"order":2,"label":"C","text":"Фиксированную и экспоненциальную паузу, но случайность меняет число попыток","correct":false,"sections":{"what_actually":"Случайность может менять задержку.","source_of_confusion":"И число попыток, и ожидание влияют на поведение.","if_it_were_true":"Клиенты продолжали бы делать синхронные повторы.","how_it_should_be":"Настроить jitter."}},{"order":3,"label":"D","text":"Случайную и экспоненциальную паузу, а фиксированная требует ручного sleep","correct":false,"sections":{"what_actually":"Фиксированная политика существует.","source_of_confusion":"Она может блокировать поток на паузе.","if_it_were_true":"Код сам управлял бы ожиданием.","how_it_should_be":"Настроить fixed backoff."}}]}]},
-{"q_number":6,"blocks":[{"block_idx":0,"question_text":"Что такое RetryTemplate и когда его использовать?","options":[{"order":0,"label":"A","text":"Декларативный прокси для всех методов класса с одинаковой политикой","correct":false,"sections":{"what_actually":"Template работает через явный вызов.","source_of_confusion":"Аннотация тоже настраивает повторы.","if_it_were_true":"Все методы получали бы один advice.","how_it_should_be":"Передать конкретный callback."}},{"order":1,"label":"B","text":"Исполнитель отложенных задач, который повторяет зарегистрированные методы по расписанию","correct":false,"sections":{"what_actually":"Retry не планирует запуск операций по календарю.","source_of_confusion":"Обе функции повторно вызывают код.","if_it_were_true":"Время вызова определялось бы расписанием.","how_it_should_be":"Использовать execute вокруг операции."}},{"order":2,"label":"C","text":"Программный исполнитель callback с выбранной retry-политикой и backoff","correct":true,"sections":{"explanation":"Execute управляет циклом попыток вокруг переданной операции.","example":"Можно обернуть только сетевой вызов внутри большого метода.","when_to_apply":"Когда граница повтора или политика определяется программно.","edge_cases":"Блокирующий backoff занимает текущий поток.","related":"Доступен отдельный recovery callback."}},{"order":3,"label":"D","text":"Программный исполнитель callback, который управляет только паузой между внешними повторами","correct":false,"sections":{"what_actually":"Template принимает решение о продолжении попыток.","source_of_confusion":"Backoff является частью настройки.","if_it_were_true":"Внешний цикл дублировал бы управление повторами.","how_it_should_be":"Передать RetryPolicy и BackOffPolicy."}}]}]},
-{"q_number":7,"blocks":[{"block_idx":0,"question_text":"Какие RetryPolicy реализации есть в Spring Retry?","options":[{"order":0,"label":"A","text":"SimpleRetryPolicy ограничивает попытки, TimeoutRetryPolicy — время, ExceptionClassifierRetryPolicy выбирает политику по исключению","correct":true,"sections":{"explanation":"RetryPolicy решает, разрешена ли следующая попытка.","example":"Можно назначить разные лимиты для IOException и других сбоев.","when_to_apply":"Для гибкого программного управления повторами.","edge_cases":"TimeoutRetryPolicy не прерывает уже начатый вызов.","related":"Длительность пауз задаёт BackOffPolicy."}},{"order":1,"label":"B","text":"SimpleRetryPolicy ограничивает паузы, TimeoutRetryPolicy — размер пула, ExceptionClassifierRetryPolicy выбирает транзакцию","correct":false,"sections":{"what_actually":"Пауза относится к BackOffPolicy.","source_of_confusion":"Лимит попыток влияет на суммарное время.","if_it_were_true":"Простая политика не ограничивала бы число повторов.","how_it_should_be":"Назначить лимит попыток отдельно."}},{"order":2,"label":"C","text":"SimpleRetryPolicy ограничивает время, TimeoutRetryPolicy — число попыток, ExceptionClassifierRetryPolicy выбирает executor","correct":false,"sections":{"what_actually":"Simple ограничивает попытки, Timeout следит за временем.","source_of_confusion":"Оба ограничивают общий бюджет.","if_it_were_true":"Предел времени считался бы количеством.","how_it_should_be":"Выбирать политику по виду бюджета."}},{"order":3,"label":"D","text":"SimpleRetryPolicy задаёт jitter, TimeoutRetryPolicy — сетевой таймаут вызова, ExceptionClassifierRetryPolicy выбирает обработчик recovery","correct":false,"sections":{"what_actually":"Jitter и сетевой таймаут настраиваются отдельно.","source_of_confusion":"Сетевой timeout часто вызывает retry.","if_it_were_true":"Политика попыток управляла бы сокетом.","how_it_should_be":"Задать таймаут клиента и retry-политику."}}]}]}
-,{"q_number":8,"blocks":[{"block_idx":0,"question_text":"Что такое CircuitBreakerRetryPolicy?","options":[{"order":0,"label":"A","text":"Политика, которая увеличивает задержку после сбоев и по-прежнему выполняет каждый вызов","correct":false,"sections":{"what_actually":"Открытая цепь останавливает выполнение.","source_of_confusion":"Обе стратегии снижают нагрузку после сбоев.","if_it_were_true":"Каждый запрос всё равно доходил бы до зависимости.","how_it_should_be":"Различать backoff и отказ без вызова."}},{"order":1,"label":"B","text":"Политика, которая оборачивает условие повтора и временно блокирует вызовы после исчерпания попыток в окне","correct":true,"sections":{"explanation":"Политика добавляет модель размыкания к делегату RetryPolicy.","example":"Исчерпание попыток в пределах openTimeout может открыть цепь.","when_to_apply":"Для ограничения заведомо неуспешных обращений.","edge_cases":"Состояние должно сохраняться между вызовами, чтобы размыкание имело эффект.","related":"ResetTimeout управляет повторным допуском."}},{"order":2,"label":"C","text":"Политика, которая запрещает повтор после первого успешного вызова и открывается по расписанию","correct":false,"sections":{"what_actually":"Открытие связано с ошибками политики, а не успехом.","source_of_confusion":"Политика использует интервалы времени.","if_it_were_true":"Здоровая зависимость блокировалась бы.","how_it_should_be":"Настраивать окно наблюдения за сбоями."}},{"order":3,"label":"D","text":"Политика, которая переключает вызов на резервный endpoint при каждом исключении","correct":false,"sections":{"what_actually":"Политика решает, допускать ли попытку.","source_of_confusion":"Резервный результат можно добавить через recovery.","if_it_were_true":"Retry сам менял бы сетевой маршрут.","how_it_should_be":"Описывать fallback отдельно."}}]}]},
-{"q_number":9,"blocks":[{"block_idx":0,"question_text":"Почему @Retryable не работает при self-invocation?","options":[{"order":0,"label":"A","text":"Вызов через this идёт мимо прокси с retry advice","correct":true,"sections":{"explanation":"В стандартном прокси-режиме внутренний вызов направлен на целевой объект.","example":"Фасад вызывает внедрённый retry-сервис вместо this.load().","when_to_apply":"Когда точку повтора надо вынести из метода оркестрации.","edge_cases":"Проверяйте фактическую границу прокси.","related":"То же ограничение характерно для других Spring AOP advice."}},{"order":1,"label":"B","text":"Вызов через this идёт через прокси, но теряет класс исключения","correct":false,"sections":{"what_actually":"Класс исключения сохраняется.","source_of_confusion":"Фильтрация типа действительно влияет на retries.","if_it_were_true":"Настройка retryFor исправляла бы обход прокси.","how_it_should_be":"Маршрутизировать вызов через бин."}},{"order":2,"label":"C","text":"Вызов через this идёт через прокси, но отключает только backoff","correct":false,"sections":{"what_actually":"Обход выключает весь advice.","source_of_confusion":"Backoff заметнее при отладке.","if_it_were_true":"Без задержки оставались бы повторы.","how_it_should_be":"Перенести операцию за прокси-границу."}},{"order":3,"label":"D","text":"Вызов через this идёт мимо прокси только после первой неудачной попытки","correct":false,"sections":{"what_actually":"Прямым является уже первый вызов.","source_of_confusion":"Наличие исключения определяет повтор при входе через прокси.","if_it_were_true":"Прокси обработал бы начальную попытку.","how_it_should_be":"Проверить путь вызова до выполнения."}}]}]},
-{"q_number":10,"blocks":[{"block_idx":0,"question_text":"Как правильно комбинировать @Retryable и @Transactional?","options":[{"order":0,"label":"A","text":"Открыть транзакцию снаружи и выполнять повторы внутри неё без пересоздания","correct":false,"sections":{"what_actually":"Транзакция после сбоя может быть rollback-only.","source_of_confusion":"Общая транзакция подходит для одной атомарной команды.","if_it_were_true":"Успешная попытка могла бы завершиться откатом.","how_it_should_be":"Дать каждой попытке отдельную транзакцию."}},{"order":1,"label":"B","text":"Открыть транзакцию снаружи и создавать retry advice только после commit","correct":false,"sections":{"what_actually":"Retry должен охватывать операцию, которую повторяют.","source_of_confusion":"Ошибка может обнаружиться при коммите.","if_it_were_true":"После коммита повтор не управлял бы сбоем операции.","how_it_should_be":"Поставить retry вокруг транзакционного вызова."}},{"order":2,"label":"C","text":"Обернуть транзакционный вызов в retry так, чтобы каждая попытка проходила через собственную транзакционную границу","correct":true,"sections":{"explanation":"Повтор должен заново вызвать транзакционную операцию после отката прошлой попытки.","example":"Внешний бин с @Retryable вызывает метод отдельного транзакционного бина.","when_to_apply":"Для повторов временных ошибок записи, например конфликта блокировок.","edge_cases":"Активная внешняя транзакция с REQUIRED может изменить границу, учитывайте propagation.","related":"Порядок advice при размещении на одном методе тоже имеет значение."}},{"order":3,"label":"D","text":"Обернуть транзакционный вызов в retry через this, чтобы обе аннотации сработали в одном бине","correct":false,"sections":{"what_actually":"Вызов через this обходит транзакционный прокси.","source_of_confusion":"Обе аннотации могут быть в одном классе.","if_it_were_true":"Транзакционная граница могла бы отсутствовать.","how_it_should_be":"Вызвать отдельный проксированный бин."}}]}]},
-{"q_number":11,"blocks":[{"block_idx":0,"question_text":"Как Spring Retry интегрируется с Reactor/WebClient?","options":[{"order":0,"label":"A","text":"Поставить @Retryable на метод, возвращающий Mono, чтобы прокси повторял любой асинхронный onError","correct":false,"sections":{"what_actually":"Прокси видит успешный возврат Mono до исполнения.","source_of_confusion":"Аннотация ловит синхронное исключение метода.","if_it_were_true":"Поздний onError выглядел бы как исключение вызова.","how_it_should_be":"Применить retryWhen к цепочке."}},{"order":1,"label":"B","text":"Поставить @Retryable на метод, возвращающий Mono, и применить RetryTemplate к созданию WebClient","correct":false,"sections":{"what_actually":"Создание клиента не выполняет запрос.","source_of_confusion":"RetryTemplate повторяет callback.","if_it_were_true":"Повторялась бы сборка клиента вместо сетевой операции.","how_it_should_be":"Настроить повторы вокруг реактивного вызова."}},{"order":2,"label":"C","text":"Оборачивать каждый WebClient Mono в block и повторять вызов на event loop","correct":false,"sections":{"what_actually":"Block блокирует вызывающий поток.","source_of_confusion":"Блокирующий retry может поймать ошибку block.","if_it_were_true":"Event loop ожидал бы I/O и паузы.","how_it_should_be":"Оставить реактивный retry."}},{"order":3,"label":"D","text":"Добавить retryWhen к цепочке WebClient, чтобы повтор происходил по реактивному сигналу ошибки","correct":true,"sections":{"explanation":"Reactor повторно подписывается на upstream при ошибке согласно политике.","example":"Retry.backoff задаёт число повторов, фильтр — допустимые ошибки.","when_to_apply":"Для неблокирующего повтора HTTP I/O.","edge_cases":"Повтор POST требует учитывать побочные эффекты.","related":"Обычный Spring Retry перехватывает синхронные вызовы."}}]}]}
-,{"q_number":12,"blocks":[{"block_idx":0,"question_text":"Что такое Stateful Retry и когда он нужен?","options":[{"order":0,"label":"A","text":"Хранит контекст повторов по ключу между отдельными вызовами, например при повторной доставке","correct":true,"sections":{"explanation":"RetryContextCache позволяет продолжать учёт попыток с тем же ключом.","example":"После отката сообщение доставляется вновь, а retry учитывает прошлый сбой.","when_to_apply":"Когда повторы пересекают отдельные вызовы обработчика.","edge_cases":"Ключ должен стабильно идентифицировать единицу работы.","related":"Обычный stateless retry живёт в одном вызове."}},{"order":1,"label":"B","text":"Хранит контекст повторов только в стеке текущего вызова и сбрасывает его при повторной доставке","correct":false,"sections":{"what_actually":"Стек не сохраняется между доставками.","source_of_confusion":"В одном вызове stateless-политика тоже ведёт счётчик.","if_it_were_true":"Бюджет начинался бы заново.","how_it_should_be":"Использовать состояние по ключу."}},{"order":2,"label":"C","text":"Хранит контекст повторов в транзакции сообщения и откатывает счётчик вместе с обработкой","correct":false,"sections":{"what_actually":"Прогресс должен пережить откат бизнес-операции.","source_of_confusion":"Обработка часто транзакционна.","if_it_were_true":"Каждый откат стирал бы счётчик.","how_it_should_be":"Хранить retry-контекст отдельно."}},{"order":3,"label":"D","text":"Хранит один контекст на метод и делит бюджет между всеми входными сообщениями","correct":false,"sections":{"what_actually":"Ключ отличает единицы работы.","source_of_confusion":"Параметры политики могут быть общими.","if_it_were_true":"Одно сообщение влияло бы на попытки другого.","how_it_should_be":"Задавать стабильный ключ операции."}}]}]},
-{"q_number":13,"blocks":[{"block_idx":0,"question_text":"Как добавить метрики и логирование через RetryListener?","options":[{"order":0,"label":"A","text":"Зарегистрировать RetryListener только в транзакционном менеджере и считать коммиты","correct":false,"sections":{"what_actually":"RetryListener подключается к retry.","source_of_confusion":"Транзакционные callbacks тоже сообщают исход.","if_it_were_true":"Метрики не видели бы попытки без транзакций.","how_it_should_be":"Зарегистрировать listener у retry."}},{"order":1,"label":"B","text":"Зарегистрировать RetryListener в retry-инфраструктуре и использовать open, onError и close","correct":true,"sections":{"explanation":"Listener наблюдает жизненный цикл retry и получает RetryContext.","example":"В onError фиксируют класс ошибки и номер попытки.","when_to_apply":"Для диагностики повторов и их итогов.","edge_cases":"Не добавляйте идентификаторы запросов в высококардинальные теги.","related":"Можно задать listeners у template или выбрать их для @Retryable."}},{"order":2,"label":"C","text":"Зарегистрировать RetryListener только в BackOffPolicy и считать все паузы ошибками","correct":false,"sections":{"what_actually":"Backoff отвечает за задержки.","source_of_confusion":"Пауза часто следует за ошибкой.","if_it_were_true":"Последняя ошибка могла бы остаться без учёта.","how_it_should_be":"Использовать onError."}},{"order":3,"label":"D","text":"Зарегистрировать RetryListener после @Recover и считать только возвращённые fallback-значения","correct":false,"sections":{"what_actually":"Recovery видит терминальный участок.","source_of_confusion":"Fallback полезен как отдельная метрика.","if_it_were_true":"Успешные повторы оставались бы невидимыми.","how_it_should_be":"Использовать lifecycle callbacks."}}]}]},
-{"q_number":14,"blocks":[{"block_idx":0,"question_text":"Как настроить разные retry-политики для разных методов?","options":[{"order":0,"label":"A","text":"Объявить один RetryTemplate с одной политикой и ждать, что она изменится по имени метода","correct":false,"sections":{"what_actually":"Один шаблон использует заданную конфигурацию.","source_of_confusion":"Методы могут вызывать общий бин.","if_it_were_true":"Имя Java-метода неявно меняло бы бюджет.","how_it_should_be":"Выбрать нужный шаблон явно."}},{"order":1,"label":"B","text":"Пометить методы разными @Recover, чтобы заданные лимиты определялись сигнатурой fallback","correct":false,"sections":{"what_actually":"Recover определяет поведение после сбоя.","source_of_confusion":"Fallback можно настроить отдельно на операцию.","if_it_were_true":"Сигнатура обработчика управляла бы числом попыток.","how_it_should_be":"Настроить maxAttempts у retry."}},{"order":2,"label":"C","text":"Задать разные параметры @Retryable на методах или явно выбрать разные RetryTemplate","correct":true,"sections":{"explanation":"У каждого метода могут быть собственные исключения, лимиты и backoff.","example":"Поиск повторяет таймауты, а создание заказа — только специально выбранные сбои.","when_to_apply":"Когда операции имеют разные бюджеты и побочные эффекты.","edge_cases":"Избегайте случайного удвоения попыток вложенными retry-слоями.","related":"Для сложного выбора можно использовать программные политики."}},{"order":3,"label":"D","text":"Задать разные параметры @Transactional, чтобы задержки и исключения определялись propagation","correct":false,"sections":{"what_actually":"Propagation задаёт транзакционную границу.","source_of_confusion":"Retry часто комбинируется с транзакциями.","if_it_were_true":"Тип транзакции выбирал бы задержку.","how_it_should_be":"Настроить retry отдельно."}}]}]},
-{"q_number":15,"blocks":[{"block_idx":0,"question_text":"Что произойдёт, если @Recover выбросит исключение?","options":[{"order":0,"label":"A","text":"Запустится тот же цикл повторов, но уже вокруг @Recover","correct":false,"sections":{"what_actually":"Текущий цикл уже исчерпан.","source_of_confusion":"Recover вызывается тем же advice.","if_it_were_true":"Fallback мог бы повторяться бесконечно.","how_it_should_be":"Проектировать retry fallback отдельно."}},{"order":1,"label":"B","text":"Всегда вернётся первоначальное исключение и ошибка @Recover будет отброшена","correct":false,"sections":{"what_actually":"Ошибка recovery сама может распространиться.","source_of_confusion":"Последний исходный сбой используется при выборе обработчика.","if_it_were_true":"Сбой fallback был бы скрыт.","how_it_should_be":"Учитывать контракт ошибки recovery."}},{"order":2,"label":"C","text":"Будет выбран следующий менее специфичный @Recover и цикл продолжится","correct":false,"sections":{"what_actually":"Выбирается один совместимый обработчик.","source_of_confusion":"Перегрузки могут различаться по специфичности.","if_it_were_true":"Падение обработчика запускало бы поиск другого.","how_it_should_be":"Явно программировать цепочку fallback."}},{"order":3,"label":"D","text":"Ошибка восстановления уйдёт вызывающему коду, текущий цикл повторов не возобновится","correct":true,"sections":{"explanation":"Recover завершает управление в текущей retry-операции.","example":"Если получение резервного результата падает, вызов завершится ошибкой.","when_to_apply":"Для явной передачи вызывающему сбоя восстановления.","edge_cases":"Повтор запасной операции требует отдельной явной политики.","related":"Выбор recover определяется сигнатурой и исключением исходной операции."}}]}]},
-{"q_number":16,"blocks":[{"block_idx":0,"question_text":"Как протестировать логику retry в тестах?","options":[{"order":0,"label":"A","text":"Задать предсказуемые исходы и проверить число вызовов и результат через прокси или RetryTemplate","correct":true,"sections":{"explanation":"Тест управляет ошибками зависимости и наблюдает границу повтора.","example":"Мок дважды бросает IOException, затем возвращает значение, тест проверяет три вызова.","when_to_apply":"Для проверки политики попыток, recovery и фильтрации ошибок.","edge_cases":"Реальную задержку лучше убрать или подменить, если она не предмет теста.","related":"Прокси нужен именно при проверке @Retryable."}},{"order":1,"label":"B","text":"Задать предсказуемые исходы и вызвать аннотированный объект через new для проверки AOP","correct":false,"sections":{"what_actually":"Объект через new не получает обработчик аннотации.","source_of_confusion":"Прямой вызов удобен для тестирования бизнес-логики.","if_it_were_true":"Аннотация работала бы без Spring.","how_it_should_be":"Вызвать бин из контекста."}},{"order":2,"label":"C","text":"Задать предсказуемые исходы и проверить только финальный результат, не проверяя попыток","correct":false,"sections":{"what_actually":"Финальный результат может совпадать без повтора.","source_of_confusion":"Функциональная проверка результата тоже важна.","if_it_were_true":"Неверный бюджет остался бы невидим.","how_it_should_be":"Проверить число обращений."}},{"order":3,"label":"D","text":"Задать предсказуемые исходы и проверить число попыток только по длительности sleep","correct":false,"sections":{"what_actually":"Время зависит от планирования.","source_of_confusion":"Backoff увеличивает полное время.","if_it_were_true":"Тест стал бы нестабильным и медленным.","how_it_should_be":"Наблюдать попытки и отделить проверку задержки."}}]}]},
-{"q_number":17,"blocks":[{"block_idx":0,"question_text":"Чем Spring Retry отличается от Resilience4j?","options":[{"order":0,"label":"A","text":"Spring Retry предоставляет rate limiter и bulkhead, Resilience4j — только аннотированный retry","correct":false,"sections":{"what_actually":"RateLimiter и Bulkhead входят в набор Resilience4j.","source_of_confusion":"У Spring Retry есть несколько видов политик.","if_it_were_true":"Ограничение параллелизма управлялось бы RetryTemplate.","how_it_should_be":"Отделять retry от других механизмов."}},{"order":1,"label":"B","text":"Spring Retry специализируется на повторах, Resilience4j добавляет отдельные модули CircuitBreaker, Bulkhead и RateLimiter","correct":true,"sections":{"explanation":"Resilience4j покрывает несколько самостоятельных механизмов устойчивости.","example":"Сервис может комбинировать Retry с CircuitBreaker и Bulkhead.","when_to_apply":"Когда нужны дополнительные политики и средства наблюдения.","edge_cases":"В Spring Retry есть CircuitBreakerRetryPolicy, но она не эквивалентна всему модулю Resilience4j.","related":"RetryTemplate удобен для явного программного повтора."}},{"order":2,"label":"C","text":"Spring Retry предоставляет неблокирующие операторы Reactor по умолчанию, Resilience4j поддерживает только синхронные вызовы","correct":false,"sections":{"what_actually":"У Resilience4j есть интеграция с Reactor.","source_of_confusion":"В обоих проектах есть синхронные сценарии.","if_it_were_true":"Реактивный клиент не мог бы использовать декораторы Resilience4j.","how_it_should_be":"Выбрать интеграцию под модель выполнения."}},{"order":3,"label":"D","text":"Spring Retry и Resilience4j имеют одинаковый набор политик, отличаются только именами аннотаций","correct":false,"sections":{"what_actually":"Наборы механизмов различаются.","source_of_confusion":"Обе библиотеки позволяют настроить повторы.","if_it_were_true":"Миграция свелась бы к переименованию аннотаций.","how_it_should_be":"Сравнить политики, состояние и эксплуатационные метрики."}}]}]}
-]}
+{
+  "topic_slug": "spring-retry-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Spring Retry и для каких задач он предназначен?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Настроить повтор для A и B, поскольку обе ошибки известны. Для C сначала проверить статус платежа или использовать ключ идемпотентности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В B входные данные остаются невалидными. Новый вызов воспроизведёт ту же ошибку и займёт ресурсы, которые могли бы обслужить корректный запрос.",
+                "source_of_confusion": "Перечень известных типов исключений легко принять за перечень временных сбоев. Тип помогает классифицировать исход, но сам по себе ничего не говорит о возможности восстановления.",
+                "if_it_were_true": "Если бы сам повтор устранял ошибку B, три отправки одного запроса с отсутствующим обязательным полем дали бы разные результаты без изменения данных или правил.",
+                "how_it_should_be": "Исключите ошибки валидации из политики и верните клиенту причину отказа. Повтор станет осмысленным после исправления входа."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Настроить ограниченный повтор для A, поскольку сбой временный. Для B исправить данные, для C сначала проверить статус платежа или защитить повторы от дублей.",
+              "correct": true,
+              "sections": {
+                "explanation": "Spring Retry заново запускает операцию при подходящем исключении в пределах политики попыток. Пауза даёт ресурсу время восстановиться. У B повтор сохраняет причину сбоя, а у C таймаут говорит только об отсутствии ответа, поэтому повтор может воспроизвести побочный эффект.",
+                "example": "Сервис чтения каталога получает 503. HTTP-клиент преобразует этот статус в исключение из фильтра повтора. После паузы в 500 мс второй GET возвращает 200, и вызывающий получает данные.",
+                "when_to_apply": "Применяйте ограниченный retry, если сбой с разумной вероятностью исчезает сам и операция допускает повтор. Для записи проверяйте контракт дедупликации у стороны, которая выполняет эффект.",
+                "edge_cases": "Если платёжный провайдер гарантирует идемпотентность по ключу, повтор с тем же ключом может вернуть результат первой операции. Новый ключ превращает повтор в отдельную операцию.",
+                "related": "Backoff ограничивает частоту попыток одного вызова, а rate limiter ограничивает общий поток вызовов. На уровне HTTP нужно учитывать семантику операции и ответы вроде 503 в контексте контракта сервиса."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Настроить повтор для A и C по сетевым признакам ошибки. Для B вернуть ошибку валидации, поскольку исходные данные остаются прежними.",
+              "correct": false,
+              "sections": {
+                "what_actually": "A может восстановиться, но в C платёж мог быть проведён ещё до таймаута клиента. Повтор команды с новым идентификатором способен создать второе списание.",
+                "source_of_confusion": "Отсутствие подтверждения выглядит как отсутствие результата. На деле сеть может потерять ответ уже после успешного выполнения команды.",
+                "if_it_were_true": "Если бы таймаут гарантировал отсутствие списания, после каждой такой ошибки выписка всегда показывала бы ноль операций до повтора.",
+                "how_it_should_be": "Для платежей используйте стабильный ключ идемпотентности с серверной дедупликацией либо запрос статуса и сверку перед новой командой. При отсутствии обеих возможностей передайте неоднозначный результат в процесс разбирательства."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Настроить повтор для C после длинной паузы, чтобы дождаться финализации платежа. Для A и B сразу вернуть ошибку, поскольку результат уже получен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Длинная пауза не определяет итог списания. Одновременно 503 у A даёт осмысленный повод для ограниченного повтора, если команда безопасна для повторного запуска.",
+                "source_of_confusion": "Пауза действительно помогает при кратковременной перегрузке, поэтому ей легко приписать способность разрешать неопределённость на стороне клиента.",
+                "if_it_were_true": "Если бы одной паузы хватало для безопасности, повтор платежа после 30 секунд автоматически находил бы первую операцию даже без идентификатора.",
+                "how_it_should_be": "Используйте backoff для восстановления доступности. Неопределённый результат платежа выясняйте по идентификатору операции или дедуплицируйте эффекты с гарантией провайдера."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как подключить Spring Retry?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Добавить `spring-retry` и `spring-boot-starter-aop`. Обработку `@Retryable` включит автоконфигурация Boot при обнаружении обеих зависимостей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Два артефакта дают классы Spring Retry и инфраструктуру AOP. В обычной конфигурации Boot 3.5 они сами по себе не регистрируют advisor Spring Retry для этой аннотации.",
+                "source_of_confusion": "У Boot есть автоконфигурация AOP, а многие стартеры действительно включают отдельную функцию по наличию классов. Отсюда ожидание такой же активации политики retry.",
+                "if_it_were_true": "Если бы Boot включал нужный advisor автоматически, при удалении `@EnableRetry` тест всё равно увидел бы три обращения стабильно падающего метода.",
+                "how_it_should_be": "Добавьте `@EnableRetry` к загружаемой конфигурации и проверьте число вызовов через внедрённый бин. BOM управляет версиями, а поведение задаёт конфигурация контекста."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Добавить `spring-retry` и `spring-boot-starter-aop`. Обработку `@Retryable` включить через `@EnableAspectJAutoProxy` на конфигурации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@EnableAspectJAutoProxy` позволяет создавать прокси для подходящих advisor и аспектов. Сам по себе этот механизм не описывает, какие вызовы должна перехватывать Spring Retry.",
+                "source_of_confusion": "Название аннотации напоминает об обязательном для retry AOP. Здесь смешаны включение механизма прокси и регистрация конкретного advice.",
+                "if_it_were_true": "Если бы общей настройки AOP хватало, метод с `@Retryable` проходил бы через retry даже в контексте без `RetryConfiguration`.",
+                "how_it_should_be": "Используйте `@EnableRetry`, которая импортирует конфигурацию retry и включает проксирование. При нестандартной ручной сборке эквивалентный advisor пришлось бы зарегистрировать явно."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Добавить `spring-retry` и `spring-boot-starter-aop`. Обработку `@Retryable` включить через `@EnableResilientMethods` на конфигурации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В примере используется Framework 6.2 и аннотация библиотеки Spring Retry. `@EnableResilientMethods` относится к встроенной поддержке Framework 7.0 и другому пакету аннотаций.",
+                "source_of_confusion": "Обе реализации предоставляют аннотацию с простым именем `Retryable`. Без чтения импорта одинаковые имена выглядят как одно API.",
+                "if_it_were_true": "Если бы включатели были взаимозаменяемы, переход на Framework 7.0 сохранял бы старый импорт и обработчик `@Recover` в новой реализации без адаптации.",
+                "how_it_should_be": "Для `org.springframework.retry.annotation.Retryable` подключите `@EnableRetry`. При отдельной миграции на встроенный API сверяйте импорты, атрибуты и обработку исчерпания."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Добавить `spring-retry` и `spring-boot-starter-aop`. Обработку `@Retryable` включить через `@EnableRetry` на конфигурации.",
+              "correct": true,
+              "sections": {
+                "explanation": "BOM Boot 3.5 согласует версии артефактов, а зависимости добавляют классы и AOP. `@EnableRetry` импортирует конфигурацию с advisor, который запускает retry при вызове целевого метода через прокси.",
+                "example": "При наличии обеих зависимостей добавьте `@Configuration @EnableRetry class RetryConfig {}` в загружаемые конфигурации. Вызов внедрённого сервиса с `maxAttempts = 2` при двух подходящих исключениях даст два обращения к зависимости.",
+                "when_to_apply": "Используйте эту конфигурацию, когда нужен декларативный повтор на методах Spring-бинов. Убедитесь, что клиент получает проксированную ссылку, а метод доступен для перехвата.",
+                "edge_cases": "Если `spring-retry` уже есть транзитивно, повторно подключать его ради наличия классов необязательно. Инфраструктуру обработки аннотаций всё равно нужно включить.",
+                "related": "`RetryTemplate` запускает программный повтор через callback даже вне контейнера. Для него `@EnableRetry` и AOP не являются предпосылками."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает @Retryable?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "`gateway.read()` вызовут три раза. `IOException` входит в `retryFor`, а `maxAttempts` включает первый вызов. Последний `IOException` уйдёт клиенту.",
+              "correct": true,
+              "sections": {
+                "explanation": "При вызове через прокси retry-interceptor регистрирует каждую ошибку и сверяет её тип и остаток попыток. Две ошибки оставляют право на следующую попытку. Третья исчерпывает лимит, и при отсутствии recovery вызов завершается последним исключением.",
+                "example": "Пусть вызовы выбрасывают `IOException` с сообщениями «one», «two» и «three». Счётчик обращений к gateway покажет 3, а вызывающий получит исключение с сообщением «three».",
+                "when_to_apply": "Задавайте `retryFor` по наблюдаемым типам временных сбоев и выбирайте `maxAttempts` по бюджету внешних обращений и задержки.",
+                "edge_cases": "`noRetryFor` может исключить конкретный подтип из повтора, оставив возможность recovery. Если этот же тип указан в `notRecoverable`, подходящий fallback для него тоже пропускается.",
+                "related": "У встроенного retry Framework 7.0 `maxRetries` считает повторы сверх первого вызова. Для сохранения трёх вызовов при миграции укажите `maxRetries = 2`."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "`gateway.read()` вызовут четыре раза. `IOException` входит в `retryFor`, а `maxAttempts` считает только повторы. Последний `IOException` уйдёт клиенту.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Spring Retry 2.0.x исходное выполнение занимает один из трёх слотов `maxAttempts`. До четвёртого вызова управление не дойдёт.",
+                "source_of_confusion": "Термин «число ретраев» часто используют и для количества всех обращений, и для количества повторов. Во Framework 7.0 атрибут `maxRetries` действительно считает лишь повторы.",
+                "if_it_were_true": "Если бы тройка задавала только повторы, лог зависимости и Mockito `times(4)` зафиксировали бы четвёртое обращение после третьего отказа.",
+                "how_it_should_be": "Для требования «первый вызов и до трёх повторов» в Spring Retry 2.0.x ставьте `maxAttempts = 4`. Проверяйте бюджет на зависимости, которая стабильно выдаёт повторяемое исключение."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "`gateway.read()` вызовут один раз. `retryFor` сопоставляется с причиной ошибки, а верхний `IOException` сразу уйдёт клиенту.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Верхний `IOException` сам соответствует фильтру. Обёртка или вложенная причина для совпадения здесь не нужны.",
+                "source_of_confusion": "При работе с HTTP и репозиториями исключения часто оборачиваются, поэтому диагностика действительно включает разбор цепочки причин. Это легко принять за требование классифицировать только вложенный тип.",
+                "if_it_were_true": "Если бы прямой `IOException` игнорировался, конструктор `new IOException(\"read failed\")` без причины лишил бы метод всех повторов.",
+                "how_it_should_be": "Начните с фактического исключения, которое проходит через прокси. Чтобы запретить повторы конкретного подтипа, задайте исключение из фильтра через `noRetryFor`."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "`gateway.read()` вызовут три раза. `IOException` входит в `retryFor`, а после исчерпания `maxAttempts` прокси вернёт `null`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В описанном stateless-вызове лимит исчерпывается после третьей ошибки. Без recovery Spring Retry пробрасывает последнее исключение и не создаёт значение для `Data`.",
+                "source_of_confusion": "`@Recover` действительно может вернуть запасной объект и превратить неудачные попытки в успешный возврат. В условии этот этап отсутствует.",
+                "if_it_were_true": "Если бы исчерпание давало `null`, присваивание `Data result = service.readData()` завершилось бы нормально и обработчик `catch (IOException e)` не вызвался бы.",
+                "how_it_should_be": "Чтобы возвращать явный запасной результат, добавьте совместимый `@Recover` и покройте ветку исчерпания тестом. При отсутствии контракта fallback обрабатывайте исключение у вызывающего."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое @Recover и каковы требования к сигнатуре?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Вызывается `recoverGeneral`. При совпадающем типе результата общий параметр `Exception` выбирается раньше более узкого `IOException`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба обработчика совместимы с исходной сигнатурой, но Spring Retry выбирает ближайший подходящий тип к фактическому исключению. Для `IOException` это `recoverIo`.",
+                "source_of_confusion": "В общем обработчике можно собрать много ошибок в одну ветку, и он выглядит универсальной точкой входа. Его широкий тип расширяет множество совпадений, а приоритет получает более конкретное совпадение.",
+                "if_it_were_true": "Если бы выбирался самый широкий тип, добавление общего `Exception` переключило бы все случаи `IOException` на общий результат.",
+                "how_it_should_be": "Оставьте общий обработчик для остальных ошибок. Для явного выбора одного обработчика у Spring Retry 2.0.x есть атрибут `recover` с именем метода, при этом требования к совместимости остаются."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Вызывается `recoverGeneral`. Для объявления `throws IOException` Spring сопоставляет recovery с родительским типом исключения, чтобы обработать возможные подтипы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Выбор строится на фактическом исключении, которое привело к исчерпанию, и совместимости сигнатуры. Объявление `throws` само по себе приоритет между двумя обработчиками не задаёт.",
+                "source_of_confusion": "Проверяемое исключение действительно фигурирует в контракте Java. Его объявление легко принять за статическую привязку к методу обработки, как при обычном выборе перегрузки по типу аргумента на этапе компиляции.",
+                "if_it_were_true": "Если бы выбор выполнялся по `throws`, у метода с `throws Exception` `recoverIo` не участвовал бы даже при реальном `IOException`.",
+                "how_it_should_be": "Подбирайте первый параметр recovery по типу фактической ошибки и сохраняйте исходный порядок передаваемых аргументов. Тестируйте выбор обработчика под конкретный тип."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Вызывается `recoverIo`. Оба метода возвращают `PaymentResult`, а `IOException` точнее совпадает с ошибкой. В обработчик передаётся исходный `req`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Spring Retry связывает fallback с retryable-методом на целевом классе. При обычном выборе без имени он сопоставляет сигнатуру и предпочитает более близкий тип исключения. Здесь расстояние от `IOException` до одноимённого параметра равно нулю.",
+                "example": "Если `recoverIo` возвращает результат со статусом `RETRY_LATER`, а `recoverGeneral` со статусом `FAILED`, после исчерпания на `new IOException(\"gateway unavailable\")` клиент получит `RETRY_LATER` для исходной заявки.",
+                "when_to_apply": "Определяйте отдельный recovery, если для известного сбоя есть осмысленная бизнес-реакция. Возвращаемый тип должен подходить исходному методу, а параметры после исключения могут принять начальную часть его аргументов.",
+                "edge_cases": "Если финальная ошибка имеет тип `IllegalStateException` и recovery для неё разрешён, из указанных методов по типу подходит `recoverGeneral`. Обработчик без параметра исключения может быть запасным вариантом.",
+                "related": "`noRetryFor` регулирует повтор, а `notRecoverable` регулирует допуск к recovery. У встроенного retry Framework 7.0 аннотация `@Recover` библиотеки не служит связанной точкой восстановления."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Оба метода пропускаются. Для recovery исходный `req` должен быть первым параметром, а `IOException` или `Exception` передаётся последним.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Если recovery принимает исключение, оно располагается первым. Поэтому `recoverIo(IOException, PaymentRequest)` подходит, а расположение исключения в конце нарушило бы ожидаемую форму.",
+                "source_of_confusion": "При ручном обработчике доменные параметры часто ставят первыми. У Spring Retry первый слот имеет специальный смысл для классификации ошибки.",
+                "if_it_were_true": "Если бы `req` ожидался первым, две указанные сигнатуры не дали бы корректного типизированного fallback после отказа.",
+                "how_it_should_be": "Держите `@Recover` в том же целевом классе с совместимым результатом, исключением первым и аргументами метода в исходном порядке. Если recovery настроен, но совместимый обработчик не найден, возможен `ExhaustedRetryException`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие backoff-стратегии поддерживает Spring Retry?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Паузы составят 1, 2 и 4 с, затем повторы прекратятся. `maxDelay` ограничивает суммарное ожидание.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Потолок применяется к каждой рассчитанной паузе. Лимит шести повторов допускает три дополнительные паузы после первых трёх, а все шесть пауз суммарно занимают 35 с без учёта работы.",
+                "source_of_confusion": "В других API таймаут действительно может ограничивать весь цикл. Имя `maxDelay` напоминает о таком бюджете, хотя относится к backoff.",
+                "if_it_were_true": "Если бы лимит действовал на сумму, четвёртая пауза в 8 с не поместилась бы в оставшиеся 3 с. В текущей политике вызов увидит полную паузу в 8 с.",
+                "how_it_should_be": "Для общего бюджета ограничивайте допуск следующих попыток по времени и задавайте дедлайн или таймаут сетевой операции. Отдельно следите, чтобы планируемый backoff помещался в остаток бюджета."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Паузы составят 1, 3, 5, 7, 9 и 10 с. `multiplier` задаёт постоянное приращение, а `maxDelay` ограничивает каждую паузу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждая следующая задержка получается умножением предыдущего значения. С `multiplier = 2.0` третья пауза равна 4 с, тогда как постоянная прибавка дала бы другой ряд.",
+                "source_of_confusion": "Запись числа рядом с задержкой иногда воспринимается как шаг в секундах. Здесь число безразмерное и определяет отношение соседних пауз до потолка.",
+                "if_it_were_true": "При линейной прибавке в 2 с интервалы росли бы одинаковыми шагами даже после 7 с. Измерения показали бы 3 с между второй и третьей попыткой.",
+                "how_it_should_be": "Для геометрического роста задайте множитель больше 1. Если нужен линейный алгоритм с заданным шагом, реализуйте отдельную `BackOffPolicy`."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Паузы составят 1, 2, 4, 8, 16 и 32 с. `multiplier` увеличивает задержку, а `maxDelay` действует только при включённой случайности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Детерминированная экспоненциальная политика также уважает `maxDelay`, поэтому после 8 с идут две паузы по 10 с. Случайность в условии отключена.",
+                "source_of_confusion": "Настройки случайности и верхней границы часто идут вместе. При `delay` и большем `maxDelay` без множителя граница действительно участвует в выборе случайного интервала, но экспоненциальный режим использует её как потолок.",
+                "if_it_were_true": "Если бы верхняя граница работала только со случайностью, последние две паузы в условии суммарно заняли бы 48 с вместо 20 с.",
+                "how_it_should_be": "В экспоненциальном режиме задавайте потолок независимо от джиттера. Если много клиентов стартуют одновременно, отдельно включайте случайный разброс."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Паузы составят 1, 2, 4, 8, 10 и 10 с. `multiplier` увеличивает задержку, а `maxDelay` ограничивает каждую паузу.",
+              "correct": true,
+              "sections": {
+                "explanation": "Первый повтор ждёт `delay`. Дальше политика умножает задержку на 2 и ограничивает её значением `maxDelay`. Всего семь вызовов и шесть пауз, поскольку первый вызов начинается без backoff.",
+                "example": "В тесте соберите `ExponentialBackOffPolicy` с начальным интервалом 1000 мс, множителем 2 и максимумом 10000 мс. Подставьте `Sleeper`, записывающий интервалы, и получите список `[1000, 2000, 4000, 8000, 10000, 10000]`.",
+                "when_to_apply": "Экспоненциальный рост с потолком годится при временной перегрузке или недоступности. Выбирайте параметры по допустимой длительности запроса и способности ресурса восстанавливаться.",
+                "edge_cases": "У `@Backoff` без параметров пауза фиксирована на 1000 мс. `delay` и больший `maxDelay` без множителя дают случайную паузу в диапазоне. У самостоятельно созданного `RetryTemplate` по умолчанию ожидания нет.",
+                "related": "Джиттер снижает синхронизацию повторов разных клиентов. Лимит попыток определяет `RetryPolicy`, а `BackOffPolicy` отвечает за ожидание между ними."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое RetryTemplate и когда его использовать?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Вызвать `RetryTemplate.execute` с callback операции и recovery. Чтобы шаблон перехватил `IOException` у объекта, созданного через `new`, этот объект сначала нужно проксировать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`execute` вызывает переданную лямбду и сам обрабатывает исключение. Объект, метод которого вызывается внутри лямбды, может быть обычным Java-объектом.",
+                "source_of_confusion": "Аннотационный retry действительно зависит от Spring AOP. Общее название библиотеки сближает механизм прокси и императивный вызов, хотя перехват расположен в разных местах.",
+                "if_it_were_true": "Если бы шаблону требовался прокси, на первом падении вызов лямбды над обычным клиентом завершался бы ошибкой даже при заданной политике.",
+                "how_it_should_be": "Создайте шаблон с нужной политикой и вызовите `template.execute(ctx -> externalApi.call(data), ctx -> fallbackResult(data))`. Проксирование нужно только при отдельном использовании аннотационного advice."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Вызвать `RetryTemplate.execute` с callback операции и recovery. На шаблоне задать фильтр `IOException`, три попытки и экспоненциальный backoff.",
+              "correct": true,
+              "sections": {
+                "explanation": "Шаблон держит цикл вокруг callback и сам управляет следующей попыткой. После исчерпания в показанном вызове отдельный `RecoveryCallback` возвращает значение, ожидаемое клиентом.",
+                "example": "`var retry = RetryTemplate.builder().maxAttempts(3).retryOn(IOException.class).exponentialBackoff(1000, 2, 10000).build();` Вызов `retry.execute(ctx -> externalApi.call(data), ctx -> fallbackResult(data))` при трёх `IOException` сделает три обращения с паузами 1 и 2 с и вернёт fallback.",
+                "when_to_apply": "Используйте шаблон, когда границу повтора задаёт вызывающий код, политика строится из конфигурации или операция выполняется вне Spring-бина.",
+                "edge_cases": "Если успех приходит со второй попытки, callback восстановления не вызывается. Для сохранения состояния между самостоятельными вызовами потребуется перегрузка с `RetryState` и стабильный ключ.",
+                "related": "У `org.springframework.core.retry.RetryTemplate` из Framework 7.0 другой контракт. В нём нет перегрузки с `RecoveryCallback` Spring Retry, а при работе с `execute` исчерпание можно обработать через `RetryException`."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Вызвать `RetryTemplate.execute` с callback операции. Для fallback объявить `@Recover` в классе клиента, чтобы шаблон нашёл его после третьего `IOException`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обычный `RetryTemplate` не ищет аннотированный метод на объекте, который вызван внутри callback. После исчерпания без recovery последний `IOException` выйдет из stateless-вызова.",
+                "source_of_confusion": "Аннотационный interceptor тоже использует механизмы Spring Retry, и это создаёт впечатление, что разметка на клиенте доступна любому шаблону.",
+                "if_it_were_true": "Если бы шаблон обнаруживал `@Recover` сам, добавление метода с этой аннотацией в обычный класс изменило бы результат существующего `execute(callback)`.",
+                "how_it_should_be": "Передайте `RecoveryCallback` напрямую. При использовании аннотаций вызывайте проксированный Spring-бин и держите связанный recovery рядом с retryable-методом."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Вызвать `RetryTemplate.execute` с callback операции и recovery. На шаблоне задать `maxAttempts(3)` и `retryOn(IOException.class)`, а задержки возьмутся из стандартного backoff аннотации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У стандартного программного шаблона паузы по умолчанию отсутствуют. Конфигурация `@Backoff` применяется при обработке аннотации, которой здесь нет.",
+                "source_of_confusion": "В одной библиотеке и шаблон, и `@Retryable` делают цикл попыток, поэтому их значения по умолчанию легко считать общими.",
+                "if_it_were_true": "Если бы стандартная пауза аннотации автоматически применялась к шаблону, три ошибки без указанной политики ожидания заняли бы около двух секунд даже у мгновенно падающего клиента.",
+                "how_it_should_be": "Обозначьте ожидание явно через билдер или `BackOffPolicy`. Для растущих пауз используйте `exponentialBackoff`, а политику ограничения числа попыток оставьте отдельной настройкой."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие RetryPolicy реализации есть в Spring Retry?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Поставить один `SimpleRetryPolicy(5)` с фильтром по `IOException` и `TimeoutException`. Предел в пять вызовов разделится между этими типами по правилам фильтра.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один `SimpleRetryPolicy` применяет общий предел ко всем разрешённым типам. При пяти последовательных `IOException` он исчерпает пять вызовов, хотя для этого типа требуются три.",
+                "source_of_confusion": "Фильтр действительно различает классы исключений. Из этого легко сделать вывод, что он же задаёт разные лимиты, хотя его решение отвечает на вопрос о допустимости исключения.",
+                "if_it_were_true": "Если бы фильтр распределял лимит по типам, одного числа 5 в конфигурации хватило бы, чтобы восстановить другое число 3 без дополнительного правила.",
+                "how_it_should_be": "Для общего лимита и белого списка подходит `SimpleRetryPolicy`. Разные числовые бюджеты задайте отдельными экземплярами политик и классификатором."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Объединить `SimpleRetryPolicy(3)` и `SimpleRetryPolicy(5)` в `CompositeRetryPolicy` с правилом AND. Для каждого исключения сработает предел соответствующей политики.",
+              "correct": false,
+              "sections": {
+                "what_actually": "AND-композиция требует разрешения обеих политик. При двух простых политиках без разделения ошибок первая, исчерпав лимит 3, запретит четвёртый вызов и при `TimeoutException`.",
+                "source_of_confusion": "В композиции действительно можно собрать несколько ограничений. Однако логическое объединение ответов не выбирает политику по типу исключения.",
+                "if_it_were_true": "Если бы AND был диспетчером, более строгая политика не участвовала бы в решении о четвёртой попытке после таймаута. На практике её отказ блокирует повтор.",
+                "how_it_should_be": "Используйте композицию для одновременных ограничений, например по времени и числу попыток. Для выбора политики поставьте `ExceptionClassifierRetryPolicy`."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Настроить `ExceptionClassifierRetryPolicy` с `SimpleRetryPolicy(3)` для `IOException`, `SimpleRetryPolicy(5)` для `TimeoutException` и `NeverRetryPolicy` для `IllegalArgumentException`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Классификатор по фактическому исключению выбирает вложенную политику. Она ведёт свой контекст и решает, допустима ли следующая попытка. До первой ошибки вызов разрешён, поэтому `NeverRetryPolicy` для ошибки аргумента запрещает только повтор.",
+                "example": "`policy.setPolicyMap(Map.of(IOException.class, new SimpleRetryPolicy(3), TimeoutException.class, new SimpleRetryPolicy(5), IllegalArgumentException.class, new NeverRetryPolicy()));` На трёх отдельных тестовых запусках с неизменным типом ошибки счётчики вызовов покажут 3, 5 и 1.",
+                "when_to_apply": "Используйте классификатор, если классы ошибок выражают разные условия восстановления. Выбирайте соответствие по исключению на фактической границе вызова.",
+                "edge_cases": "Если исключения чередуются и переходят между разными экземплярами политик, у делегатов отдельные контексты. Для единого верхнего предела на операцию нужен самостоятельный суммарный лимит.",
+                "related": "`TimeoutRetryPolicy` проверяет время при решении о продолжении и не прерывает выполняющуюся попытку. `AlwaysRetryPolicy` сам по себе не ограничивает число обращений."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Настроить `TimeoutRetryPolicy` с тремя лимитами по типам. Число вызовов получится из таймаутов, а долгую попытку политика оборвёт на установленной границе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Политика по времени оценивает возможность дальнейшего вызова, а продолжительность отдельного обращения зависит от самой операции. При одинаковом бюджете быстрых вызовов может поместиться больше, чем медленных.",
+                "source_of_confusion": "Сетевой read timeout прерывает ожидание на своём уровне, поэтому похожее название создаёт ожидание того же эффекта у политики retry.",
+                "if_it_were_true": "Если бы политика гарантировала три вызова по одному временному пределу, три мгновенные ошибки и три вызова по секунде исчерпывали бы бюджет одинаково.",
+                "how_it_should_be": "Для точного потолка по обращениям используйте счётчик попыток через `SimpleRetryPolicy`. Таймауты клиента и общий deadline определяйте отдельно."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое CircuitBreakerRetryPolicy?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Через 1 с вызов будет отклонён, через 21 с операция снова допустима. `openTimeout` участвует в размыкании, а `resetTimeout` применяется при проверке сброса.",
+              "correct": true,
+              "sections": {
+                "explanation": "Вложенная политика исчерпала три вызова в пределах окна. Обёртка учитывает это в сохранённом контексте, поэтому следующий вызов с тем же ключом завершится до выполнения callback. Когда проходит интервал сброса, очередная проверка создаёт новый контекст вложенной политики и пропускает вызов.",
+                "example": "Пусть три ошибки получены в первые 3 с. Счётчик обращений к gateway останется равным 3 у запроса через 1 с. Через 21 с новый запрос вызовет gateway и увеличит счётчик до 4, даже если до этого больше никто не обращался.",
+                "when_to_apply": "Используйте такой предохранитель, когда нужно временно отсечь обращения после серии ошибок и политика работает с контекстом, общим для нужной группы вызовов.",
+                "edge_cases": "При вызовах через `execute(callback)` без состояния между отдельными запусками контекст каждый раз новый. Серия независимых отказов не накопится в одной цепи.",
+                "related": "У Resilience4j есть `HALF_OPEN` с ограниченными пробными вызовами. В этой политике Spring Retry следующая проверка после сброса возвращает доступ по заново созданному контексту. [CircuitBreakerRetryPolicy 2.0.12](https://github.com/spring-attic/spring-retry/blob/v2.0.12/src/main/java/org/springframework/retry/policy/CircuitBreakerRetryPolicy.java)"
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Через 1 с вызов будет отклонён, через 21 с пройдёт как ограниченная проба. После `resetTimeout` цепь переходит в `HALF_OPEN`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Запрос через 21 с действительно может снова вызвать операцию, но политика сбрасывает вложенный контекст. Специальной квоты пробных вызовов с состоянием `HALF_OPEN` она не ведёт.",
+                "source_of_confusion": "В распространённой модели circuit breaker первый допущенный вызов после паузы служит пробой. Сходство первого эффекта скрывает отличие в дальнейшей обработке.",
+                "if_it_were_true": "Если бы был `HALF_OPEN` с одной пробой, второй запрос после сброса мог бы быть отклонён только потому, что пробная квота уже занята.",
+                "how_it_should_be": "Для управляемых проб используйте полноценный circuit breaker с настройкой допустимого числа вызовов в `HALF_OPEN`. Для этой политики отслеживайте состояние вложенного лимита после сброса."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Через 1 с вызов будет допущен, через 21 с тоже. `openTimeout` задаёт паузу до размыкания, поэтому третья ошибка за 3 с оставляет цепь закрытой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Исчерпание политики внутри первых 5 с приводит к размыканию при проверке. Через секунду контекст всё ещё блокирует запуск. Через 21 с проверка может сбросить его.",
+                "source_of_confusion": "Параметр со словом `Timeout` можно принять за задержку перед переходом. Здесь он задаёт окно, в котором быстрое исчерпание учитывается для размыкания.",
+                "if_it_were_true": "Если бы размыкание ждало истечения окна, запрос на четвёртой секунде дошёл бы до ресурса несмотря на исчерпанный лимит.",
+                "how_it_should_be": "Интерпретируйте `openTimeout` как окно оценки, а `resetTimeout` как порог сброса. Для регулирования пауз между разрешёнными попытками настройте отдельный backoff."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Через 1 с вызов будет отклонён, через 21 с тоже. Исчерпанный `SimpleRetryPolicy` восстановится только после явного сброса ключа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Политика проверяет время при обращении и после `resetTimeout` может заменить исчерпанный контекст вложенной политики. Вызов с прежним ключом снова допустим.",
+                "source_of_confusion": "Простой счётчик сам по себе действительно остаётся исчерпанным, пока используется тот же контекст. Circuit breaker добавляет именно управление временем жизни этого контекста.",
+                "if_it_were_true": "Если бы сброс выполнялся только вручную, ресурс мог бы давно восстановиться, но все вызовы с ключом `payment-status` продолжали бы отклоняться.",
+                "how_it_should_be": "Оставьте постоянный ключ и настройте интервалы предохранителя. Ручная смена ключа создаёт отдельную историю и может преждевременно снять защиту."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как ведёт себя @Retryable при self-invocation?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "`retryableMethod` будет повторён. Внешний вызов `process` уже вошёл в прокси, который перехватывает исключения всех внутренних методов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Внешняя точка входа соответствует `process`, где retry не задан. Вызов `this.retryableMethod(p)` выполняется на целевом объекте и не добавляет в текущую цепочку retry-interceptor.",
+                "source_of_confusion": "В стеке действительно остаётся внешний вызов прокси. Из этого легко заключить, что он отдельно перехватывает каждый метод target-объекта.",
+                "if_it_were_true": "Если бы внешний вход активировал retry для любого последующего метода, одна ошибка `gateway.charge` приводила бы к нескольким обращениям даже при вызове через `this`.",
+                "how_it_should_be": "Вынесите повторяемую операцию в отдельный бин и вызовите его через внедрённый прокси. Если нужно повторять весь `process`, задайте политику на доступном внешнем методе и учтите все его побочные эффекты."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "`retryableMethod` будет повторён при CGLIB. Подкласс прокси перехватит `this.retryableMethod`, даже если `process` не аннотирован.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring AOP с CGLIB тоже делегирует обычное исполнение целевому объекту. Внутренний вызов на target проходит без отдельного входа в прокси.",
+                "source_of_confusion": "CGLIB создаёт подкласс, а Java использует виртуальную диспетчеризацию. Этот факт создаёт правдоподобную модель, в которой всё тело метода будто исполняется на объекте прокси.",
+                "if_it_were_true": "Если бы переключения типа прокси хватало, одна настройка `proxyTargetClass = true` превращала бы обращение через `this` в повторяемый вызов.",
+                "how_it_should_be": "При proxy-based AOP проверяйте ссылку, на которой вызывается аннотированный метод. Для явной границы без проксирования можно обернуть действие в `RetryTemplate.execute`."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "`retryableMethod` выполнится один раз. Вызов через `this` остаётся на целевом объекте и не входит в retry-interceptor аннотированного метода.",
+              "correct": true,
+              "sections": {
+                "explanation": "При обращении клиента прокси строит цепочку для `process`. Из тела `process` переход в `retryableMethod` происходит напрямую на target. Ошибка gateway выходит из этого стека без повтора.",
+                "example": "Пусть мок gateway выбрасывает `IOException` при каждом вызове. `verify(gateway, times(1)).charge(p)` пройдёт после вызова `process(p)`. Если ту же операцию вынести в отдельный бин с лимитом 3 и вызвать через его прокси, мок получит три обращения.",
+                "when_to_apply": "Выносите retry-границу на операцию, которую допустимо перезапускать целиком. Убедитесь, что вызывающий код обращается к управляемому Spring-бину по проксированной ссылке.",
+                "edge_cases": "Если внедрить собственную проксированную ссылку и использовать `self.retryableMethod(p)`, вызов пройдёт через advice. `@Lazy` может отложить разрешение зависимости, но такая схема усложняет структуру бина.",
+                "related": "У `@Transactional` в proxy-режиме то же ограничение. Прямой вызов может работать в уже открытой транзакции, но внутренний метод сам не активирует свои настройки распространения."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Первый вызов `retryableMethod` пройдёт через `this`, а при `IOException` повтор возьмёт на себя прокси, поскольку ему доступна аннотация целевого метода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Прокси не перехватывает внутренний вызов как самостоятельную операцию. При выходе исключения он видит отказ `process`, и на этой точке входа настройка повторов отсутствует.",
+                "source_of_confusion": "Внешний AOP-interceptor способен увидеть ошибку наружного метода. Из этого кажется, что он может определить внутреннюю точку отказа и повторить только её.",
+                "if_it_were_true": "Если бы такое было возможно, прокси мог бы повторить внутренний вызов с аргументами `p` и вернуть управление в уже развёрнутый стек `process`.",
+                "how_it_should_be": "Для точного интервала повтора сделайте внутреннее действие отдельным callback или точкой входа другого проксированного бина. Обычный advice действует на границе фактического вызова."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как правильно комбинировать @Retryable и @Transactional?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Вторая попытка останется в первой транзакции. `REQUIRED` связывает все исполнения одного вызова прокси с общим контекстом, пока retry не вернёт результат.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При заданном порядке transaction advice входит заново для каждой попытки. Первый вход создал транзакцию, а выход при `OptimisticLockingFailureException` откатил её до того, как управление вернулось в retry.",
+                "source_of_confusion": "`REQUIRED` действительно переиспользует активную транзакцию. Здесь легко принять наличие внешнего retry-цикла за наличие активной внешней транзакции.",
+                "if_it_were_true": "Если бы транзакция пережила первую ошибку, следующий `flush` мог бы работать в контексте, помеченном rollback-only, и даже успешный возврат не обеспечил бы commit.",
+                "how_it_should_be": "Определите, где находится активная транзакция при входе в `REQUIRED`. При внешней транзакции и требовании независимых commit/rollback используйте отдельную границу `REQUIRES_NEW` с учётом её семантики."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Вторая попытка останется в первой транзакции. При одинаковой точке входа transaction advice выполняется первым, а retry advice работает внутри него.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В совпадающей точке входа порядок задаётся приоритетами advisor. У `@EnableRetry` приоритет `LOWEST_PRECEDENCE - 1`, у стандартного transaction advice `LOWEST_PRECEDENCE`, поэтому retry оказывается снаружи.",
+                "source_of_confusion": "При изменении порядка advisor транзакция действительно может окружить весь retry-цикл. Место аннотаций на одной декларации легко принять за признак этого порядка.",
+                "if_it_were_true": "Если бы транзакция была снаружи, до возврата из retry-цикла transaction advice не закончил бы управление общей транзакцией, и повторы унаследовали бы состояние после первой ошибки.",
+                "how_it_should_be": "Проверяйте конфигурацию advisor и внешний транзакционный контекст. Можно явно разделить границы на два бина, чтобы retry-метод на каждой попытке вызывал проксированный transaction-метод."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Вторая попытка выполнится без транзакции. Прокси запускает transaction advice только при первом входе, а дальше retry повторяет только тело метода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Retry-interceptor повторно проходит оставшуюся цепочку вызова. В ней есть transaction advice, поэтому при `REQUIRED` и отсутствии активной транзакции стартует новая.",
+                "source_of_confusion": "Ручной retry-цикл внутри транзакционного метода действительно повторяет лишь тело callback. В задаче цикл расположен на другом уровне.",
+                "if_it_were_true": "Если бы повтор обходил transaction advice, второй вызов репозитория работал бы без заданной сервисной транзакции и мог бы дать другую границу записи или ошибку при `flush`.",
+                "how_it_should_be": "Поместите повтор снаружи транзакционной границы. В программном варианте цикл может вызывать `TransactionTemplate.execute` заново на каждой попытке."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Вторая попытка начнётся в новой транзакции. Retry advice оборачивает transaction advice, а `REQUIRED` при каждом входе создаёт транзакцию при отсутствии внешней.",
+              "correct": true,
+              "sections": {
+                "explanation": "Меньший `order` даёт retry более внешний уровень перехвата. В первой попытке transaction advice начинает транзакцию и откатывает её при данном unchecked-исключении. После этого повтор входит в transaction advice снова и создаёт другую транзакцию.",
+                "example": "Два клиента читают версию 7 записи. Первый фиксирует версию 8. Второй получает ошибку оптимистической блокировки при `flush` и откатывается. Во второй попытке повторное чтение по ID в новой транзакции видит версию 8 и может успешно записать версию 9.",
+                "when_to_apply": "Используйте такую границу для временных конкурентных сбоев, если каждая попытка может заново прочитать состояние и повторить изменение. Фильтруйте исключение в том виде, в котором оно выходит после трансляции Spring Data.",
+                "edge_cases": "С внешней транзакцией `REQUIRED` присоединится к ней. Если независимая фиксация соответствует требованиям, `REQUIRES_NEW` создаст отдельную транзакцию, чей commit переживёт откат внешней.",
+                "related": "Порядок аннотаций в исходном тексте не управляет порядком advice. Framework 7.0 тоже документирует внешний встроенный retry и внутреннюю транзакцию в штатной конфигурации, но это отдельное API. [Spring Framework 7.0](https://docs.spring.io/spring-framework/reference/7.0/core/resilience.html#_combining_retryable_with_other_proxy_based_features)"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как @Retryable обрабатывает ошибки WebClient в Spring Retry 2.0.x и Framework 7.0?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Обе версии повторят подписку при 503. В обоих случаях прокси автоматически добавит retry к возвращённому `Mono`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring Retry 2.0.x завершает перехват, когда метод успешно выдаёт `Mono`. При первой подписке ошибка появляется внутри publisher, и повтор от старой аннотации не запускается.",
+                "source_of_confusion": "Framework 7.0 действительно умеет декорировать реактивный результат. Аннотации имеют одинаковое простое имя, поэтому новую возможность легко приписать библиотеке 2.0.x.",
+                "if_it_were_true": "Если бы оба прокси декорировали `Mono`, у клиента на Spring Retry 2.0.x тестовый WebClient сделал бы второй HTTP-запрос без оператора retry в цепочке.",
+                "how_it_should_be": "Для Spring Retry 2.0.x задайте `retryWhen` в цепочке Reactor. При переходе на Framework 7.0 проверьте импорт и включите обработку `org.springframework.resilience.annotation.Retryable`."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "В Spring Retry 2.0.x ошибка подписки обойдёт retry advice. В Framework 7.0 встроенная аннотация декорирует `Mono` и может повторить подписку при 503.",
+              "correct": true,
+              "sections": {
+                "explanation": "В условии вызов метода и выполнение publisher происходят на разных этапах. Обычный interceptor Spring Retry реагирует на выброшенное из метода исключение. Framework 7.0 может вернуть publisher, к которому уже применена реактивная спецификация повтора.",
+                "example": "Пусть тестовый HTTP-сервер отвечает 503, а затем 200 с телом. Для старой аннотации добавьте `.retryWhen(Retry.backoff(1, Duration.ofMillis(100)).filter(e -> e instanceof WebClientResponseException.ServiceUnavailable))` после `bodyToMono`. Одна подписка клиента вызовет два запроса и получит тело второго ответа.",
+                "when_to_apply": "Размещайте retry на уровне реактивного pipeline, если ошибка приходит сигналом и повторная подписка безопасна. Встроенная аннотация Framework 7.0 подходит при включённой инфраструктуре и совпадении ошибки с фильтром.",
+                "edge_cases": "Если метод выбрасывает исключение синхронно до возврата `Mono`, Spring Retry может повторить вызов метода. Если используется горячий или закэшированный источник, повторная подписка не обязательно создаст новый HTTP-запрос.",
+                "related": "`Retry.backoff` в Reactor задаёт число дополнительных подписок, `jitter` разносит попытки во времени, а `onRetryExhaustedThrow` задаёт финальную ошибку. [Реактивные методы во Framework 7.0](https://docs.spring.io/spring-framework/reference/7.0/core/resilience.html)"
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "В обеих версиях 503 обойдёт retry advice. Аннотации перехватывают вызов Java-метода, поэтому для `Mono` всегда нужен явно записанный `retryWhen`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для Spring Retry 2.0.x это верно при успешном возврате `Mono`. Встроенная реализация Framework 7.0 распознаёт реактивный тип и возвращает декорированный publisher.",
+                "source_of_confusion": "Опыт эксплуатации старой аннотации даёт правильное правило для императивного interceptor. При миграции правило кажется универсальным из-за одинакового имени `Retryable`.",
+                "if_it_were_true": "Если бы декорирования во Framework 7.0 не было, первая подписка с допустимой ошибкой всегда завершалась бы 503 даже с верным импортом и положительным `maxRetries`.",
+                "how_it_should_be": "Выберите один уровень, который владеет повтором, по версии и импорту аннотации. Учитывайте, что независимые retry-слои способны перемножить число запросов."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "В Spring Retry 2.0.x прокси повторит вызов фабрики `Mono` при 503. В Framework 7.0 такой же повтор произойдёт только после вызова `block()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Старая аннотация не видит ошибку после возврата фабрики. Новая умеет повторять подписку без перевода реактивной операции в блокирующую.",
+                "source_of_confusion": "`block()` действительно может поднять исключение в стеке Java-метода, если вызвать его внутри метода. При обычном возврате `Mono` этот механизм отсутствует.",
+                "if_it_were_true": "Если бы повтор Framework 7.0 требовал `block()`, подписка WebFlux никогда не делала бы второй запрос без блокировки вызывающего потока.",
+                "how_it_should_be": "Оставляйте подписку и её повторы в Reactor либо используйте реактивное декорирование Framework 7.0. Блокирующий вызов меняет контракт метода и требует отдельно подходящей среды выполнения."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Stateful Retry и когда он нужен?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Передавать `DefaultRetryState` со стабильным ID и использовать тот же `RetryTemplate` с тем же кэшем. Новый вызов восстановит контекст попыток по ключу.",
+              "correct": true,
+              "sections": {
+                "explanation": "Когда ошибка выходит из вызова, транзакция получает возможность откатиться. Шаблон сохраняет состояние неудачной работы в `RetryContextCache`. При повторной доставке ключ связывает новый стек вызова с уже зарегистрированными неудачами.",
+                "example": "`template.execute(ctx -> { processMessage(message); return null; }, new DefaultRetryState(deliveryId));` Если первая доставка с ID `orders:2:81` завершается ошибкой, на входе callback при следующей доставке с этим ID `ctx.getRetryCount()` будет равен 1.",
+                "when_to_apply": "Выбирайте stateful retry, если между попытками нужна отдельная граница вызова, например выход исключения к транзакционному listener-контейнеру. Ключ должен оставаться стабильным и однозначно обозначать единицу работы.",
+                "edge_cases": "При перезапуске процесса локальный кэш исчезает. В другой партиции тот же offset обозначает другую запись, поэтому для Kafka включайте в ключ ещё topic и partition.",
+                "related": "Доставку или повторное чтение настраивает брокер или контейнер. В Spring Kafka для транзакционного сценария есть обработка после отката через `DefaultAfterRollbackProcessor`, а для нетранзакционного сценария есть `DefaultErrorHandler` с backoff."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Повторно вызывать stateless `execute` с той же записью. Шаблон сам распознает стабильный ID в переданном сообщении и продолжит счёт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для нового stateless-вызова создаётся новый `RetryContext`. Совпадение payload или ID в замыкании не используется для поиска предыдущего контекста.",
+                "source_of_confusion": "Повторная доставка логически продолжает обработку одной записи. Для шаблона она выглядит отдельным вызовом, если не передать ключ явно.",
+                "if_it_were_true": "Если бы контекст сопоставлялся автоматически, два вызова `execute(callback)` после первого отката показали бы на входе callback счётчики 0 и 1.",
+                "how_it_should_be": "Передайте стабильный ID через `RetryState` и используйте общий кэш состояния. Для счётчика на уровне контейнера рассмотрите его обработчик повторной доставки."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Передавать `DefaultRetryState` с новым ID для каждой доставки. Шаблон выберет политику по типу ошибки и восстановит предыдущий счёт по данным сообщения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Новый ключ означает новый контекст. Совпадение класса исключения или содержимого payload не связывает его с прежним ключом.",
+                "source_of_confusion": "Классификатор ошибок действительно выбирает разные политики. В stateful retry отдельный механизм выбирает запись в кэше, и ключ принадлежит именно ему.",
+                "if_it_were_true": "Если бы шаблон продолжал счёт по типу ошибки, две разные записи, упавшие с `IOException`, могли бы исчерпать бюджет друг друга.",
+                "how_it_should_be": "Разделяйте классификацию исключения и идентичность работы. Выбирайте стабильный ключ для одной записи, а тип сбоя обрабатывайте настройкой `RetryPolicy`."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Сохранять исходное сообщение через `RetryContextCache`. После отката шаблон сам запланирует доставку сохранённой записи и восстановит счёт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кэш хранит состояние retry по ключу. Он не выполняет повторную доставку, а в условии новый вызов приходит через инфраструктуру доставки после отката.",
+                "source_of_confusion": "Термин stateful напоминает очередь с сохранением payload. В данном случае слово относится к истории попыток, которую шаблон переносит между вызовами.",
+                "if_it_were_true": "Если бы кэш был очередью, он инициировал бы новые вызовы даже при отключённом повторном чтении контролируемой записи.",
+                "how_it_should_be": "Настройте повторную доставку отдельно и используйте кэш лишь для корреляции попыток. Если история должна переживать смену процесса, определите устойчивое хранение или механизм счётчика на уровне доставки."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как добавить метрики и логирование через RetryListener?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Задать постоянный тег в `open`, считать итоговую ошибку в `onError`, а успешную попытку записать в `close`. При ответе со второй попытки счётчик ошибок останется нулевым.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`onError` вызывается уже после первого `IOException`, хотя весь цикл затем заканчивается успехом. Счётчик ошибок попыток увеличится на единицу.",
+                "source_of_confusion": "Финальные ошибки часто регистрируют в общем обработчике вызова, когда результат уже известен. Имя `onError` легко перенести на этот уровень, хотя хук находится внутри цикла.",
+                "if_it_were_true": "Если бы `onError` срабатывал только при исчерпании, сервис с успешными повторами выглядел бы по метрике попыток таким же здоровым, как сервис без ошибок.",
+                "how_it_should_be": "Считайте ошибку попытки в `onError`, а финальный исход и длительность учитывайте отдельно. Для фиксированного тега инициализируйте атрибут контекста в `open`."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Задать постоянный тег в `open`, считать ошибку в `onError`, а `close` использовать только при исчерпании. Итог успешного вызова зарегистрирует исключительно `onSuccess`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`onSuccess` действительно получает результат удачной попытки, но `close` вызывается и при успешном окончании цикла. Он подходит для измерения общей длительности обоих исходов.",
+                "source_of_confusion": "Хуки `onError` и `onSuccess` выглядят как две финальные ветки. На деле оба работают на уровне попыток, а у завершения вызова есть самостоятельный хук.",
+                "if_it_were_true": "Если бы `close` пропускался при успехе, таймер, начатый в `open`, не записал бы длительность сценария «первая ошибка, второй успех».",
+                "how_it_should_be": "Используйте `onSuccess` для доступа к результату, а `close` для завершения измерений. Считайте финальный исход и число ошибок разными величинами."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Задать постоянный тег в `open`, считать ошибку в `onError` и записать итог в `close`. При успехе со второй попытки получится одна ошибка попытки и успешное завершение.",
+              "correct": true,
+              "sections": {
+                "explanation": "Зарегистрированный `RetryListener` получает `open` перед первой попыткой, `onError` после каждой неудачи и `close` при выходе. Он может наблюдать цикл, не меняя политику, если `open` возвращает `true`, а коллбэки не выбрасывают ошибок.",
+                "example": "Установите в `open` `ctx.setAttribute(RetryContext.NAME, \"external-api\")`. На первый `IOException` увеличьте `retry.attempt.failures` с тегом `external-api`. После успешной второй попытки `close` получит `null` в аргументе ошибки, а `ctx.getRetryCount()` останется равным 1.",
+                "when_to_apply": "Используйте отдельные метрики ошибок попыток и исходов операций. Для тега выбирайте постоянное имя операции с ограниченным набором значений, чтобы идентификаторы заявок не раздували число рядов.",
+                "edge_cases": "В Spring Retry 2.0 `onSuccess` может выбросить исключение по результату, и оно станет входом политики повтора. Для чистого наблюдения избегайте такой проверки, а результат успешного recovery учитывайте отдельно от исхода попыток.",
+                "related": "`MetricsRetryListener` помогает регистрировать время работы retry-цикла через Micrometer. В 2.0 методы `RetryListener` имеют реализации по умолчанию, поэтому можно реализовать только нужные хуки. [RetryListener 2.0.12](https://docs.spring.io/spring-retry/docs/2.0.12/apidocs/org/springframework/retry/RetryListener.html)"
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Задать постоянный тег в `open`, а ошибку и итог записать только в `close`. Достаточно проверить аргумент `Throwable`, в котором сохранится первая ошибка даже после успеха.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При нормальном успехе второй попытки аргумент `Throwable` в `close` будет `null`. Ошибка первой попытки была доступна в `onError`, а число неудач остаётся в контексте.",
+                "source_of_confusion": "Параметр завершения легко принять за сводку всей истории ошибок. Шаблон обнуляет локальную ссылку на ошибку перед запуском следующей попытки.",
+                "if_it_were_true": "Если бы заключительный `Throwable` сохранялся после успеха, классификация исхода по этому аргументу записывала бы успешно завершившийся вызов как ошибку.",
+                "how_it_should_be": "Записывайте тип и номер неудачной попытки в `onError`. Используйте `close` для общего итога и длительности, явно определив учёт сценариев с восстановлением."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить разные retry-политики для разных методов?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Задать отдельный `@Retryable` на каждом методе. Указать `retryFor`, `maxAttempts` и `backoff` по требованиям каждого вызова. Классовую аннотацию можно оставить общим правилом для остальных методов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Аннотационный interceptor выбирает настройку для вызываемого метода прокси. В `syncData` учитывается допустимость `IOException` и свой лимит, а для `getQuote` выбирается другая политика. Методная аннотация задаёт конфигурацию целиком.",
+                "example": "Для `syncData` задайте `retryFor = IOException.class, maxAttempts = 5, backoff = @Backoff(delay = 2000, multiplier = 1.5)`. Для `getQuote` задайте `retryFor = ServiceUnavailableException.class, maxAttempts = 2, backoff = @Backoff(delay = 500)`. При постоянных подходящих ошибках получится пять и два вызова соответственно, у второго метода будет одна пауза в 500 мс.",
+                "when_to_apply": "Используйте локальные настройки, когда вызовы отличаются стоимостью, допустимой длительностью или классом временных ошибок. Общую политику на классе применяйте, когда она действительно подходит большинству его проксируемых методов.",
+                "edge_cases": "Если класс фильтрует `IOException`, а метод объявляет только `@Retryable(maxAttempts = 5)`, фильтр класса не переносится в методную политику. Укажите его в аннотации метода, если он нужен и там.",
+                "related": "Для повторного использования сложной политики можно сослаться на именованный interceptor через атрибут `interceptor`. Встроенный набор атрибутов метода не следует смешивать с настройками этого interceptor."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Задать один `@Retryable` на классе с обоими типами ошибок и `maxAttempts = 5`. Для `getQuote` указать только число 2 и задержку. Тип возьмётся из правила класса по имени метода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Методная аннотация замещает классовую конфигурацию целиком. В классовой аннотации список типов общий, и Spring не сопоставляет его элементы методам по именам.",
+                "source_of_confusion": "Иерархическое наследование конфигурационных элементов часто позволяет менять только нужные поля. Отсюда ожидание, что пропущенный `retryFor` будет заимствован у класса.",
+                "if_it_were_true": "Если бы работало слияние, метод с одним `maxAttempts` оставался бы ограничен классом исключений из классового уровня. В стандартной политике Spring Retry он может повторить ошибку за пределами такого списка.",
+                "how_it_should_be": "На каждом методе с особым бюджетом укажите свой список типов и backoff. Если общий набор настроек важен, оформите его как отдельную переиспользуемую политику."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Задать один `@Retryable` на классе и подключить классификатор исключений. При обоих методах тип ошибки сам выберет нужное число попыток и backoff без настройки границы метода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Простой классовый `@Retryable` задаёт общие фильтр, предел и backoff. Классификатор типов может переключать политику попыток в программном API, но не выбирает автоматически задержку и допустимость ошибки по имени метода.",
+                "source_of_confusion": "В задании типы целевых ошибок разные, поэтому разделение по типу похоже на разделение по операциям. Ошибка другого типа в неожиданном методе показывает, что это разные критерии.",
+                "if_it_were_true": "Если бы тип сам обозначал метод, `ServiceUnavailableException` из `syncData` получила бы предназначенную для `getQuote` задержку даже при запрете такого повтора для синхронизации.",
+                "how_it_should_be": "Задайте политику на границе каждого метода. Для динамических настроек можно направлять оба метода в разные настроенные `RetryTemplate`, если вызывающий код сам выбирает нужный шаблон."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Задать `@Retryable` на интерфейсе сервиса с общей политикой. Для обоих методов настроить разные `@Backoff`, которые автоматически изменят также тип ошибки и число попыток.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Backoff` описывает паузы в составе политики `@Retryable`. Для фильтра типов и лимита вызовов у `@Retryable` отдельные параметры.",
+                "source_of_confusion": "Время ожидания влияет на частоту повторов и воспринимается как весь бюджет. От этого легко принять изменение задержки за изменение количества разрешённых попыток и фильтра.",
+                "if_it_were_true": "Если бы пауза определяла лимит, замена 500 мс на 2 с могла бы сама переключить `getQuote` с двух на пять попыток.",
+                "how_it_should_be": "Задайте критерии независимо: `retryFor` выбирает ошибки, `maxAttempts` ограничивает число вызовов, `backoff` управляет паузами. Каждый метод получает нужную комбинацию."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что произойдёт, если @Recover выбросит исключение?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Клиент получит последний `IOException`. Spring Retry сохранит исходное исключение как основной результат, а ошибку fallback добавит к нему.",
+              "correct": false,
+              "sections": {
+                "what_actually": "После исчерпания RetryTemplate вызывает recovery. Если выбранный обработчик бросает `IllegalStateException`, эта ошибка выходит из recovery и становится исключением клиентского вызова.",
+                "source_of_confusion": "В try-with-resources ошибки закрытия действительно могут стать suppressed-исключениями исходной ошибки. Recovery вызывается по другому контракту и его результат или отказ становятся итогом вызова.",
+                "if_it_were_true": "Если бы `IOException` оставался главным исключением, `catch (IllegalStateException e)` у клиента не сработал бы, а новую ошибку пришлось бы искать среди suppressed.",
+                "how_it_should_be": "При необходимости сохранить обе причины делайте это явно в recovery, например оборачивайте отказ fallback в специальное исключение и добавляйте исходный сбой в диагностический контекст."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Клиент получит результат следующего `@Recover`. Отказ выбранного обработчика заставит Spring Retry продолжить поиск менее специфичных методов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring Retry подбирает совместимый обработчик для исходного исключения один раз. Ошибка из тела выбранного обработчика выходит наружу и не запускает подбор заново.",
+                "source_of_confusion": "Несколько перегрузок `@Recover` похожи на цепочку запасных вариантов. Специфичность применяется при выборе по типу входной ошибки, без обхода следующих кандидатов при отказе.",
+                "if_it_were_true": "Если бы обработчики перебирались, общий `recover(Exception, ...)` мог бы вернуть результат после ошибки `recover(IOException, ...)`.",
+                "how_it_should_be": "Для многоступенчатого fallback опишите последовательность явно в обработчике или вызывающем сервисе. Определите, какие ошибки разрешают следующий шаг и как передавать финальный отказ."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Клиент дождётся нового цикла `processPayment`. Ошибка из `@Recover` поступит в ту же политику, начнётся новый счёт попыток.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Recovery вызывается после завершения цикла `processPayment`. Ошибка `fallbackService` выйдет из вызова, а прежняя политика не выполнит ещё одну попытку.",
+                "source_of_confusion": "Оба этапа выполняются внутри обращения к прокси. Из этого легко заключить, что всё происходящее внутри него одинаково охвачено retry-циклом.",
+                "if_it_were_true": "Если бы recovery призывал новый цикл, постоянно падающий fallback многократно запускал бы основной платёж и умножал риск повторного эффекта.",
+                "how_it_should_be": "При необходимости отдельно оберните fallback в свою ограниченную политику. Применяйте её при безопасном повторе конкретного действия и согласованном общем бюджете."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Клиент получит `IllegalStateException`. `@Recover` выполняется после retry-цикла, поэтому ошибка fallback не запускает новые попытки `processPayment`.",
+              "correct": true,
+              "sections": {
+                "explanation": "После исчерпания попыток interceptor передаёт исходную ошибку в подходящий recovery. Тот вызывает fallback, и выброшенное runtime-исключение становится итогом вызова. Внешней политики, которая могла бы перехватить этот итог, в условии нет.",
+                "example": "Если лимит основного вызова равен 3, gateway упадёт трижды. После этого `getFallbackResult` вызывается один раз и выбрасывает `new IllegalStateException(\"fallback unavailable\")`. Клиент получает это исключение, четвёртого обращения к gateway нет.",
+                "when_to_apply": "Сделайте recovery последним шагом с явным контрактом результата. Если запасной источник недоступен, решите, можно ли вернуть корректный деградированный результат или следует сообщить о сбое.",
+                "edge_cases": "Checked-исключение из recovery может быть обёрнуто на рефлексивной или прокси-границе. Внешняя политика, если она появится, увидит итог вызова и примет независимое решение о повторе.",
+                "related": "Атрибут `notRecoverable` ограничивает допуск к recovery для исходных исключений. Поведение при сбое самого fallback определяется его реализацией и внешними обработчиками."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как протестировать логику retry в тестах?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Создать `PaymentService` через `new`, передать мок `PaymentGateway` и проверить три обращения и значение `@Recover` без запуска Spring-контекста.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обычный объект вызовет gateway один раз, после чего `IOException` выйдет к тесту. Обработку `@Retryable` и выбор `@Recover` для такого объекта никто не активирует.",
+                "source_of_confusion": "Тестирование класса с моками хорошо проверяет его бизнес-код. Аннотации остаются видимы через рефлексию, откуда возникает ожидание, что они исполняются автоматически.",
+                "if_it_were_true": "Если бы `new` давал тот же эффект, контекст в тесте аннотации можно было бы убрать без потери проверки wiring и advisor.",
+                "how_it_should_be": "Тестируйте бизнес-ветки на обычном объекте, а аннотационную политику на внедрённом проксированном бине. Для программного retry можно вызвать настроенный `RetryTemplate` в unit-тесте."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Вызвать внедрённый `PaymentService` из контекста с `@EnableRetry`, подменить `PaymentGateway` через `@MockitoBean` и проверить три обращения и ожидаемый fallback.",
+              "correct": true,
+              "sections": {
+                "explanation": "Так тест проходит через тот же advisor, который используется у управляемого бина. Постоянный `IOException` расходует весь лимит из трёх вызовов. После этого совместимый `@Recover` возвращает запасной результат.",
+                "example": "Настройте `when(gateway.charge(any())).thenThrow(new IOException(\"timeout\"))`. Сохраните результат `service.processPayment(request)`, выполните `verify(gateway, times(3)).charge(any())` и проверьте, что результат сообщает `Service unavailable`. Здесь каждое выполнение метода делает одно обращение к gateway.",
+                "when_to_apply": "Выбирайте `@SpringBootTest` или узкий `@SpringJUnitConfig` с настроенным retry, когда нужно проверить прокси, фильтр исключений и связывание recovery. Заменяйте конкретный бин gateway, который внедрён в сервис.",
+                "edge_cases": "Если поставить единственный тестовый бин `Sleeper`, который ничего не ждёт, можно сохранить реальные переходы advice без задержек CI. Без такой замены обычный backoff продолжит действовать в тестах.",
+                "related": "`@MockitoBean` из Framework 6.2 подходит для Boot 3.5. Старый Boot `@MockBean` помечен устаревшим начиная с Boot 3.4 и удалён в Boot 4."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Вызвать внедрённый `PaymentService`, подменить `PaymentGateway` через `@MockitoBean` и проверить только ожидаемый fallback. Его наличие подтверждает ровно три обращения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fallback подтверждает, что управление дошло до recovery. Он может вернуться и при другом лимите или после первой ошибки, например если ошибка исключена из повторов, но допускает recovery.",
+                "source_of_confusion": "Возврат определённого fallback выглядит как доказательство исчерпания. Он не показывает, какой бюджет был исчерпан и был ли вообще разрешён повтор.",
+                "if_it_were_true": "Если бы fallback подтверждал ровно три обращения, изменение `maxAttempts` с 3 на 1 обязательно изменило бы выходной объект. Обычно он остаётся прежним.",
+                "how_it_should_be": "Проверьте две величины отдельно: число обращений через `verify(..., times(3))` и значение, полученное от сервиса. Проследите, что одна попытка делает одно обращение к проверяемому моку."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Вызвать внедрённый `PaymentService`, подменить `PaymentGateway` через `@MockitoBean` и проверить четыре обращения и fallback, считая три повтора после первого вызова.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`maxAttempts = 3` в Spring Retry включает исходное обращение. После третьего исключения от gateway начинается recovery. Четвёртое обращение в этой политике отсутствует.",
+                "source_of_confusion": "Формулировка «три повтора» напоминает `maxRetries` встроенного retry Framework 7.0. Здесь в конфигурации назван другой атрибут.",
+                "if_it_were_true": "Если бы лимит включал три дополнительных обращения, мок получил бы четыре вызова до запуска fallback, а `times(3)` провалился бы.",
+                "how_it_should_be": "Выводите ожидаемый счётчик по атрибуту используемого API. У Spring Retry выбирайте `maxAttempts` для общего числа вызовов и отдельно проверяйте результат восстановления."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем Spring Retry отличается от Resilience4j?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Использовать Spring Retry для повтора и проб через `CircuitBreakerRetryPolicy`. Частоту и изоляцию задать параметрами `BackOffPolicy` и `RetryPolicy`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У Spring Retry есть упрощённое размыкание с временным сбросом, но отдельного `HALF_OPEN` с квотой проб нет. Backoff задаёт паузы между попытками, а retry policy решает, продолжать ли один цикл.",
+                "source_of_confusion": "Увеличение паузы снижает частоту запросов внутри отдельного вызова. Это похоже на ограничение нагрузки, хотя множество независимых вызовов продолжают конкурировать за те же ресурсы.",
+                "if_it_were_true": "Если бы backoff заменял rate limiter и bulkhead, пятьдесят одновременных первых запросов автоматически получили бы общий лимит частоты и числа выполняющихся операций.",
+                "how_it_should_be": "Для общего темпа используйте RateLimiter, для параллелизма Bulkhead, для проб настроенный CircuitBreaker с `HALF_OPEN`. Одну и ту же операцию можно оборачивать этими политиками с осознанным порядком."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Использовать Resilience4j для повтора и `HALF_OPEN`. Частоту и параллелизм ограничить одним `TimeLimiter`, который управляет пропускной способностью ресурса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TimeLimiter ограничивает ожидание результата по времени для совместимых асинхронных операций. Он не ведёт квоту запросов за интервал и не выдаёт разрешения на параллельное выполнение.",
+                "source_of_confusion": "Меньшая длительность ожидания иногда снижает число зависших вызовов. Из этого легко заключить, что таймаут гарантирует порог нагрузки, хотя массовый всплеск может стартовать раньше любых таймаутов.",
+                "if_it_were_true": "Если бы достаточно было TimeLimiter, сто запросов не могли бы начаться одновременно при таймауте 2 с. Таймаут сработает по времени только после запуска или ожидания операции.",
+                "how_it_should_be": "Задайте квоту через RateLimiter и отдельно ограничьте параллелизм через Bulkhead. Timeout выбирайте по бюджету задержки и проверяйте, отменяется ли исходная операция при отказе по времени."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Использовать Resilience4j с `Retry`, `RateLimiter`, `Bulkhead` и `CircuitBreaker`. Настроить `HALF_OPEN` для проб. Spring Retry покрывает повторы и базовое размыкание.",
+              "correct": true,
+              "sections": {
+                "explanation": "Требования относятся к разным точкам управления. Retry перезапускает временно неудачное действие, RateLimiter выдаёт разрешения по темпу, Bulkhead ограничивает число занятых ресурсов, CircuitBreaker после открытого состояния может допустить ограниченные пробы.",
+                "example": "Для каталога задайте квоту 30 разрешений в секунду, не более 8 параллельных обращений и 2 пробных вызова в `HALF_OPEN`. При настроенной композиции с проверками на каждую внешнюю попытку отдельные политики ограничат темп, параллелизм и восстановление даже при включённом retry.",
+                "when_to_apply": "Выбирайте набор по конкретным признакам нагрузки. Если основная задача ограничена повтором идемпотентной операции при временных ошибках, существующей настройки Spring Retry может хватить.",
+                "edge_cases": "В Reactor нужен реактивный декоратор или оператор, чтобы учитывать события подписки. В Spring Retry для Micrometer регистрируют listener, в Resilience4j метрики работают при подключённых модулях и настройке интеграции.",
+                "related": "Spring Batch 5.x и Spring Integration 6.x используют Spring Retry в соответствующих механизмах. В Batch 6.0 и Integration 7.0 при миграции нужно сверить встроенные API retry Framework 7.0, включая подсчёт повторов и recovery."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Использовать Resilience4j с `Retry` и `CircuitBreaker`. Доля неудач и квота `HALF_OPEN` автоматически ограничат частоту и изолируют параллельные вызовы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Схема CircuitBreaker допускает вызовы в закрытом состоянии, пока окно измерений и пороги разрешают. Квота проб действует в `HALF_OPEN`, а ограничения темпа и параллелизма требуются и при здоровом ресурсе.",
+                "source_of_confusion": "При открытии цепи поток запросов действительно резко уменьшается. По этому эффекту легко принять защиту от продолжительного отказа за нормирование здорового трафика.",
+                "if_it_were_true": "Если бы circuit breaker обеспечивал изоляцию в закрытом состоянии, входящий всплеск из ста успешных запросов не смог бы одновременно занять весь пул без единой ошибки.",
+                "how_it_should_be": "Добавьте Bulkhead для лимита одновременных обращений и RateLimiter для пропускной квоты. Настраивайте порог и размер выборки CircuitBreaker по сигналам нездоровой зависимости."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
