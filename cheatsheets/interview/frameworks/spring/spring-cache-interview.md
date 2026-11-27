@@ -67,6 +67,12 @@ Spring Cache Abstraction — декларативный слой кэширов�
 
 ## Q1. (!) Что такое Spring Cache Abstraction и зачем она нужна?
 
+```text
+Метод getProduct(id) загружает товар из репозитория. Команде нужно
+переиспользовать результаты чтения и иметь возможность сменить локальное
+хранилище на общее, сохранив тело метода. Какую роль здесь играет Spring Cache?
+```
+
 **Spring Cache Abstraction** — это слой, который позволяет добавить кэширование декларативно, через аннотации, не привязываясь к конкретному провайдеру. Вы помечаете метод `@Cacheable` — и Spring сам перехватывает вызов, проверяет кэш и при попадании возвращает сохранённый результат, не заходя в тело метода.
 
 Главная идея — отделить *что* кэшировать (бизнес-решение в аннотации) от того, *где* и *как* это хранится (Caffeine, Redis, EhCache — деталь конфигурации). Сравните ручной и декларативный варианты — во втором кэширования в коде метода не видно вовсе:
@@ -100,7 +106,13 @@ public Product getProduct(Long id) {
 
 ## Q2. Как подключить кэширование в Spring Boot?
 
-Два обязательных шага: добавить starter и включить кэширование аннотацией `@EnableCaching`. После этого аннотации `@Cacheable` / `@CacheEvict` начинают работать.
+```text
+Проект на Spring Boot 3.5 уже запускается. Метод Spring-бина помечен
+@Cacheable("products"), а кэширование в конфигурации ещё не подключено.
+Какие зависимости и настройки нужны для декларативного кэширования?
+```
+
+В обычном проекте добавляют `spring-boot-starter-cache` и включают обработку аннотаций через `@EnableCaching`. Если нужные библиотеки уже есть в classpath, отдельный стартер необязателен. Для приведённого примера используется стандартный режим с прокси.
 
 **1. Зависимость:**
 ```xml
@@ -125,38 +137,23 @@ public class Application { ... }
 
 ## Q3. (!) Что делает @Cacheable и как работает?
 
-`@Cacheable` реализует паттерн **read-through**: при первом вызове выполняет метод и кладёт результат в кэш по вычисленному ключу. При повторных вызовах с тем же ключом возвращает значение из кэша, **не заходя в тело метода**. То есть аннотация заменяет ручную проверку «есть в кэше? верни : посчитай и положи».
-
 ```java
-@Cacheable(value = "products", key = "#id")
+@Cacheable(value = "products", key = "#p0")
 public Product getProduct(Long id) {
-    // выполняется только при cache miss
     return repository.findById(id).orElseThrow();
 }
+
+// Кэш пуст, товар 42L существует. Вызовы последовательны и идут через Spring-бин.
+productService.getProduct(42L);
+productService.getProduct(42L);
 ```
+
+`@Cacheable` реализует паттерн **read-through**: при первом вызове выполняет метод и кладёт результат в кэш по вычисленному ключу. При повторных вызовах с тем же ключом возвращает значение из кэша, **не заходя в тело метода**. То есть аннотация заменяет ручную проверку «есть в кэше? верни : посчитай и положи».
 
 **Поток выполнения:**
 
-```mermaid
-sequenceDiagram
-    participant Caller
-    participant Proxy
-    participant Cache
-    participant Method
-
-    Caller->>Proxy: getProduct(42)
-    Proxy->>Cache: get("products::42")
-    alt Cache Hit
-        Cache-->>Proxy: Product
-        Proxy-->>Caller: Product (метод не вызван)
-    else Cache Miss
-        Cache-->>Proxy: null
-        Proxy->>Method: getProduct(42)
-        Method-->>Proxy: Product
-        Proxy->>Cache: put("products::42", Product)
-        Proxy-->>Caller: Product
-    end
-```
+1. При первом вызове перехватчик ищет ключ `42L` в кэше `products`. Записи ещё нет, поэтому метод читает товар из репозитория, а перехватчик сохраняет результат.
+2. Второй вызов с тем же ключом находит значение в кэше. Перехватчик возвращает его вызывающему коду. Репозиторий получает один вызов за весь сценарий.
 
 Ключевое для понимания: при cache hit метод **не вызывается вообще**, поэтому любые побочные эффекты внутри него (логирование, инкремент счётчика, запрос в БД) пропадают. Кэшируйте только чистые операции чтения.
 
@@ -165,11 +162,18 @@ sequenceDiagram
 - `key` — SpEL-выражение для ключа; по умолчанию ключ строится из аргументов (см. Q7).
 - `condition` — условие, проверяемое **до** выполнения: кэшировать или нет.
 - `unless` — условие, проверяемое **после** выполнения (имеет доступ к `#result`): исключить результат из кэша.
-- `sync = true` — single-flight: при cache miss значение вычисляет только один поток, остальные ждут его результат (защита от cache stampede, см. Q18).
+- `sync = true` — передаёт загрузку кэшу для координации одновременных промахов. Гарантии зависят от провайдера (см. Q18).
 
 ---
 
 ## Q4. Чем @CachePut отличается от @Cacheable?
+
+```text
+Для ключа 42L в кэше products уже есть товар. Репозиторий содержит новую
+версию. Сравните два вызова одного метода через Spring-прокси, отдельно с
+@Cacheable и @CachePut. Параметры кэша и ключ совпадают, условий нет.
+Будет ли выполнено тело метода и какое значение останется в кэше?
+```
 
 Главное различие — `@CachePut` **всегда выполняет метод** и кладёт результат в кэш, тогда как `@Cacheable` при попадании метод пропускает. То есть `@Cacheable` оптимизирует чтение (может вернуть результат, не вызывая метод), а `@CachePut` обновляет кэш свежим значением (метод выполнить обязан).
 
@@ -199,6 +203,12 @@ public Product getProduct(Long id) {
 
 ## Q5. (!) Как работает @CacheEvict?
 
+```text
+В products есть записи 42L и 43L. Один метод удаляет товар 42L, другой
+выполняет массовое изменение. Для одиночной операции рассмотрите успешный
+вызов и вызов с исключением. Как выбрать область и момент инвалидации?
+```
+
 `@CacheEvict` удаляет запись (или весь кэш) — это инструмент **инвалидации**. Его вешают на методы, которые меняют данные: после изменения в БД устаревшая копия в кэше должна исчезнуть, иначе чтения будут отдавать старое значение.
 
 ```java
@@ -222,6 +232,12 @@ public void clearAll() { }
 ---
 
 ## Q6. Для чего нужны @Caching и @CacheConfig?
+
+```text
+При обновлении товара нужно записать его в productsByName и очистить
+allProducts. Несколько методов другого сервиса используют один кэш products.
+Как выразить несколько операций метода и общие настройки класса?
+```
 
 Обе аннотации решают проблему дублирования, но с разных сторон: `@Caching` собирает несколько кэш-операций на одном методе, `@CacheConfig` выносит общие настройки на весь класс.
 
@@ -257,6 +273,16 @@ public class ProductService {
 
 ## Q7. (!) Как формируется ключ кэша по умолчанию?
 
+```java
+@Cacheable("cache")
+public A methodA(Long id) { return loadA(id); }
+
+@Cacheable("cache")
+public B methodB(Long id) { return loadB(id); }
+
+// Кэш пуст. Оба метода вызываются через прокси, сначала methodA(42L), затем methodB(42L).
+```
+
 Если `key` явно не задан, Spring строит ключ из аргументов метода через `SimpleKeyGenerator`:
 - **0 параметров** → `SimpleKey.EMPTY` (один общий ключ на весь метод).
 - **1 параметр** → сам параметр как есть (например, `id`).
@@ -280,6 +306,12 @@ public B methodB(Long id) { ... }  // ключ тоже: 42L → коллизи�
 ---
 
 ## Q8. Как задать кастомный ключ через SpEL?
+
+```text
+Для getUser(Long userId) ключом должен быть ID пользователя, для
+processOrder(Order order) нужен ID заказа. Поиск продуктов зависит от
+категории и номера страницы. Какие выражения зададут эти ключи?
+```
 
 Атрибут `key` принимает SpEL-выражение, которое вычисляется в момент вызова и даёт ключ кэша. Внутри доступны аргументы метода (по имени и по индексу), а также `#result` — возвращаемое значение (но только там, где результат уже известен: в `@CachePut` и в `unless`). Это нужно, когда ключ — не просто один аргумент, а поле объекта или комбинация значений.
 
@@ -315,6 +347,16 @@ public User saveUser(User user) { ... }
 
 ## Q9. Чем отличаются condition и unless в @Cacheable?
 
+```java
+@Cacheable(value = "products", condition = "#p0 > 0", unless = "#result == null")
+public Product findProduct(Long id) {
+    return repository.findById(id).orElse(null);
+}
+
+// Каждый случай начинается с пустого кэша. Для -1L и 42L репозиторий
+// возвращает товар, для 43L возвращает Optional.empty().
+```
+
 Оба фильтруют кэширование, но по-разному и в разные моменты. `condition` решает **до** вызова, стоит ли вообще задействовать кэш (и проверять его, и писать в него); `unless` решает **после** вызова, не выкинуть ли уже посчитанный результат из кэша. Главное практическое следствие: `unless` имеет доступ к `#result`, а `condition` — нет.
 
 | | `condition` | `unless` |
@@ -342,6 +384,12 @@ public List<Product> getAll() { ... }
 ---
 
 ## Q10. Как создать кастомный KeyGenerator?
+
+```text
+У двух сервисных методов одинаковые аргументы и общий кэш. Ключ должен
+учитывать метод, целевой тип и значения аргументов. Одну стратегию надо
+переиспользовать для нескольких методов. Как зарегистрировать и подключить её?
+```
 
 `KeyGenerator` — альтернатива SpEL-выражению в `key`, когда логику формирования ключа хочется задать кодом и переиспользовать на многих методах. Реализуете интерфейс с одним методом `generate(target, method, params)` и возвращаете объект-ключ. Частый кейс — включить в ключ имя класса и метода, чтобы исключить коллизии из Q7.
 
@@ -379,7 +427,14 @@ public class CacheConfig implements CachingConfigurer {
 
 ## Q11. (!) Какие CacheManager реализации поддерживает Spring Boot?
 
-`CacheManager` — это абстракция провайдера: именно он создаёт и хранит сами кэши. Аннотации (`@Cacheable` и т.д.) одинаковы для любого провайдера, а вот хранилище за ними определяет `CacheManager`. Spring Boot подбирает его реализацию автоматически по тому, что есть на classpath:
+```text
+Spring Boot 3.5, кэширование включено. В classpath есть Ehcache 3
+с одним JCache-провайдером и Caffeine. Пользовательского CacheManager,
+CacheResolver с именем cacheResolver и бинов Cache нет.
+Как Boot выберет менеджер и как закрепить использование Ehcache 3?
+```
+
+`CacheManager` — это абстракция провайдера: именно он создаёт и хранит сами кэши. Аннотации (`@Cacheable` и т.д.) одинаковы для любого провайдера, а вот хранилище за ними определяет `CacheManager`. Spring Boot 3.5 проверяет classpath и условия автоконфигурации. Ниже несколько распространённых вариантов.
 
 | Провайдер | Артефакт | CacheManager |
 |---|---|---|
@@ -387,21 +442,34 @@ public class CacheConfig implements CachingConfigurer {
 | Caffeine | `com.github.ben-manes.caffeine:caffeine` | `CaffeineCacheManager` |
 | Redis | `spring-boot-starter-data-redis` | `RedisCacheManager` |
 | EhCache 3 | `org.ehcache:ehcache` | `JCacheCacheManager` |
-| Hazelcast | `com.hazelcast:hazelcast` | `HazelcastCacheManager` |
+| Hazelcast | `com.hazelcast:hazelcast-spring` и `HazelcastInstance` | `HazelcastCacheManager` (нативный вариант) |
 | Infinispan | `org.infinispan:infinispan-spring-boot-starter` | `SpringEmbeddedCacheManager` |
 
-Если на classpath сразу несколько провайдеров, автоопределение становится неоднозначным — тогда выбор фиксируют явно через `spring.cache.type`:
+При включённом кэшировании и без пользовательского бина `CacheManager` или бина `CacheResolver` с именем `cacheResolver` Boot выбирает первый вариант, для которого выполнены условия. Порядок в Boot 3.5: Generic (есть бины Spring `Cache`), JCache, Hazelcast, Infinispan, Couchbase, Redis, Caffeine, Cache2k, Simple. При доступном JCache-провайдере Ehcache 3 из условия JCache выбирается раньше Caffeine.
+
+`spring.cache.type` фиксирует тип автоконфигурации. Зависимость и остальные условия для выбранного типа по-прежнему нужны. Для Ehcache 3 используйте `jcache`:
+
 ```yaml
 spring:
   cache:
-    type: caffeine  # redis / ehcache / hazelcast / none
+    type: jcache
+    jcache:
+      config: classpath:ehcache.xml
 ```
+
+В примере `ehcache.xml` содержит конфигурацию используемых кэшей. При нескольких JCache-провайдерах задайте `spring.cache.jcache.provider`, например `org.ehcache.jsr107.EhcacheCachingProvider`. [Провайдеры кэша в Spring Boot 3.5](https://docs.spring.io/spring-boot/3.5/reference/io/caching.html#io.caching.provider)
 
 `type: none` — заглушка-`NoOpCacheManager`: аннотации остаются, но ничего не кэшируется (метод выполняется каждый раз). Удобно отключить кэш в тестах или временно сравнить поведение с кэшем и без.
 
 ---
 
 ## Q12. Как настроить Caffeine как провайдер кэша?
+
+```text
+Нужен локальный кэш Caffeine в Spring Boot. Для products, users и orders
+задайте лимит 500 записей на кэш и срок 10 минут с записи. В отдельном
+варианте products и sessions должны иметь разные правила истечения.
+```
 
 Caffeine — быстрый локальный (in-process) кэш с TTL и вытеснением, де-факто стандарт, когда распределённость не нужна. Настроить можно двумя способами: коротко через `application.yml` (один spec на все кэши) или через Java Config (когда у разных кэшей разные параметры).
 
@@ -456,6 +524,12 @@ public class CacheConfig {
 
 ## Q13. Как подключить Redis-кэш?
 
+```text
+Два экземпляра приложения Spring Boot должны использовать один кэш
+products. Redis доступен по localhost:6379 для обоих экземпляров
+в тестовом окружении. Что добавить в проект и как настроить подключение?
+```
+
 Redis выбирают, когда кэш должен быть **распределённым** — общим для всех инстансов приложения (в отличие от Caffeine, у которого на каждом узле своя копия). Подключение: добавить starter, указать `type: redis` и адрес — `RedisCacheManager` Spring Boot создаст сам.
 
 **Зависимость:**
@@ -484,6 +558,12 @@ Spring Boot автоматически создаёт `RedisCacheManager`. В о
 ---
 
 ## Q14. Как настроить TTL для Redis-кэша?
+
+```text
+Приложение уже использует RedisCacheManager. Требуемый TTL по умолчанию
+30 минут, для products 10 минут, для sessions 1 час. Для значения нужен
+один и тот же JSON-сериализатор. Как задать эту конфигурацию?
+```
 
 TTL задаётся через `entryTtl(Duration)` в `RedisCacheConfiguration`. Удобно так: один `defaultConfig` с общим TTL и сериализатором, а для отдельных кэшей переопределяете TTL через `withInitialCacheConfigurations`. Это и решает частую задачу «у `products` свой срок, у `sessions` — свой».
 
@@ -529,14 +609,13 @@ spring:
 
 ## Q15. (!) Почему self-invocation ломает @Cacheable?
 
-Потому что кэширование живёт в **прокси**, а не в самом классе. Spring оборачивает бин прокси-объектом, и весь advice (проверка кэша) находится там. Когда метод вызывает другой метод того же класса как `this.getProduct(id)`, обращение идёт напрямую к экземпляру, минуя прокси, — advice не срабатывает, кэш не используется.
-
 ```java
+// Включено кэширование в режиме PROXY. Клиент вызывает refresh(42L) через Spring-бин.
 @Service
 public class ProductService {
 
     public Product refresh(Long id) {
-        return getProduct(id);  // self-invocation! @Cacheable не сработает
+        return getProduct(id);
     }
 
     @Cacheable("products")
@@ -546,11 +625,14 @@ public class ProductService {
 }
 ```
 
+Потому что кэширование живёт в **прокси**, а не в самом классе. Spring оборачивает бин прокси-объектом, и весь advice (проверка кэша) находится там. Когда метод вызывает другой метод того же класса как `this.getProduct(id)`, обращение идёт напрямую к экземпляру, минуя прокси, — advice не срабатывает, кэш не используется.
+
+
 Суть всех решений одна — добиться, чтобы вызов проходил **через прокси**, а не через `this`.
 
 **Решения:**
 
-1. **Вынести кэшируемый метод в отдельный бин** (рекомендуется как самое чистое): вызов между бинами всегда идёт через прокси, и проблема исчезает естественно.
+1. **Вынести кэшируемый метод в отдельный бин** (рекомендуется как самое чистое): вызов через внедрённый прокси второго бина проходит через кэш-перехватчик.
 ```java
 @Service
 public class ProductService {
@@ -606,17 +688,38 @@ public class ProductService {
 
 ## Q17. Как тестировать кэш в Spring Boot?
 
+```java
+@Autowired ProductService productService;
+@MockitoBean ProductRepository repository;
+
+// Сервис внедрён из Spring-контекста, включён proxy-режим кэширования.
+// getProduct(1L) вызывается дважды подряд, репозиторий возвращает товар.
+// Во втором тесте после первого чтения товар удаляют, следующее чтение
+// из репозитория вернуло бы Optional.empty().
+// Как подготовить кэш и проверить чтение и инвалидацию?
+```
+
 Идея теста: кэш не проверяют напрямую, а **считают вызовы зависимости**. Замокайте репозиторий, вызовите кэшируемый метод дважды с одним ключом и убедитесь, что в репозиторий ушёл только **один** запрос — значит второй вызов вернулся из кэша. Аналогично проверяется evict: после удаления повторное чтение снова бьёт в репозиторий.
 
-Два обязательных момента: тест должен быть `@SpringBootTest` (нужен живой контекст с AOP-прокси — в обычном unit-тесте кэширования нет) и кэши надо чистить между тестами, иначе записи протекут между ними.
+Для проверки прокси достаточно минимального Spring-контекста с сервисом, `@EnableCaching`, тестовым `CacheManager` и подменой репозитория. Очищайте кэш перед каждым тестом, если контекст переиспользуется. `@SpringBootTest` подходит, когда нужно проверить и конфигурацию приложения целиком.
 
 ```java
-@SpringBootTest
+@SpringJUnitConfig(ProductServiceCacheTest.Config.class)
 class ProductServiceCacheTest {
+
+    @Configuration(proxyBeanMethods = false)
+    @EnableCaching(proxyTargetClass = true)
+    @Import(ProductService.class)
+    static class Config {
+        @Bean
+        CacheManager cacheManager() {
+            return new ConcurrentMapCacheManager("products");
+        }
+    }
 
     @Autowired ProductService productService;
     @Autowired CacheManager cacheManager;
-    @MockitoBean ProductRepository repository; // бывший @MockBean: устарел с Boot 3.4, удалён в Boot 4
+    @MockitoBean ProductRepository repository;
 
     @BeforeEach
     void clearCaches() {
@@ -657,42 +760,54 @@ class ProductServiceCacheTest {
 
 ## Q18. (!) Как защититься от cache stampede в Spring Cache и зачем нужен `@Cacheable(sync = true)`?
 
-**Cache stampede (thundering herd)** — когда популярный ключ протух (или ещё не прогрет), и сразу много параллельных запросов получают cache miss. Все они одновременно идут в БД/upstream считать одно и то же, давая резкий всплеск нагрузки — именно тогда, когда кэш должен был защищать. `sync = true` решает это локально: гарантирует, что для ключа метод выполнит только **один** поток, а остальные дождутся его результата.
-
-```java
-// БЕЗ sync: N параллельных запросов → N походов в БД
-@Cacheable("products")
-public Product getProduct(Long id) { return repository.findById(id).orElseThrow(); }
-
-// С sync: только 1 поток вычисляет, остальные ждут результат
-@Cacheable(value = "products", sync = true)
-public Product getProduct(Long id) { return repository.findById(id).orElseThrow(); }
+```text
+В одном экземпляре Spring-приложения используется CaffeineCacheManager.
+Записи products для ключа 42L нет. Несколько потоков одновременно вызывают
+getProduct(42L) через прокси, пока репозиторий готовит результат.
+Что меняет sync = true и какие гарантии нужно проверить при переходе
+на общий Redis-кэш для нескольких экземпляров?
 ```
 
-**Как это работает:** Spring вместо обычного `get` + `put` вызывает `Cache.get(key, valueLoader)`. Контракт этого метода обязывает провайдер выполнить loader **ровно один раз** на ключ даже при параллельных промахах — это и есть паттерн single-flight. Но «один раз» гарантируется только в рамках одного экземпляра кэша, отсюда — ограничение распределённости ниже.
+**Cache stampede** возникает, когда несколько запросов одновременно получают промах по одному ключу и каждый начинает загрузку. В обычном режиме проверка кэша и запись результата выполняются отдельно. С `sync = true` Spring передаёт кэшу загрузчик через `Cache.get(key, valueLoader)`. Координация вычислений зависит от провайдера. [Контракт Cacheable в Spring Framework 6.2](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/cache/annotation/Cacheable.html#sync())
 
-**Где `sync = true` действительно защищает (зависит от провайдера):**
-
-| Провайдер | Работает sync? | Как |
-|---|---|---|
-| `ConcurrentMapCache` | Да | Через `computeIfAbsent` |
-| Caffeine | Да | Через `LoadingCache` / `AsyncLoadingCache` |
-| Redis (Lettuce/Jedis) | Локально на узле | Distributed-локов НЕТ — на каждом узле возможен свой single-flight |
-| Hazelcast | Зависит от конфигурации | Поддерживает distributed lock через `IMap.executeOnKey` |
-
-**Чего `sync = true` НЕ делает (и о чём важно знать на собеседовании):**
-- **Не сочетается** с `unless`, с другими кэш-операциями на том же методе и с несколькими кэшами сразу (`cacheNames = {"a", "b"}`) — Spring выбросит `IllegalStateException` при первом вызове метода. `condition` при этом разрешён, а с Spring Framework 6.1 `sync` работает и с `CompletableFuture`/`Mono`.
-- **Не защищает в кластере.** Single-flight локален: на каждом из N узлов он отработает свой раз, и до БД дойдёт до N запросов вместо одного. На один узел — спасает, на весь кластер — нет.
-
-**Полная защита в кластере** требует уже распределённого лока — например, Redisson `RLock`: один узел берёт лок и идёт в БД, остальные ждут, пока он положит значение в кэш:
 ```java
-RLock lock = redisson.getLock("product:" + id);
-if (lock.tryLock(0, 5, TimeUnit.SECONDS)) {
-    try { return loadFromDb(id); } finally { lock.unlock(); }
-} else {
-    return waitForCacheAndRead(id);  // ждать, пока другой узел не положит в кэш
+@Cacheable(cacheNames = "products", sync = true)
+public Product getProduct(Long id) {
+    return repository.findById(id).orElseThrow();
 }
 ```
+
+При успешной загрузке Caffeine координирует вызовы для одного ключа внутри одного локального кэша. `ConcurrentMapCache` тоже координирует загрузку через `computeIfAbsent`. `sync = true` требует одного кэша и исключает `unless` и совмещение с другими кэш-операциями. `condition` допустим.
+
+Общий Redis даёт экземплярам доступ к одним данным. Синхронизацию загрузки между экземплярами нужно проверять по реализации `RedisCacheWriter`. По умолчанию используется writer без блокировок. Опциональный writer с блокировками работает на уровне всего кэша. [Spring Data Redis 3.5: Redis Cache](https://docs.spring.io/spring-data/redis/reference/3.5/redis/redis-cache.html)
+
+Пример координации по одному ключу через Redisson. Все экземпляры должны использовать одинаковый ключ блокировки и общий кэш. Здесь `null` означает промах, а загрузчик возвращает товар или бросает исключение.
+
+```java
+Product readProduct(Long id) {
+    Product cached = cache.get(id, Product.class);
+    if (cached != null) {
+        return cached;
+    }
+
+    RLock lock = redisson.getLock("cache:products:load:" + id);
+    lock.lock();
+    try {
+        Product loadedByAnother = cache.get(id, Product.class);
+        if (loadedByAnother != null) {
+            return loadedByAnother;
+        }
+
+        Product product = loadFromDb(id);
+        cache.put(id, product);
+        return product;
+    } finally {
+        lock.unlock();
+    }
+}
+```
+
+Ожидающий поток перечитывает кэш после захвата блокировки. Вариант рассчитан на прямую запись в общий кэш, видимую другим экземплярам до освобождения блокировки. `lock()` ждёт захвата без заданного в примере дедлайна. Для ограниченного ожидания можно задать `tryLock` и отдельно обработать истечение бюджета. Гарантии блокировки при сбоях зависят от топологии Redis. [Redisson: locks and synchronizers](https://redisson.pro/docs/data-and-services/locks-and-synchronizers/)
 
 ---
 
