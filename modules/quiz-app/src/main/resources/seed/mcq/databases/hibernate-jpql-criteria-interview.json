@@ -1,103 +1,1020 @@
-{"topic_slug":"hibernate-jpql-criteria-interview","questions":[
-{"q_number":1,"blocks":[{"block_idx":0,"question_text":"Какие способы запросов существуют в JPA/Hibernate?","options":[
-{"order":0,"label":"A","text":"JPA предоставляет JPQL и Criteria API. Native SQL и расширения HQL требуют прямого обращения к Hibernate, а Spring Data добавляет методы репозиториев.","correct":false,"sections":{"what_actually":"JPA предоставляет также EntityManager.createNativeQuery.","source_of_confusion":"Зависимость SQL от диалекта путают с зависимостью API от Hibernate.","if_it_were_true":"Для выполнения любого SQL пришлось бы получать Hibernate Session.","how_it_should_be":"Различайте стандартный API native-запросов и возможности языка HQL."}},
-{"order":1,"label":"B","text":"JPA предоставляет JPQL, Criteria API и native SQL. Hibernate расширяет JPQL средствами HQL, а Spring Data добавляет методы репозиториев.","correct":true,"sections":{"explanation":"JPQL описывает запрос текстом, Criteria строит его программно, а native SQL передаёт базе запрос на её диалекте.","example":"Для поиска по email подойдёт JPQL, а для набора необязательных фильтров — Criteria или Specifications.","when_to_apply":"Выбирайте механизм при проектировании репозитория с учётом динамики и переносимости.","edge_cases":"Строковые пути Criteria проверяются при выполнении. Для проверки имён компилятором используйте статическую метамодель.","related":"EntityManager, CriteriaBuilder и Spring Data JPA."}},
-{"order":2,"label":"C","text":"JPA предоставляет JPQL, Criteria API и native SQL. Hibernate расширяет JPQL средствами HQL, а методы репозиториев Spring Data входят в тот же стандарт JPA.","correct":false,"sections":{"what_actually":"Derived-методы и аннотация Spring Data Query принадлежат отдельной библиотеке.","source_of_confusion":"Название Spring Data JPA воспринимают как название стандартного API.","if_it_were_true":"Один EntityManager умел бы интерпретировать имена методов репозитория.","how_it_should_be":"Различайте стандарт JPA, провайдер Hibernate и библиотеку Spring Data."}},
-{"order":3,"label":"D","text":"JPA предоставляет JPQL, Criteria API и native SQL. HQL служит именем для SQL конкретной базы, а Spring Data добавляет методы репозиториев.","correct":false,"sections":{"what_actually":"HQL работает с сущностями и расширяет язык JPQL.","source_of_confusion":"Расширения HQL внешне похожи на SQL.","if_it_were_true":"В HQL пришлось бы использовать физические имена таблиц.","how_it_should_be":"Для SQL конкретной базы используйте native query, а для расширений языка сущностей — HQL."}}
-]}]},
-{"q_number":2,"blocks":[{"block_idx":0,"question_text":"Что такое JPQL и чем он отличается от SQL?","options":[
-{"order":0,"label":"A","text":"JPQL обращается к таблицам и колонкам, но позволяет указать тип результата как Java-класс. Условие соединения составляется по маппингу ассоциации.","correct":false,"sections":{"what_actually":"JPQL использует имена сущностей и их постоянных атрибутов.","source_of_confusion":"Оба языка используют SELECT, FROM и JOIN.","if_it_were_true":"Изменение имени колонки потребовало бы изменить соответствующий путь JPQL.","how_it_should_be":"Пишите пути в терминах отображённой объектной модели."}},
-{"order":1,"label":"B","text":"JPQL обращается к сущностям и атрибутам. При соединении по ассоциации условие по внешнему ключу явно задаётся через имена физических колонок.","correct":false,"sections":{"what_actually":"Для соединения по пути ассоциации провайдер берёт условие из маппинга.","source_of_confusion":"SQL-условие соединения переносят в JPQL.","if_it_were_true":"В JPQL пришлось бы повторять настройку JoinColumn в каждом запросе.","how_it_should_be":"Для связи orders используйте JOIN u.orders o."}},
-{"order":2,"label":"C","text":"JPQL обращается к сущностям и атрибутам. Провайдер переводит запрос в SQL, а при соединении по ассоциации использует условие из маппинга.","correct":true,"sections":{"explanation":"Запрос выражается через объектную модель, а провайдер подставляет нужные таблицы, колонки и соединения.","example":"SELECT u FROM User u JOIN u.orders o WHERE o.status = :status использует атрибут orders сущности User.","when_to_apply":"Используйте для запросов к сущностям без прямой привязки к физической схеме.","edge_cases":"В стандартном JPQL предел страницы задаётся API запроса, а SELECT * заменяют выбором сущности или полей.","related":"JPQL, native SQL и отображение ассоциаций."}},
-{"order":3,"label":"D","text":"JPQL обращается к сущностям и атрибутам. Провайдер переводит запрос в SQL, а в стандартном JPQL страницу задают выражением LIMIT и OFFSET.","correct":false,"sections":{"what_actually":"LIMIT и OFFSET не входят в синтаксис стандартного JPQL.","source_of_confusion":"Эти конструкции встречаются в SQL и расширениях HQL.","if_it_were_true":"Синтаксис LIMIT был бы переносим между провайдерами JPA.","how_it_should_be":"Используйте setFirstResult и setMaxResults."}}
-]}]}
-,{"q_number":3,"blocks":[{"block_idx":0,"question_text":"Как использовать параметры в JPQL?","options":[
-{"order":0,"label":"A","text":"Пишите :email или ?1, а значения прежде всего экранируйте и подставляйте в текст до вызова createQuery.","correct":false,"sections":{"what_actually":"Значения передаются отдельно от текста запроса.","source_of_confusion":"Bind путают с подстановкой строкового шаблона.","if_it_were_true":"Провайдер разбирал бы пользовательский ввод как часть выражения.","how_it_should_be":"Оставьте placeholder в запросе и передайте значение через setParameter."}},
-{"order":1,"label":"B","text":"Пишите :email или ?1, передавайте значения через setParameter и разграничивайте именованные и позиционные параметры в разных запросах.","correct":true,"sections":{"explanation":"JPQL поддерживает именованные и позиционные параметры. Связывание передаёт значение отдельно от синтаксиса.","example":"Для WHERE u.email = :email вызовите setParameter(\"email\", email).","when_to_apply":"Используйте при передаче значений из приложения в условие запроса.","edge_cases":"Нумерация начинается с 1. В одном JPQL-запросе не смешивают два вида параметров.","related":"Query.setParameter и коллекционный параметр IN."}},
-{"order":2,"label":"C","text":"Пишите :email или ?1 и передавайте значения через setParameter. В одном запросе виды параметров можно смешать, если каждый привязан отдельно.","correct":false,"sections":{"what_actually":"JPQL запрещает смешивать именованные и позиционные параметры в одном запросе.","source_of_confusion":"Перегрузки setParameter создают впечатление, что режимы можно комбинировать.","if_it_were_true":"В запросе с :email и ?1 оба параметра можно было бы переносимо связать.","how_it_should_be":"Выберите один вид параметров для всего запроса."}},
-{"order":3,"label":"D","text":"Пишите :email или ?1 и передавайте значения через setParameter. Позицию при связывании отсчитывайте с нуля, как индекс массива Java.","correct":false,"sections":{"what_actually":"Индексы позиционных параметров JPQL начинаются с 1.","source_of_confusion":"Нумерацию параметров принимают за индексирование массивов.","if_it_were_true":"Вызов setParameter(0, email) связывал бы ?1.","how_it_should_be":"Для ?1 вызовите setParameter(1, email)."}}
-]}]}
-,{"q_number":4,"blocks":[{"block_idx":0,"question_text":"Как делать JOIN в JPQL?","options":[
-{"order":0,"label":"A","text":"Соединяйте по пути ассоциации. LEFT JOIN сохраняет владельцев без соответствия, а обычный JOIN загружает коллекцию, если её алиас участвует в фильтре.","correct":false,"sections":{"what_actually":"Ссылка на алиас в фильтре не задаёт загрузку коллекции.","source_of_confusion":"Присутствие строк связанной таблицы в SQL путают с материализацией ассоциации.","if_it_were_true":"Фильтрация по заказу могла бы без FETCH загрузить коллекцию владельца.","how_it_should_be":"Используйте обычный JOIN для результата и JOIN FETCH для явной загрузки."}},
-{"order":1,"label":"B","text":"Соединяйте по пути ассоциации. LEFT JOIN сохраняет владельцев без соответствия до фильтрации, а JOIN FETCH задаёт загрузку ассоциации.","correct":true,"sections":{"explanation":"Условие соединения пути выводится из маппинга. Обычный JOIN формирует результат, а FETCH дополнительно загружает связь.","example":"LEFT JOIN u.orders o подходит для внешнего соединения, LEFT JOIN FETCH u.orders — для загрузки заказов вместе с пользователем.","when_to_apply":"Используйте соединение для фильтрации или проекции, а fetch join — когда затем нужен доступ к связи.","edge_cases":"WHERE по правой стороне может отсеять строки без пары. Пагинация с fetch join коллекции требует особого внимания.","related":"INNER JOIN, ON, JOIN FETCH и N+1."}},
-{"order":2,"label":"C","text":"Соединяйте по пути ассоциации. LEFT JOIN сохраняет владельцев без соответствия даже при условии WHERE o.total > 100, а JOIN FETCH задаёт загрузку ассоциации.","correct":false,"sections":{"what_actually":"Сравнение с NULL на правой стороне отсекает строку в WHERE.","source_of_confusion":"Свойство внешнего соединения переносят на результат после фильтрации.","if_it_were_true":"Родитель без заказа прошёл бы условие по сумме заказа.","how_it_should_be":"Для фильтрации подходящих заказов с сохранением владельцев перенесите условие соединения в ON."}},
-{"order":3,"label":"D","text":"Соединяйте по пути ассоциации. LEFT JOIN сохраняет владельцев без соответствия до фильтрации, а JOIN FETCH подготавливает отложенную загрузку связи при обращении.","correct":false,"sections":{"what_actually":"Fetch join загружает ассоциацию в рамках запроса.","source_of_confusion":"Fetch join путают с настройкой ленивой загрузки.","if_it_were_true":"После запроса с FETCH обращение к связи всё равно требовало бы её отдельной инициализации.","how_it_should_be":"Используйте FETCH, чтобы включить ассоциацию в загрузку текущим запросом."}}
-]}]}
-,{"q_number":5,"blocks":[{"block_idx":0,"question_text":"Что такое Criteria API и когда его использовать?","options":[
-{"order":0,"label":"A","text":"Это объектный API для динамического построения запроса. Проверка ссылок на атрибуты компилятором доступна и при передаче имени строкой.","correct":false,"sections":{"what_actually":"Строковое имя компилятор не сопоставляет с сущностью.","source_of_confusion":"Тип Root принимают за проверку значения строкового аргумента.","if_it_were_true":"Опечатка в root.get(\"emial\") обнаруживалась бы при компиляции.","how_it_should_be":"Для проверяемых ссылок используйте атрибуты статической метамодели."}},
-{"order":1,"label":"B","text":"Это объектный API для запросов с неизменным набором условий. Чтобы менять условия динамически, нужно преобразовать Criteria в JPQL и дописать нужные части.","correct":false,"sections":{"what_actually":"Предикаты можно собирать во время выполнения через CriteriaBuilder.","source_of_confusion":"Типизированное описание запроса принимают за заранее фиксированный запрос.","if_it_were_true":"Поддержка нового необязательного фильтра требовала бы редактировать текст JPQL.","how_it_should_be":"Соберите нужные Predicate и передайте их в where."}},
-{"order":2,"label":"C","text":"Это объектный API для динамического построения запроса. CriteriaBuilder создаёт предикаты, а статическая метамодель помогает проверять ссылки на атрибуты при компиляции.","correct":true,"sections":{"explanation":"CriteriaQuery задаёт структуру, Root представляет источник, а предикаты добавляются по условиям приложения.","example":"Добавьте предикат по User_.age только при наличии минимального возраста в фильтре.","when_to_apply":"Используйте для композиции необязательных и переиспользуемых фильтров.","edge_cases":"Статичный запрос может быть короче на JPQL. Проверка метамодели не гарантирует корректную бизнес-логику.","related":"CriteriaQuery, CriteriaBuilder и Specifications."}},
-{"order":3,"label":"D","text":"Это объектный API для динамического построения запроса. Предикаты строятся после загрузки сущностей и применяются в памяти приложения.","correct":false,"sections":{"what_actually":"Провайдер переводит описанные ограничения в запрос к базе.","source_of_confusion":"Построение предиката на Java принимают за фильтрацию Java-объектов.","if_it_were_true":"Провайдер должен был бы загрузить сущности до проверки условий.","how_it_should_be":"Передайте CriteriaQuery в EntityManager и выполните запрос с условиями на стороне базы."}}
-]}]}
-,{"q_number":6,"blocks":[{"block_idx":0,"question_text":"Что такое JPA Metamodel и как его использовать?","options":[
-{"order":0,"label":"A","text":"Статическая метамодель описывает атрибуты сущности классом User_. В Criteria этот класс позволяет компилятору проверять имена атрибутов, переданные строкой.","correct":false,"sections":{"what_actually":"Проверяемая ссылка передаётся как атрибут User_.email, а не как строка.","source_of_confusion":"Наличие метамодели принимают за автоматическую проверку строкового API.","if_it_were_true":"Компилятор обнаруживал бы опечатку в root.get(\"emial\").","how_it_should_be":"Передавайте объект атрибута в перегрузку get."}},
-{"order":1,"label":"B","text":"Статическая метамодель описывает атрибуты сущности классом User_. Hibernate создаёт этот класс при первом запросе, и тогда на него можно сослаться из Criteria.","correct":false,"sections":{"what_actually":"Для компиляции ссылки класс нужен уже во время сборки.","source_of_confusion":"Статические классы путают с метамоделью, доступной в runtime.","if_it_were_true":"Java-код мог бы использовать тип, которого ещё нет при сборке.","how_it_should_be":"Подключите процессор аннотаций и используйте созданный им класс."}},
-{"order":2,"label":"C","text":"Статическая метамодель описывает атрибуты сущности классом User_. Его члены проверяют текст JPQL при компиляции, а обращения в Criteria остаются строковыми.","correct":false,"sections":{"what_actually":"Атрибуты метамодели используются напрямую в типизированных операциях Criteria.","source_of_confusion":"Генерацию метамодели путают с проверкой текстовых запросов.","if_it_were_true":"User_.email служил бы для анализа JPQL вместо создания типизированного пути.","how_it_should_be":"Используйте root.get(User_.email) в Criteria."}},
-{"order":3,"label":"D","text":"Статическая метамодель описывает атрибуты сущности классом User_. Его можно сгенерировать при сборке и передавать типизированные атрибуты в Criteria.","correct":true,"sections":{"explanation":"Статическая метамодель даёт Java-ссылки на постоянные атрибуты и сохраняет информацию об их типах.","example":"Для пути email вызовите root.get(User_.email).","when_to_apply":"Используйте в Criteria, чтобы переименование атрибута обнаруживалось при пересборке.","edge_cases":"Для Hibernate 7.1 настройте hibernate-processor в сборке и согласуйте его версию с hibernate-core.","related":"StaticMetamodel, SingularAttribute и Hibernate Processor."}}
-]},{"block_idx":1,"question_text":"Как Hibernate Processor использует @Find для генерации finder-метода?","options":[
-{"order":0,"label":"A","text":"Процессор генерирует метод при сборке и выводит фильтр из имени метода. Имена параметров разрешено выбирать независимо от фильтруемых атрибутов.","correct":false,"sections":{"what_actually":"Имя метода произвольно. Для обычных параметров поиска важны имена и типы атрибутов.","source_of_confusion":"Аннотацию сравнивают с derived-методами Spring Data.","if_it_were_true":"Переименование метода меняло бы условия поиска.","how_it_should_be":"В сигнатуре сопоставьте параметры поиска с атрибутами сущности."}},
-{"order":1,"label":"B","text":"Процессор генерирует метод при сборке и выводит условия из параметров поиска. Конкретный способ поиска зависит от того, каким атрибутам соответствуют параметры.","correct":true,"sections":{"explanation":"Hibernate Processor анализирует сигнатуру и генерирует реализацию. Имя finder-метода само по себе не задаёт условия.","example":"Если isbn — первичный ключ Book, по методу byIsbn(String isbn) можно сгенерировать вызов EntityManager.find.","when_to_apply":"Используйте для типизированных поисковых методов в проекте с Hibernate Processor.","edge_cases":"В Hibernate 7.1 при точном совпадении с натуральным ключом возможен Session.byNaturalId. Для обычных постоянных атрибутов процессор строит Criteria-запрос.","related":"Hibernate @Find, @Id, @NaturalId и Criteria API."}},
-{"order":2,"label":"C","text":"Процессор генерирует метод при сборке и выводит условия из параметров поиска. Если параметры совпадают с полями натурального ключа, используется EntityManager.find.","correct":false,"sections":{"what_actually":"EntityManager.find загружает по первичному ключу. Hibernate использует отдельный API натурального ключа.","source_of_confusion":"Первичный и натуральный ключи могут идентифицировать одну сущность, но отображаются по-разному.","if_it_were_true":"Значение натурального ключа можно было бы передать в find вместо первичного.","how_it_should_be":"Различайте EntityManager.find и Session.byNaturalId."}},
-{"order":3,"label":"D","text":"Процессор выводит условия из параметров поиска, а реализация finder создаётся при первом вызове по отражению, без генерации Java-кода во время сборки.","correct":false,"sections":{"what_actually":"Реализацию создаёт процессор аннотаций во время компиляции.","source_of_confusion":"Генерацию кода путают с прокси, которые создаются при запуске приложения.","if_it_were_true":"Ссылка на сгенерированный метод работала бы без обработки аннотаций.","how_it_should_be":"Включите Hibernate Processor в сборке."}}
-]}]}
-,{"q_number":7,"blocks":[{"block_idx":0,"question_text":"Как делать subqueries?","options":[
-{"order":0,"label":"A","text":"В стандартном JPQL подзапрос можно вложить в WHERE или HAVING и сослаться на внешний алиас. В Criteria создайте Subquery и явно включите его во внешний предикат.","correct":true,"sections":{"explanation":"Подзапрос входит в условие как операнд IN, EXISTS или сравнения. Корреляция связывает его с текущей строкой внешнего запроса.","example":"Проверьте существование заказа через WHERE EXISTS (SELECT o FROM Order o WHERE o.user = u).","when_to_apply":"Используйте, если фильтр зависит от существования связанной записи или результата агрегата.","edge_cases":"Производная таблица в FROM не входит в стандартный JPQL. Поддержку таких расширений проверяйте отдельно.","related":"CriteriaQuery.subquery, CriteriaBuilder.exists и корреляция."}},
-{"order":1,"label":"B","text":"В стандартном JPQL подзапрос можно вложить в WHERE или HAVING, но внешний алиас из него недоступен. В Criteria создайте Subquery и включите его во внешний предикат.","correct":false,"sections":{"what_actually":"Коррелированный подзапрос может ссылаться на алиас внешнего запроса.","source_of_confusion":"Собственные алиасы подзапроса принимают за полную изоляцию областей видимости.","if_it_were_true":"Нельзя было бы сравнить o.user с внешним u внутри EXISTS.","how_it_should_be":"Свяжите подзапрос с внешним алиасом в его условии."}},
-{"order":2,"label":"C","text":"В стандартном JPQL подзапрос можно вложить в WHERE или HAVING и сослаться на внешний алиас. В Criteria созданный через subquery объект сам ограничивает внешний результат.","correct":false,"sections":{"what_actually":"Создание Subquery не добавляет условия во внешний запрос.","source_of_confusion":"Принадлежность объекта внешнему запросу путают с применением предиката.","if_it_were_true":"Описанный, но неиспользованный подзапрос уже фильтровал бы результат.","how_it_should_be":"Явно передайте Subquery в IN, EXISTS или сравнение."}},
-{"order":3,"label":"D","text":"В стандартном JPQL подзапрос можно вложить в WHERE, HAVING или FROM и сослаться на внешний алиас. В Criteria создайте Subquery и включите его во внешний предикат.","correct":false,"sections":{"what_actually":"Стандартный JPQL ограничивает размещение подзапросов условиями WHERE и HAVING.","source_of_confusion":"Производные таблицы из SQL и HQL переносят в стандартный JPQL.","if_it_were_true":"JPQL-провайдеры поддерживали бы подзапрос в FROM без расширений.","how_it_should_be":"Вынесите проверку в условие или применяйте подходящее расширение провайдера."}}
-]}]}
-,{"q_number":8,"blocks":[{"block_idx":0,"question_text":"Что такое Spring Data Specifications?","options":[
-{"order":0,"label":"A","text":"Это фильтры на Criteria API, которые передают в JpaSpecificationExecutor. Их комбинируют через and и or, а пустой фильтр задают через unrestricted().","correct":true,"sections":{"explanation":"Specification строит предикат по Root, запросу и CriteriaBuilder. При композиции можно добавлять только заданные фильтры.","example":"Объедините hasEmail(email) и olderThan(age) через and и вызовите findAll(spec).","when_to_apply":"Используйте, когда комбинация фильтров поиска зависит от запроса пользователя.","edge_cases":"unrestricted() доступен с 3.5.2. При отсутствии условий выдачу можно ограничивать пагинацией.","related":"Specification, JpaSpecificationExecutor и CriteriaBuilder."}},
-{"order":1,"label":"B","text":"Это фильтры на Criteria API, которые передают в JpaSpecificationExecutor. Операции and и or выбирают один из фильтров вместо объединения их предикатов.","correct":false,"sections":{"what_actually":"and и or образуют логическую композицию предикатов.","source_of_confusion":"Эти операции путают с выбором одного из фильтров в Java.","if_it_were_true":"Комбинация фильтров по возрасту и городу не могла бы потребовать выполнения обоих условий.","how_it_should_be":"Используйте and для пересечения, or для объединения условий."}},
-{"order":2,"label":"C","text":"Это фильтры на Criteria API, которые передают непосредственно в базовый JpaRepository. Их комбинируют через and и or, а пустой фильтр задают через unrestricted().","correct":false,"sections":{"what_actually":"Методы исполнения спецификаций задаёт JpaSpecificationExecutor.","source_of_confusion":"Наличие findAll в JpaRepository принимают за поддержку всех его перегрузок.","if_it_were_true":"findAll(spec) был бы доступен любому JpaRepository без дополнительного интерфейса.","how_it_should_be":"Добавьте JpaSpecificationExecutor к интерфейсу репозитория."}},
-{"order":3,"label":"D","text":"Это фильтры на Criteria API, которые передают в JpaSpecificationExecutor. Их комбинируют через and и or, а unrestricted() задаёт предикат, истинный для любой записи.","correct":false,"sections":{"what_actually":"unrestricted() не вносит предикат при композиции.","source_of_confusion":"Вызов без фильтра и логическая истина дают один результат при самостоятельном использовании.","if_it_were_true":"unrestricted().or(hasEmail(email)) подходил бы всем записям.","how_it_should_be":"Рассматривайте unrestricted() как отсутствие вклада в итоговый предикат."}}
-]}]}
-,{"q_number":9,"blocks":[{"block_idx":0,"question_text":"Что такое @NamedQuery и когда его использовать?","options":[
-{"order":0,"label":"A","text":"Это именованное объявление SQL конкретной базы. Используйте его для статичного запроса, вызываемого через createNamedQuery.","correct":false,"sections":{"what_actually":"NamedQuery объявляет запрос JPQL.","source_of_confusion":"Названия NamedQuery и NamedNativeQuery похожи.","if_it_were_true":"Запрос по имени сущности и её атрибутам не подходил бы для этой аннотации.","how_it_should_be":"Для SQL используйте NamedNativeQuery."}},
-{"order":1,"label":"B","text":"Это именованное объявление JPQL. Используйте его для статичного запроса, который вызывают через createQuery, передавая имя вместо текста.","correct":false,"sections":{"what_actually":"createQuery принимает текст запроса, а не ключ именованного объявления.","source_of_confusion":"Оба метода создают Query и имеют типизированные перегрузки.","if_it_were_true":"Строка User.findByEmail интерпретировалась бы как имя запроса внутри createQuery.","how_it_should_be":"Вызывайте именованный запрос через createNamedQuery."}},
-{"order":2,"label":"C","text":"Это именованное объявление JPQL. Используйте его для статичного запроса по имени, если нужно избежать проверки Hibernate при старте и отложить её до первого вызова.","correct":false,"sections":{"what_actually":"В Hibernate 6.6 проверка именованных запросов при старте включена по умолчанию.","source_of_confusion":"Поведение динамически созданного запроса переносят на именованный.","if_it_were_true":"Ошибка в NamedQuery по умолчанию не могла бы сорвать запуск фабрики.","how_it_should_be":"Учитывайте настройку hibernate.query.startup_check отдельно от способа объявления."}},
-{"order":3,"label":"D","text":"Это именованное объявление JPQL. Используйте его для статичного запроса, вызываемого через createNamedQuery, например если он нужен в нескольких местах.","correct":true,"sections":{"explanation":"Объявление связывает имя с текстом. При вызове поставщик находит запрос по имени, а параметры задаются как обычно.","example":"Вызовите createNamedQuery(\"User.findByEmail\", User.class) и свяжите email через setParameter.","when_to_apply":"Используйте для повторного вызова заранее определённого JPQL по имени.","edge_cases":"В Hibernate 6.6 стартовую проверку можно отключить. Имена запросов должны быть уникальны в пределах persistence unit.","related":"NamedQueries, NamedNativeQuery и QUERY_STARTUP_CHECKING."}}
-]}]}
-,{"q_number":10,"blocks":[{"block_idx":0,"question_text":"Как использовать native SQL запросы?","options":[
-{"order":0,"label":"A","text":"Передайте SQL в createNativeQuery и укажите отображение результата. Если целевая СУБД меняется, провайдер перепишет специфичные выражения под новый диалект.","correct":false,"sections":{"what_actually":"Диалектные конструкции native SQL остаются ответственностью автора запроса.","source_of_confusion":"Генерацию SQL из JPQL переносят на готовый SQL.","if_it_were_true":"Функция tablefunc работала бы после перехода на другую СУБД без изменений.","how_it_should_be":"Проверяйте native-запрос на целевой СУБД."}},
-{"order":1,"label":"B","text":"Передайте SQL в createNativeQuery и укажите отображение результата. Такой запрос подходит для возможностей конкретной СУБД и может вернуть сущности либо проекции.","correct":true,"sections":{"explanation":"Native query выполняет SQL выбранного диалекта. Отображение определяет, получит ли код сущность, скалярные значения или DTO.","example":"Передайте User.class для запроса, который выбирает колонки, необходимые для отображения User.","when_to_apply":"Используйте для функций, которых не хватает в JPQL, или для явного контроля над SQL.","edge_cases":"Сущность из native SELECT может быть managed. Для переносимого связывания параметров используйте позиции.","related":"NamedNativeQuery и SqlResultSetMapping."}},
-{"order":2,"label":"C","text":"Передайте SQL в createNativeQuery и укажите отображение результата. К результату применяются правила проекций, поэтому сущности из такого SELECT всегда находятся вне контекста персистентности.","correct":false,"sections":{"what_actually":"Отображение на сущность может вернуть управляемый объект.","source_of_confusion":"Скалярный результат native query принимают за единственную форму результата.","if_it_were_true":"Изменения сущности, полученной через отображение, никогда не отслеживались бы при flush.","how_it_should_be":"Различайте отображение на entity и скалярную или DTO-проекцию."}},
-{"order":3,"label":"D","text":"Передайте SQL в createNativeQuery и используйте позиционные параметры. Для сущностей или DTO обработайте сырые строки вручную, поскольку API отображает только скалярные значения.","correct":false,"sections":{"what_actually":"JPA поддерживает отображение результата native query на сущность и отображения через SqlResultSetMapping.","source_of_confusion":"Форму по умолчанию принимают за ограничение API.","if_it_were_true":"createNativeQuery с User.class не мог бы вернуть User.","how_it_should_be":"Задайте класс сущности или именованное отображение результата."}}
-]}]}
-,{"q_number":11,"blocks":[{"block_idx":0,"question_text":"Что такое @EntityGraph и как он предотвращает проблему N+1?","options":[
-{"order":0,"label":"A","text":"Аннотация задаёт граф атрибутов для конкретного запроса. Провайдер обязан включить все заданные связи в один SQL, поэтому дополнительная проверка количества запросов не нужна.","correct":false,"sections":{"what_actually":"Граф гарантирует загрузку указанных атрибутов, но не форму SQL.","source_of_confusion":"Частый SQL-план с JOIN принимают за требование графа.","if_it_were_true":"Все графы устраняли бы дополнительные запросы на любом провайдере.","how_it_should_be":"Проверяйте выполнение графа по SQL и метрикам."}},
-{"order":1,"label":"B","text":"Аннотация задаёт граф атрибутов для конкретного запроса. В него входят только связи, заранее объявленные именованным графом на сущности.","correct":false,"sections":{"what_actually":"В Spring Data доступны и графы с attributePaths.","source_of_confusion":"Именованный граф принимают за единственный вариант объявления.","if_it_were_true":"Нельзя было бы указать разные наборы связей прямо на методах репозитория.","how_it_should_be":"Используйте имя готового графа или задайте пути в attributePaths."}},
-{"order":2,"label":"C","text":"Аннотация задаёт граф атрибутов для конкретного запроса. Загрузка нужных связей помогает избежать N+1, а число SQL-запросов зависит от выбранного провайдером плана.","correct":true,"sections":{"explanation":"Граф предписывает загрузку указанных атрибутов. Провайдер может выбрать соединения или дополнительные запросы.","example":"Укажите attributePaths = {\"orders\", \"profile\"} на методе, который читает пользователей вместе с заказами и профилем.","when_to_apply":"Используйте для точечного и переиспользуемого управления загрузкой вне текста запроса.","edge_cases":"Устранение N+1 проверяйте по фактическому SQL. Граф с коллекцией может влиять на пагинацию.","related":"NamedEntityGraph, fetchgraph, loadgraph и JOIN FETCH."}},
-{"order":3,"label":"D","text":"Аннотация задаёт граф атрибутов для конкретного запроса. После первого вызова эти связи считаются EAGER и для остальных запросов той же сущности.","correct":false,"sections":{"what_actually":"Граф влияет на операцию, в которой он применён, без изменения глобального маппинга.","source_of_confusion":"Уже загруженную связь управляемого объекта путают со стратегией загрузки для всех объектов.","if_it_were_true":"Один вызов репозитория менял бы SQL в несвязанных сценариях приложения.","how_it_should_be":"Применяйте граф к операциям, где действительно нужны эти атрибуты."}}
-]}]}
-,{"q_number":12,"blocks":[{"block_idx":0,"question_text":"Какие типичные ошибки при работе с JPQL?","options":[
-{"order":0,"label":"A","text":"Заменяйте SELECT * выбором сущности или атрибутов. Коллекцию передавайте в IN одним параметром, а страницу корневых сущностей получайте отдельно от fetch join коллекции.","correct":true,"sections":{"explanation":"JPQL выбирает сущности и выражения. Для IN можно связать коллекцию напрямую. При fetch join коллекции SQL-строки и корневые сущности имеют разную кратность.","example":"Получите страницу идентификаторов, затем загрузите соответствующих пользователей и их заказы.","when_to_apply":"Проверяйте эти случаи при переносе SQL-запросов в JPQL и проектировании страниц с коллекциями.","edge_cases":"Пустой список нужно обработать отдельно. В Hibernate 6 дубли корневых сущностей от fetch join устраняются без ручного DISTINCT.","related":"IN, JOIN FETCH, setMaxResults и Modifying."}},
-{"order":1,"label":"B","text":"Заменяйте SELECT * выбором сущности или атрибутов. Коллекцию передавайте в IN только именованным параметром, а страницу корневых сущностей получайте отдельно от fetch join коллекции.","correct":false,"sections":{"what_actually":"Коллекционный параметр справа от IN может быть и позиционным.","source_of_confusion":"Распространённый пример с именованным параметром считают правилом.","if_it_were_true":"Валидный JPQL с IN ?1 отвергался бы из-за способа нумерации.","how_it_should_be":"Используйте IN :emails или IN ?1 и отдельно учитывайте пустой список."}},
-{"order":2,"label":"C","text":"Заменяйте SELECT * выбором сущности или атрибутов. Коллекцию передавайте в IN одним параметром, а страницу с fetch join коллекции ограничивайте SQL-лимитом через setMaxResults.","correct":false,"sections":{"what_actually":"Ограничение числа SQL-строк может обрезать коллекцию или дать неверный размер страницы.","source_of_confusion":"Одну строку результата соединения принимают за одну корневую сущность.","if_it_were_true":"Лимит 20 по строкам гарантировал бы 20 целиком загруженных пользователей.","how_it_should_be":"Отделите запрос страницы корневых сущностей от загрузки коллекции."}},
-{"order":3,"label":"D","text":"Для выбора сущности используйте SELECT *. Коллекцию передавайте в IN одним параметром, а страницу корневых сущностей получайте отдельно от fetch join коллекции.","correct":false,"sections":{"what_actually":"SELECT * не входит в грамматику стандартного JPQL.","source_of_confusion":"Синтаксис SQL проецируют на запрос к объектной модели.","if_it_were_true":"Символ * заменял бы алиас сущности в JPQL.","how_it_should_be":"Используйте SELECT u FROM User u."}}
-]}]}
-,{"q_number":13,"blocks":[{"block_idx":0,"question_text":"Что такое Projection в JPQL/Criteria?","options":[
-{"order":0,"label":"A","text":"Проекция определяет набор выражений результата. Для DTO используйте SELECT new с простым именем Java-класса, а для Criteria можно выбрать Tuple.","correct":false,"sections":{"what_actually":"Стандартное конструкторное выражение требует полного имени класса.","source_of_confusion":"Импорты Java принимают за импорты языка JPQL.","if_it_were_true":"Импорт DTO в Java-файле позволял бы писать его короткое имя внутри строки JPQL.","how_it_should_be":"Указывайте имя DTO вместе с пакетом."}},
-{"order":1,"label":"B","text":"Проекция определяет набор выражений результата. Для DTO используйте SELECT new, а для Criteria можно выбрать Tuple с нужными атрибутами.","correct":true,"sections":{"explanation":"Проекция задаёт форму результата и позволяет выбирать значения без загрузки всей сущности.","example":"SELECT new com.example.UserDto(u.id, u.email) FROM User u возвращает DTO из двух полей.","when_to_apply":"Используйте для списков, отчётов и других сценариев чтения с ограниченным набором данных.","edge_cases":"DTO со скалярными полями не становится управляемой сущностью. Аргументы должны подходить конструктору.","related":"Конструкторное выражение JPQL, Tuple и интерфейсные проекции Spring Data."}},
-{"order":2,"label":"C","text":"Проекция определяет набор выражений результата. Для DTO используйте SELECT new, а изменения скалярных полей DTO сохранятся при flush, как у сущности.","correct":false,"sections":{"what_actually":"DTO сам по себе не управляется контекстом персистентности.","source_of_confusion":"Объект, созданный провайдером, принимают за загруженную сущность.","if_it_were_true":"Изменение объекта отчёта могло бы обновить таблицу без явной операции записи.","how_it_should_be":"Для dirty checking работайте с управляемой сущностью."}},
-{"order":3,"label":"D","text":"Проекция определяет набор выражений результата. В JPQL можно выбрать несколько полей, а Criteria позволяет вернуть только корневую сущность целиком.","correct":false,"sections":{"what_actually":"Criteria поддерживает выбор нескольких выражений и результаты Tuple или DTO.","source_of_confusion":"Тип запроса CriteriaQuery<User> принимают за ограничение всего API.","if_it_were_true":"Criteria не позволял бы строить динамические отчёты с выбором нужных полей.","how_it_should_be":"Задайте нужный тип результата, например через createTupleQuery."}}
-]}]}
-,{"q_number":14,"blocks":[{"block_idx":0,"question_text":"Как реализовать pagination в JPA?","options":[
-{"order":0,"label":"A","text":"В JPA примените setFirstResult и setMaxResults, а total вычислите по размеру возвращённого списка. В Spring Data передайте Pageable и получите Page.","correct":false,"sections":{"what_actually":"Размер страницы не равен общему числу совпадающих записей.","source_of_confusion":"Число элементов текущей страницы принимают за счётчик полного результата.","if_it_were_true":"Страница из двадцати записей всегда означала бы ровно двадцать совпадений.","how_it_should_be":"Считайте total отдельно, если он нужен."}},
-{"order":1,"label":"B","text":"В JPA запишите LIMIT и OFFSET прямо в стандартном JPQL, а для total используйте COUNT. В Spring Data передайте Pageable и получите Page.","correct":false,"sections":{"what_actually":"В стандартном JPQL границы страницы задаются через Query API.","source_of_confusion":"SQL и расширения HQL принимают за синтаксис JPQL.","if_it_were_true":"Текст с LIMIT одинаково принимали бы все стандартные JPA-провайдеры.","how_it_should_be":"Используйте setFirstResult и setMaxResults."}},
-{"order":2,"label":"C","text":"В JPA примените setFirstResult и setMaxResults, а для total используйте COUNT по тем же условиям. В Spring Data передайте Pageable и получите Page.","correct":true,"sections":{"explanation":"Один запрос получает ограниченную выборку, а общее количество относится ко всем совпадениям. Page предоставляет содержимое и метаданные общего размера.","example":"Запросите первые 20 активных пользователей со стабильной сортировкой и считайте total по тому же фильтру.","when_to_apply":"Используйте для API, в которых нужны страница результатов и общее число элементов.","edge_cases":"Spring Data может вывести total из результата без выполнения COUNT. Fetch join коллекции осложняет SQL-пагинацию.","related":"Pageable, Page, COUNT и setMaxResults."}},
-{"order":3,"label":"D","text":"В JPA примените setFirstResult и setMaxResults, а для total используйте COUNT. В Spring Data передайте Pageable и получите Slice с общим числом страниц.","correct":false,"sections":{"what_actually":"Slice показывает наличие следующей страницы, а total сообщает Page.","source_of_confusion":"Оба типа предоставляют содержимое и информацию о навигации.","if_it_were_true":"Slice позволял бы показать точное число страниц без отдельного total.","how_it_should_be":"Выберите Page, если приложению требуется общее количество."}}
-]}]}
-,{"q_number":15,"blocks":[{"block_idx":0,"question_text":"Какие best practices при работе с JPA queries?","options":[
-{"order":0,"label":"A","text":"Для простого поиска используйте derived-метод, для динамики — Specifications, для отчёта — проекцию. Bulk UPDATE через @Query выполните с @Modifying в транзакции.","correct":true,"sections":{"explanation":"Инструмент выбирают по структуре запроса и нужной форме результата. Для модифицирующего @Query требуется режим выполнения DML и активная транзакция.","example":"Поиск по email выразите методом репозитория, фильтры комбинируйте спецификациями, а задачу деактивации выполняйте транзакционным bulk UPDATE.","when_to_apply":"Используйте при проектировании и ревью методов доступа к данным.","edge_cases":"Транзакция может начинаться в сервисе. После bulk DML состояние уже загруженных сущностей требует внимания.","related":"JpaSpecificationExecutor, проекции, Modifying и Transactional."}},
-{"order":1,"label":"B","text":"Для простого поиска используйте derived-метод, для динамики — Specifications, для отчёта — проекцию. Bulk UPDATE через @Query выполните с @Modifying без транзакции.","correct":false,"sections":{"what_actually":"Modifying задаёт режим вызова, но не открывает транзакцию.","source_of_confusion":"Аннотацию операции принимают за аннотацию транзакционной границы.","if_it_were_true":"executeUpdate работал бы вне транзакции.","how_it_should_be":"Выполняйте модифицирующие запросы внутри транзакции репозитория или сервиса."}},
-{"order":2,"label":"C","text":"Для простого поиска используйте derived-метод, для динамики — Specifications, для отчёта с парой полей — полные сущности. Bulk UPDATE через @Query выполните с @Modifying в транзакции.","correct":false,"sections":{"what_actually":"Для отчёта с ограниченным набором полей обычно подходит проекция.","source_of_confusion":"Переиспользование готовой сущности считают бесплатным.","if_it_were_true":"Загрузка всех столбцов и управление сущностью не добавляли бы работы даже для узкого отчёта.","how_it_should_be":"Запрашивайте только поля, которые нужны отчёту."}},
-{"order":3,"label":"D","text":"Для простого поиска используйте derived-метод, для произвольных динамических фильтров — один метод с фиксированным именем, для отчёта — проекцию. Bulk UPDATE выполните в транзакции с @Modifying.","correct":false,"sections":{"what_actually":"Имя derived-метода задаёт фиксированный набор условий.","source_of_confusion":"Меняющиеся значения параметров путают с меняющейся структурой запроса.","if_it_were_true":"Один derived-метод мог бы добавлять произвольные поля фильтра во время выполнения.","how_it_should_be":"Для композиции необязательных условий используйте Specifications или Criteria."}}
-]}]}
-,{"q_number":16,"blocks":[{"block_idx":0,"question_text":"Что HQL 6 добавляет поверх стандартного JPQL (set-операции, оконные функции, CTE)?","options":[
-{"order":0,"label":"A","text":"JPQL 3.2 включает операции над множествами и оконные функции через OVER. HQL 6.6 добавляет CTE, в том числе рекурсивные.","correct":false,"sections":{"what_actually":"JPQL 3.2 стандартизирует операции над множествами, но не оконный синтаксис OVER.","source_of_confusion":"Добавление одних SQL-подобных конструкций распространяют на остальные.","if_it_were_true":"Запрос с rank() over (...) был бы переносимым JPQL 3.2.","how_it_should_be":"Используйте HQL для оконных функций и проверяйте поддержку диалекта."}},
-{"order":1,"label":"B","text":"JPQL 3.2 включает операции над множествами и нерекурсивные CTE. HQL 6.6 добавляет оконные функции и рекурсивные CTE.","correct":false,"sections":{"what_actually":"JPQL 3.2 не стандартизирует CTE, включая нерекурсивные.","source_of_confusion":"Поддержку некоторых вложенных запросов принимают за поддержку WITH.","if_it_were_true":"Простой запрос с WITH был бы переносимым JPQL 3.2.","how_it_should_be":"Используйте HQL или native SQL для CTE."}},
-{"order":2,"label":"C","text":"JPQL 3.2 включает операции над множествами. HQL 6.6 поддерживает также оконные функции и CTE, включая рекурсивные при поддержке СУБД.","correct":true,"sections":{"explanation":"Набор расширений зависит от версии сравниваемого стандарта. UNION, INTERSECT и EXCEPT есть в JPQL 3.2, а оконные выражения и CTE выходят за его пределы.","example":"В HQL вычислите rank() over (partition by e.dept order by e.salary desc) по сотрудникам.","when_to_apply":"Используйте расширения HQL, когда нужны рейтинги, именованные подзапросы или рекурсивный обход.","edge_cases":"Рекурсивный CTE HQL начинается с WITH и требует поддержки рекурсии в базе. Поддержку оконных функций проверяйте для диалекта.","related":"Jakarta Persistence 3.2, Hibernate 6.6 HQL и SQL-диалекты."}},
-{"order":3,"label":"D","text":"JPQL 3.2 не включает операции над множествами. HQL 6.6 добавляет их вместе с оконными функциями и CTE, включая рекурсивные.","correct":false,"sections":{"what_actually":"Операции над множествами входят в JPQL начиная со спецификации 3.2.","source_of_confusion":"Ограничения более старых версий переносят на JPQL 3.2.","if_it_were_true":"Для любого UNION в приложении с JPA 3.2 потребовалось бы расширение провайдера.","how_it_should_be":"Разграничивайте возможности HQL и конкретной версии стандарта JPQL."}}
-]}]}
-]}
+{
+  "topic_slug": "hibernate-jpql-criteria-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие способы запросов существуют в JPA/Hibernate?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Для фиксированного запроса по сущностям подойдёт JPQL, для набора необязательных фильтров подойдут параметры JPQL, для возможностей диалекта подойдёт native SQL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Параметр заполняет значение в уже заданной структуре запроса. Передача `null` в `u.country = :country` не убирает сравнение. Для структуры, которая зависит от фильтра, можно использовать Criteria.",
+                "source_of_confusion": "В форме поиска меняются и значения, и набор условий. При первом взгляде обе задачи похожи на параметризацию одного шаблона.",
+                "if_it_were_true": "Если бы незаполненный параметр убирал предикат, при `country = null` запрос вернул бы пользователей из всех стран. На деле простое сравнение с `NULL` не даст такого результата.",
+                "how_it_should_be": "Для малого фиксированного числа условий можно явно описать пропуск фильтра в JPQL. Если меняются сами предикаты или соединения, собирай их через Criteria или Specifications."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для фиксированного запроса по сущностям подойдёт Criteria, для набора необязательных фильтров подойдёт JPQL, для возможностей диалекта подойдёт стандартный JPQL с `@Query`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Criteria работает и со статичным запросом, однако Spring Data `@Query` не расширяет грамматику JPQL. Например, функция PostgreSQL, возвращающая таблицу, не становится допустимым источником `FROM` в JPQL из-за аннотации.",
+                "source_of_confusion": "В `@Query` действительно можно поместить запрос на SQL при смене режима. Это легко принять за автоматическое распознавание языка по тексту.",
+                "if_it_were_true": "Если бы аннотация автоматически переключалась на SQL, одинаковая запись `FROM User` могла бы обозначать и сущность, и таблицу в зависимости от догадки парсера.",
+                "how_it_should_be": "Оставь JPQL для запросов по модели. Для диалектного SQL используй `createNativeQuery` или явно включи native-режим в Spring Data. Для поддерживаемого Hibernate расширения проверь HQL."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для фиксированного запроса по сущностям подойдёт JPQL, для набора необязательных фильтров подойдёт Criteria, для возможностей диалекта подойдёт native SQL. HQL и репозитории Spring Data дают дополнительные возможности на своих уровнях.",
+              "correct": true,
+              "sections": {
+                "explanation": "JPQL и Criteria входят в Jakarta Persistence и работают с отображением сущностей. JPQL описывает запрос текстом, Criteria строит его программно. HQL расширяет язык Hibernate, native SQL обращается к физической схеме. Spring Data JPA строит запрос по имени метода, исполняет объявленный запрос или передаёт спецификацию провайдеру.",
+                "example": "Для точного поиска `User` по email достаточно `findByEmail` или JPQL с `:email`. Для формы с необязательными страной и возрастом Criteria добавит ровно заполненные фильтры. Для отчёта на PostgreSQL с `crosstab()` SQL может сразу сформировать нужные колонки.",
+                "when_to_apply": "Сначала проверь, фиксирована ли форма запроса и нужна ли переносимость. Если важна проверка путей Criteria компилятором, подключи статический метамодел. Строковый `root.get(\"email\")` сам по себе такой проверки не даёт.",
+                "edge_cases": "Если требуется динамически менять только значение email, текст JPQL остаётся одним и тем же. Если нужны возможности вне JPQL, сначала проверь, выражаются ли они HQL с нужным диалектом, а для конкретного SQL используй native-запрос.",
+                "related": "Текстовый запрос можно проверить при старте или процессором аннотаций. Такая проверка дополняет типизацию Java, поскольку обычный компилятор строку JPQL не разбирает."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для фиксированного запроса по сущностям подойдёт JPQL, для набора необязательных фильтров подойдут derived-методы, для возможностей диалекта подойдёт native SQL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У derived-метода состав условий зафиксирован именем. Для `findByEmailAndActive` условие по email остаётся частью запроса и при передаче `null`. Spring Data в этом случае может сформировать `IS NULL`, а не пропустить поле.",
+                "source_of_confusion": "Derived-метод избавляет от написания строки запроса. Автоматическая генерация SQL выглядит как автоматическая сборка произвольной формы запроса.",
+                "if_it_were_true": "Если бы `null` убирал условие, `findByEmailAndActive(null, true)` возвращал бы всех активных пользователей. Тогда этим методом нельзя было бы явно найти активных пользователей без email.",
+                "how_it_should_be": "Держи derived-методы для небольшого фиксированного набора условий. Для параметров, каждый из которых независимо может отсутствовать, делай композицию Specifications или собирай список предикатов Criteria."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое JPQL и чем он отличается от SQL?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "JPQL разрешает `User` как имя сущности и `u.orders` как имя внешнего ключа. SQL разрешает таблицу и столбцы по схеме базы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`u.orders` обозначает ассоциацию сущности `User`. Провайдер может построить соединение по FK в таблице заказов или через промежуточную таблицу. Имя ассоциации не обязано существовать в физической схеме.",
+                "source_of_confusion": "В простом маппинге ассоциация и столбец могут называться похоже. SQL, который печатает Hibernate, визуально продолжает JPQL-запрос.",
+                "if_it_were_true": "Если бы путь обозначал столбец, перенос связи на join table потребовал бы переписать все `JOIN u.orders`, даже при сохранении Java-модели.",
+                "how_it_should_be": "Определяй пути по отображённым атрибутам. Для точного управления колонками, например при диагностике плана, работай с SQL и фактической схемой."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "JPQL разрешает `User` как имя сущности и `u.orders` как путь по ассоциации. SQL разрешает таблицу и столбцы по схеме базы.",
+              "correct": true,
+              "sections": {
+                "explanation": "Провайдер связывает имя сущности и выражения пути с отображением. В `select u from User u join u.orders o` он выбирает сущность `User` и выводит условие соединения из ассоциации. В SQL имя `users`, столбец `first_name` и условие по `user_id` задаются физической схемой.",
+                "example": "Если `User.firstName` отображён на `users.first_name`, JPQL `select u.firstName from User u` вернёт значения имён. После переименования столбца в `given_name` и обновления `@Column` этот JPQL останется прежним. SQL с `first_name` потребуется изменить.",
+                "when_to_apply": "Пиши JPQL, когда фильтрация и результат описываются терминами сущностей и поддерживаются стандартным языком. Проверь реальные SQL и план, если перенос на другой диалект меняет стоимость запроса.",
+                "edge_cases": "`@Entity(name = \"Account\")` меняет имя в `FROM`, даже если имя класса и таблицы осталось прежним. Для выбора строки результата укажи сущность или конкретную проекцию. Синтаксис `SELECT *` стандартный JPQL не поддерживает.",
+                "related": "JPQL и Criteria используют одну модель отображения. Для SQL, написанного вручную, связь результата с этой моделью можно задать отдельно через маппинг результата."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "JPQL разрешает `User` по имени таблицы из `@Table` и `u.orders` как путь по ассоциации. SQL разрешает таблицу и столбцы по схеме базы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Имя сущности по умолчанию совпадает с простым именем Java-класса, а `@Entity(name=...)` может его заменить. `@Table(name=...)` задаёт таблицу для SQL и не меняет имя сущности.",
+                "source_of_confusion": "Имена сущности и таблицы часто отличаются только регистром. В таком проекте легко решить, что `@Table` настраивает оба языка сразу.",
+                "if_it_were_true": "Если бы `@Table` задавала имя JPQL, то `select u from User u` перестал бы работать при простом переносе данных из `users` в `app_users` с обновлением маппинга.",
+                "how_it_should_be": "Ищи идентификатор для `FROM` в `@Entity(name=...)` и атрибуты в Java-модели. Сверяй имя из `@Table` при написании native SQL."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "JPQL разрешает `User` как имя сущности и требует явно указать внешний ключ для `u.orders`. SQL разрешает таблицу и столбцы по схеме базы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для `JOIN u.orders o` условие связи уже задаёт маппинг. Дополнительный `ON` уточняет отбор заказов, например по сумме. Ручное равенство `o.user_id = u.id` здесь не нужно, а `user_id` может вообще отсутствовать среди атрибутов `Order`.",
+                "source_of_confusion": "В SQL условие `ON` обычно описывает пару столбцов. JPQL имеет знакомый синтаксис `JOIN ... ON`, но роль дополнительного предиката на ассоциации отличается.",
+                "if_it_were_true": "Если бы внешний ключ требовалось указывать, JPQL из условия не разбирался бы, хотя в нём уже однозначно названа связь.",
+                "how_it_should_be": "Для отображённой связи используй путь `u.orders`. Если нужно соединение по отдельному условию между сущностями, проверь поддержку соединения с корнем в используемой версии JPQL или HQL."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать параметры в JPQL?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Первому шаблону передай `setParameter(1, email)`, второму передай `setParameter(\"email\", email)`. Ссылка на параметр определяется типом переданного значения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Провайдер идентифицирует параметры по объявлению в тексте. У первого запроса объявлено имя `email`, у второго индекс `1`. Тип `String` совместим со значением email в обоих случаях, но не выбирает адрес параметра.",
+                "source_of_confusion": "Оба запроса содержат по одной точке подстановки. API с перегрузками легко принять за два взаимозаменяемых способа передать одно и то же значение.",
+                "if_it_were_true": "Если бы тип значения определял адрес, два строковых параметра `:email` и `:country` невозможно было бы надёжно различить по одному `String`.",
+                "how_it_should_be": "Сопоставляй перегрузку `setParameter` с синтаксисом объявления. Для именованного передавай имя без `:`, для позиционного передавай число без `?`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Первому шаблону передай `setParameter(\":email\", email)`, второму передай `setParameter(0, email)`. Первый аргумент обозначает маркер в тексте или индекс в списке параметров.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Двоеточие относится к грамматике запроса, имя параметра равно `email`. JPQL начинает нумерацию позиционных параметров с `1`, а в запросе явно указан `?1`. Оба предложенных адреса пропустят объявленный параметр.",
+                "source_of_confusion": "Идентификатор часто копируют целиком из запроса. Нулевая позиция привычна по Java-массивам и спискам.",
+                "if_it_were_true": "Если бы адреса работали так, первый параметр JPQL `?1` связывался бы по индексу `0`, а `?2` по `1`. Прочитать номер привязки из текста без пересчёта было бы нельзя.",
+                "how_it_should_be": "Передай то имя или тот номер, который стоит после маркера. При рефакторинге нескольких условий именованные параметры помогают отслеживать значение по назначению."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В первый шаблон подставь литерал вместо `:email`, во второй подставь литерал вместо `?1`. Для обоих запросов получившаяся строка будет задавать значение параметра.",
+              "correct": false,
+              "sections": {
+                "what_actually": "После текстовой замены значение становится частью языка запроса. Строка с апострофом в имени может изменить разбор или привести к синтаксической ошибке. Шаблон с отдельной привязкой сохраняет структуру предиката.",
+                "source_of_confusion": "Контрольное значение `alice@example.com` обычно проходит и в виде JPQL-литерала. На таком тесте разницы между данными и частью текста незаметно.",
+                "if_it_were_true": "Если бы текстовая подстановка сама отделяла данные от синтаксиса, произвольная строка с кавычками разбиралась бы как единое значение без участия привязки.",
+                "how_it_should_be": "Создавай запрос из шаблона и передавай значение через `setParameter`. Для динамического поля сортировки параметр значения не подходит. Выбирай разрешённый путь из фиксированного списка или строй сортировку через Criteria."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Первому шаблону передай `setParameter(\"email\", email)`, второму передай `setParameter(1, email)`. В обоих запросах значение передаётся отдельно от текста.",
+              "correct": true,
+              "sections": {
+                "explanation": "В JPQL `:email` объявляет имя, `?1` объявляет позицию с номером 1. Вызов `setParameter` связывает значение с этим объявлением. Провайдер разбирает структуру запроса отдельно от переданных данных, поэтому содержимое email не становится синтаксисом JPQL.",
+                "example": "Если в таблице есть пользователь `alice@example.com`, оба вызова вернут его при одинаковом маппинге и состоянии данных.\n```java\nvar users = em.createQuery(namedJpql, User.class)\n    .setParameter(\"email\", email).getResultList();\n```",
+                "when_to_apply": "Используй привязку для значений, которые приходят из формы, события или конфигурации. В запросе с несколькими полями именованные параметры удобны при перестановке предикатов.",
+                "edge_cases": "В одном переносимом JPQL-запросе нельзя смешивать именованные и позиционные параметры. Если `email` равен `null` и требуется найти строки с отсутствующим адресом, опиши `IS NULL` отдельным предикатом. Равенство с `NULL` даёт неопределённый результат.",
+                "related": "Коллекционный параметр справа от `IN` представляет набор значений. Имена сущностей, атрибуты и операторы являются частью грамматики, поэтому их выбирают при составлении запроса."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как делать JOIN в JPQL?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`JOIN u.orders` соединяет по маппингу, `LEFT JOIN` сохраняет левую сторону до фильтрации, `JOIN FETCH` загружает связь для выбранного `User`.",
+              "correct": true,
+              "sections": {
+                "explanation": "В `JOIN u.orders o` провайдер выводит предикат связи из отображения. `LEFT JOIN` создаёт строку с отсутствующим заказом только при отсутствии совпадений на этапе соединения. `WHERE` проверяется затем. `JOIN FETCH` задаёт загрузку ассоциации в этом запросе, а обычный `JOIN` её не запрашивает.",
+                "example": "У Аллы нет заказов, у Бориса один заказ на 30, у Веры один на 150. Показанный `LEFT JOIN` с `WHERE o.total > 100 OR o IS NULL` вернёт Аллу и Веру. Чтобы сохранить и Бориса, поставь `o.total > 100` в `ON` и убери этот фильтр из `WHERE`.",
+                "when_to_apply": "Обычный `JOIN` подходит для условий по связанным данным. Если потребителю нужны полные коллекции выбранных пользователей, задай план загрузки через `JOIN FETCH` или граф сущности. Используй `LEFT JOIN FETCH`, если должны остаться родители без детей.",
+                "edge_cases": "`JOIN FETCH` без `LEFT` имеет семантику внутреннего соединения. Условия по элементам загружаемой коллекции способны дать неполный набор, если провайдер допускает такой запрос. Для отбора родителей лучше использовать `EXISTS` отдельно от загрузки всей коллекции.",
+                "related": "Пагинация коллекционного fetch join требует учитывать кратность SQL-строк и версию провайдера. Граф сущности помогает вынести план загрузки из текста запроса."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`JOIN u.orders` соединяет по маппингу, `LEFT JOIN` сохраняет левую сторону и после фильтрации, `JOIN FETCH` загружает связь для выбранного `User`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`LEFT JOIN` сохраняет родителя на этапе соединения. Пользователь с единственным заказом на 30 даст строку с реальным заказом. Эта строка не пройдёт `o.total > 100 OR o IS NULL`, поэтому пользователь исчезнет.",
+                "source_of_confusion": "Фраза «левое соединение сохраняет левую сторону» верна для результата соединения. Её легко перенести на весь запрос, пропустив следующий этап фильтрации.",
+                "if_it_were_true": "Если бы `WHERE` не мог удалить родителя, условие `WHERE u.id = :id` после `LEFT JOIN` тоже оставляло бы пользователей с другими ID.",
+                "how_it_should_be": "Ограничивай совпадения справа через `ON`, если родитель нужен даже при отсутствии подходящего заказа. Для отбора самих родителей используй `WHERE` или `EXISTS`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`JOIN u.orders` соединяет и загружает связь для выбранного `User`, `LEFT JOIN` меняет способ фильтрации, `JOIN FETCH` меняет только форму результата.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В обычном соединении SQL читает строки заказов ради фильтра, но сам JPQL-запрос не поручает инициализировать коллекцию. Запрос `JOIN FETCH` задаёт её загрузку и по-прежнему возвращает `User`, если `SELECT` выбирает только `u`.",
+                "source_of_confusion": "Наличие join в SQL выглядит как достаточное условие для наполнения объектов. Однако движок может использовать строки справа только для вычисления условий.",
+                "if_it_were_true": "Если бы простой join сам наполнял коллекцию, после фильтра `o.total > 100` у пользователя могла бы появиться якобы полная коллекция из одних дорогих заказов.",
+                "how_it_should_be": "Различай отбор строк и fetch-план. Для полной коллекции загружай её явно, а отбор родителей по условию на заказ вынеси в отдельный предикат или подзапрос."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`JOIN u.orders` соединяет по маппингу, `LEFT JOIN` сохраняет левую сторону до фильтрации, `JOIN FETCH` сохраняет родителей без заказов при любом виде соединения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Неквалифицированный `JOIN FETCH` остаётся внутренним соединением. При пустой коллекции у пользователя нет строки справа, поэтому результат его не содержит. Для сохранения такого родителя синтаксис явно требует `LEFT JOIN FETCH`.",
+                "source_of_confusion": "Слово `FETCH` переключает способ загрузки. Из этого иногда выводят, что оно отменяет влияние join на результат основного запроса.",
+                "if_it_were_true": "Если бы вид соединения не имел значения, запрос из примера с `JOIN FETCH` вернул бы и пользователя без единого заказа. Переключение на `LEFT JOIN FETCH` не имело бы наблюдаемого эффекта.",
+                "how_it_should_be": "Выбирай `INNER` или `LEFT` по тому, должен ли результат включать родителей без соответствия. Затем добавляй `FETCH`, если связанные данные должны быть сразу доступны."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Criteria API и когда его использовать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Criteria строит запрос из `Root` и `Predicate`, поэтому строки в `get` проверяются компилятором. API особенно полезен при переименовании полей, даже если набор условий фиксирован.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`root.get(\"email\")` принимает произвольную строку. Компилятор не знает, что она совпадает с атрибутом `User`, и не обнаружит `root.get(\"emali\")`. Проверку пути выполнит провайдер при построении или обработке запроса.",
+                "source_of_confusion": "У `CriteriaQuery<User>` действительно типизирован результат, а `CriteriaBuilder` ограничивает виды выражений. Эта гарантия выглядит шире, чем она есть для строкового имени поля.",
+                "if_it_were_true": "Если бы компилятор проверял строку в `get`, ошибочный `root.get(\"emali\")` не попадал бы в приложение даже без статического метамодела.",
+                "how_it_should_be": "Для проверки имен и типов атрибутов используй `root.get(User_.email)`. Для постоянного простого фильтра сравни читаемость Criteria и короткого JPQL."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Criteria строит запрос из `Root` и `Predicate`, поэтому условия можно собирать в Java. API особенно полезен при меняющемся наборе фильтров, а типизацию путей даёт статический метамодел.",
+              "correct": true,
+              "sections": {
+                "explanation": "`CriteriaBuilder` создаёт выражения, `CriteriaQuery<T>` описывает выборку, а `Root<T>` представляет корневую сущность. Можно создать предикат только для переданного фильтра и затем применить накопленный набор через `where`. `User_.age` сохраняет тип атрибута в Java, в отличие от имени `\"age\"`.",
+                "example": "Для запроса пользователей добавляй `cb.greaterThan(user.get(User_.age), minAge)` только при заданном `minAge`. Поиск с `minAge = 18` вернёт пользователей старше 18, поиск без параметра сохранит строки независимо от возраста.",
+                "when_to_apply": "Используй Criteria, когда у формы независимо меняются несколько условий или несколько запросов делят общие предикаты. Подключи генерацию метамодела, если проверка путей при сборке существенна.",
+                "edge_cases": "`where` задаёт новое ограничение, поэтому последовательные вызовы могут заменить ранее установленное условие. Собери набор `Predicate` и передай его за один вызов. Для неизменного запроса с одним условием JPQL часто компактнее.",
+                "related": "Spring Data `Specification<T>` строит предикат на том же Criteria API и даёт удобные операции композиции на уровне репозитория."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Criteria строит запрос из `Root` и `Predicate`, но набор условий остаётся фиксированным. API особенно полезен для замены значений в уже собранном запросе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При каждом построении можно создать разное дерево Criteria и даже добавить join только при наличии фильтра. Параметры полезны для изменения значений в одной структуре, но это отдельный механизм.",
+                "source_of_confusion": "Готовый `TypedQuery` действительно обычно исполняют с разными значениями без смены структуры. Дерево, из которого он создаётся, ошибочно принимают за заранее замороженный шаблон.",
+                "if_it_were_true": "Если бы структура была фиксированной, поиск без возраста и поиск с возрастом потребовали бы двух заранее написанных запросов на каждый набор фильтров.",
+                "how_it_should_be": "Собирай `Predicate` и join из входных условий до вызова `createQuery`. Для неизменной структуры и разных значений используй один параметризованный запрос."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Criteria строит запрос из `Root` и `Predicate` поверх SQL-схемы. API особенно полезен, когда нужно использовать имена колонок и переносить один SQL между диалектами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стандартный Criteria API принимает типы сущностей и пути их атрибутов. Если Java-атрибут `createdAt` отображён на `created_at`, в `Root<User>` используется `createdAt`. Сгенерированный SQL затем составляет провайдер.",
+                "source_of_confusion": "Дерево `select/from/where` похоже на генератор SQL. Имена колонок легко принять за допустимые строки `get`, особенно если большую часть имён маппинг не меняет.",
+                "if_it_were_true": "Если бы Criteria разрешал физические имена, миграция `created_at` в `registered_at` ломала бы Criteria при прежнем имени свойства и обновлённом маппинге.",
+                "how_it_should_be": "Используй API сущностей для переносимого запроса по модели. Когда нужно управлять физическими колонками и диалектным синтаксисом, выбирай SQL и явно задавай результат."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое JPA Metamodel и как Hibernate Processor реализует `@Find`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Статический метамодел описывает атрибуты сущности, но проверяет их только при запуске. Для `@Find` процессор создаёт метод поиска по параметру `isbn`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При использовании сгенерированного `Book_.isbn` Java-компилятор разрешает это поле как обычный член класса и проверяет его тип. При переименовании поля сущности и регенерации метамодела старой ссылки уже не будет. Для показанного `@Find` сопоставление по `isbn` действительно происходит при сборке.",
+                "source_of_confusion": "JPA умеет строить runtime metamodel из отображений при запуске. Отсюда возникает ожидание, что статический класс выполняет ту же работу и в тот же момент.",
+                "if_it_were_true": "Если бы `Book_.isbn` проверялся лишь при запуске, удалённый член `Book_` оставался бы допустимым Java-выражением на этапе компиляции.",
+                "how_it_should_be": "Для статической проверки подключи annotation processor и используй `root.get(Book_.isbn)`. Для просмотра маппинга неизвестных заранее типов в инфраструктурном коде используй `em.getMetamodel()`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Статический метамодел описывает типизированные атрибуты для Criteria. Для `@Find` процессор определяет поле по части `ByIsbn` имени метода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Book_` действительно предоставляет типизированный путь для Criteria. Но `@Find Book byIsbn(String isbn)` связывает поиск с параметром `isbn`. Метод с именем `findRegisteredBook` и тем же параметром сохраняет тот же критерий.",
+                "source_of_confusion": "Имя `byIsbn` выглядит как derived method Spring Data. Там фрагмент после `By` помогает сформировать условия, поэтому похожее имя в примере провоцирует перенос правила.",
+                "if_it_were_true": "Если бы ключ задавался именем, `byIsbn(String title)` выбирал бы по ISBN. В `@Find` такой параметр соответствует `title`, если его тип подходит отображению.",
+                "how_it_should_be": "Для `@Find` сверяй сигнатуру и атрибуты сущности. Конвенции имени метода применяй к Spring Data derived queries, если запрос строит именно Spring Data."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Статический метамодел описывает типизированные атрибуты для Criteria. Для `@Find` процессор сопоставляет `isbn` в сигнатуре с атрибутом `Book` и генерирует finder при сборке.",
+              "correct": true,
+              "sections": {
+                "explanation": "Статический JPA Metamodel представляет атрибуты типами вроде `SingularAttribute<Book, String>`. `root.get(Book_.isbn)` получает `Path<String>` без строкового поиска имени. `@Find` является отдельной возможностью Hibernate Processor. В показанном методе имя и тип параметра соответствуют полю `@Id`, поэтому генерируется поиск по первичному ключу.",
+                "example": "После генерации `root.get(Book_.isbn)` можно использовать в предикате Criteria. Если переименовать атрибут в `code` и пересобрать проект, старая ссылка на `Book_.isbn` не скомпилируется. Потребуется также обновить параметр `@Find`, если поиск должен идти по `code`.",
+                "when_to_apply": "Подключай процессор, согласованный с версией Hibernate ORM, когда нужен статический доступ к путям или сгенерированные Hibernate finder-методы. Типизированные атрибуты Criteria относятся к JPA, а контракт `@Find` зависит от Hibernate.",
+                "edge_cases": "Ссылка на `Book_.isbn` проверяется в Java, но метамодел не гарантирует корректный результат запроса. Например, предикат с неверным ISBN скомпилируется и не найдёт нужную книгу.",
+                "related": "Runtime Metamodel доступен через `EntityManager.getMetamodel()` и нужен для интроспекции. Типизированный статический метамодел используется в исходном коде при сборке."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Статический метамодел проверяет строковые имена в `root.get`. Для `@Find` процессор создаёт метод поиска по параметру `isbn`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Типобезопасная перегрузка `get` принимает метамодельный атрибут. Вызов `root.get(\"isbn\")` остаётся строковым даже при наличии `Book_`. Генерация finder по параметру этого не меняет.",
+                "source_of_confusion": "Процессор генерирует Java-описание всех свойств. Кажется, что теперь компилятор должен сверять все похожие строки с этим описанием.",
+                "if_it_were_true": "Если бы генерация меняла семантику строковой перегрузки, `root.get(\"isbnn\")` перестал бы компилироваться после подключения процессора без изменения самого запроса.",
+                "how_it_should_be": "Передавай объект `Book_.isbn` в `get`, если ошибка должна ловиться при компиляции. Строки подходят для динамически выбранных путей, если приложение проверяет такой выбор по маппингу."
+              }
+            }
+          ]
+        },
+        {
+          "block_idx": 1,
+          "question_text": "Что такое JPA Metamodel и как Hibernate Processor реализует `@Find`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Типизированные поля метамодела описывают пути для Criteria. Для `@Find` процессор генерирует запрос по суффиксу `ByIsbn`, а имя параметра можно менять независимо от модели.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В показанном `@Find` атрибут выбирается по параметру `String isbn`. Допустимое имя метода произвольно. Переименование `isbn` в `code` потребует отображённого атрибута `code`, даже если метод продолжит называться `byIsbn`.",
+                "source_of_confusion": "Метод назван так же, как часто называют ручной или производный поиск по ISBN. Это визуальное совпадение с механизмом разбора имён Spring Data.",
+                "if_it_were_true": "Если бы Hibernate искал по имени метода, `byIsbn(String title)` всё равно генерировал бы поиск по первичному ключу. В показанной модели `title` обозначает другой атрибут.",
+                "how_it_should_be": "Для переименования Java-метода оставь его параметры соответствующими полям поиска. Если требуется свободно именовать параметры, используй явно написанный запрос с правилами его привязки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Типизированные поля метамодела описывают пути для Criteria. Для `@Find` при запуске создаётся Spring Data proxy, который ищет по атрибуту `isbn`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Find` обрабатывает Hibernate Processor во время сборки. В показанном интерфейсе отсутствует контракт Spring Data Repository, а объявление метода само по себе не создаёт Spring bean.",
+                "source_of_confusion": "Оба механизма дают реализацию без ручного тела метода. По этому сходству генерацию Java-кода легко принять за создание прокси при запуске.",
+                "if_it_were_true": "Если бы реализация появлялась только при старте Spring, в обычном JPA-приложении был бы недоступен вызов сгенерированного `BookQueries_.byIsbn` до поднятия контекста.",
+                "how_it_should_be": "Проверь подключение `hibernate-processor` к сборке и вызывай API сгенерированного класса. Для метода на Spring bean используй интерфейс репозитория или явный адаптер."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Типизированные поля метамодела описывают пути для Criteria. Для `@Find` процессор выбирает ключ по возвращаемому классу и позиции аргумента, поэтому его имя несущественно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Возвращаемый `Book` указывает модель результата. `isbn` указывает конкретный атрибут, по которому идёт поиск. Единственный `String` мог бы относиться и к `isbn`, и к `title`, поэтому одной позиции и типа недостаточно.",
+                "source_of_confusion": "В `EntityManager.find(Book.class, isbn)` второй аргумент позиционный и представляет ID. Процессор может сгенерировать этот вызов, но ему сначала надо установить, что объявленный параметр соответствует ID.",
+                "if_it_were_true": "Если бы позиция однозначно означала первичный ключ, поиск книг по `String title` потребовал бы иного возвращаемого класса или дополнительных аргументов, хотя `@Find` допускает такой критерий.",
+                "how_it_should_be": "Сверь имена и типы параметров с постоянными атрибутами. Если нужен поиск по ID без генерации, вызови `em.find(Book.class, isbn)` явно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Типизированные поля метамодела описывают пути для Criteria. Для `@Find` процессор при сборке сопоставляет параметр с `Book.isbn` и генерирует метод поиска по ID.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@Find` указывает процессору, что метод описывает finder. Возвращаемый тип `Book` определяет сущность, а совпадение `String isbn` с полем `@Id` выбирает поиск по первичному ключу. В показанной форме интерфейс не предоставляет сессию, поэтому в вызов сгенерированного метода передают `EntityManager`. Имя `byIsbn` остаётся именем метода. [Hibernate 7.1 `@Find`](https://docs.hibernate.org/orm/7.1/javadocs/org/hibernate/annotations/processing/Find.html)",
+                "example": "Если в БД есть `Book` с ISBN `9780000000002`, вызов `BookQueries_.byIsbn(em, \"9780000000002\")` получит эту книгу. После переименования метода в `lookup` и пересборки вызов `BookQueries_.lookup(em, isbn)` выполняет тот же поиск.",
+                "when_to_apply": "Используй `@Find` для статических поисков по отображённым полям, когда в проекте уже работает Hibernate Processor. Для переносимого кода оставь `EntityManager.find` или запрос JPA.",
+                "edge_cases": "В Hibernate 7.1 параметр `title` соответствующего типа описывает поиск по `title` и может дать несколько книг. Для этого нужен подходящий тип результата, например `List<Book>`. Для полного natural ID процессор может выбрать API natural ID. Специальные параметры вроде `Range<T>` имеют собственные правила.",
+                "related": "Процессор также генерирует статический JPA Metamodel. Derived methods Spring Data решают похожую задачу через конвенции имени метода и собственный механизм репозитория."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как делать subqueries?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В JPQL подзапрос можно связать с внешним через `IN` или `EXISTS` в `WHERE`/`HAVING`. В Criteria его строят через `subquery`, задавая собственный источник или корреляцию.",
+              "correct": true,
+              "sections": {
+                "explanation": "Подзапрос формирует значение или набор значений для внешнего предиката. В первом примере он выбирает ID владельцев заказов дороже 1000, а внешний `IN` проверяет ID пользователя. В Criteria `cq.subquery(Long.class)` создаёт узел с нужным типом результата, который может участвовать в `user.get(User_.id).in(subquery)`.",
+                "example": "Если у пользователя 7 два дорогих заказа, у пользователя 8 один заказ на 500, а у пользователя 9 заказов нет, подзапрос может выдать `[7, 7]`. Внешний `IN` вернёт пользователя 7 одной строкой, если в самом внешнем запросе нет соединения, размножающего строки.",
+                "when_to_apply": "Используй `EXISTS`, когда нужен факт наличия связанной записи. Выбирай `IN`, когда предикат проверяет вхождение значения в набор. При условиях агрегирования размещай подзапрос в `HAVING`, если сравнение относится к группе.",
+                "edge_cases": "Стандартный JPQL ограничивает подзапросы `WHERE` и `HAVING`. В коррелированном Criteria можно явно вызвать `subquery.correlate(rootOrJoin)`. При `NOT IN` проверяй `NULL` в наборе или используй подходящий `NOT EXISTS`, поскольку неопределённость способна исключить строки.",
+                "related": "`ALL` требует истинности сравнения для каждого значения подзапроса, `ANY` и `SOME` проверяют наличие подходящего значения. При выборе квантора учитывай пустой результат и `NULL`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В JPQL подзапрос с `IN` объявляют во `FROM`. В Criteria его строят как второй корень внешнего запроса и связывают предикатом по ID.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JPQL из примера помещает `SELECT ...` в правую часть `IN` в `WHERE`. Второй корень Criteria добавляет сущность во внешний `FROM`, обычно создавая декартово произведение до фильтрации. Это другая форма запроса с другой кратностью.",
+                "source_of_confusion": "В SQL и HQL встречаются производные таблицы. Из знакомого `FROM (SELECT ...)` легко сделать вывод, что стандартный JPQL допускает ту же форму.",
+                "if_it_were_true": "Если бы второй корень был эквивалентен `IN`, два дорогих заказа одного пользователя не создавали бы две строки при соединении. В обычном join они могут создать две строки.",
+                "how_it_should_be": "Используй `cq.subquery` для проверок через `IN` или `EXISTS`. Если нужен подзапрос как источник строк, проверь поддержку в HQL или явно используй native SQL."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В JPQL `EXISTS` передаёт первый найденный объект во внешний `SELECT`. В Criteria для этого тип `Subquery` должен совпадать с типом внешнего результата.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`EXISTS` даёт логический результат по наличию хотя бы одной строки. В примере внешний `User` возвращается, если существует подходящий `Order`. Для `EXISTS` тип выбранного значения подзапроса не обязан совпадать с типом внешней сущности.",
+                "source_of_confusion": "Внутри подзапроса написан `SELECT o`, как при обычном чтении `Order`. Это кажется запросом на материализацию заказа и передачу его наружу.",
+                "if_it_were_true": "Если бы наружу передавался первый заказ, результат зависел бы от порядка заказов, а два разных запроса с `SELECT 1` и `SELECT o` давали бы разные объекты.",
+                "how_it_should_be": "Используй `EXISTS` для проверки наличия и оставляй нужную проекцию во внешнем `SELECT`. Если наружу нужно само значение подзапроса в сравнении, выбирай подходящий скалярный тип."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В JPQL вложенный запрос всегда видит только собственные алиасы. В Criteria предикат `in(subquery)` автоматически делает подзапрос коррелированным по внешнему ID.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JPQL позволяет ссылаться на внешний алиас, например `u2.country = u.country`. В Criteria `id.in(subquery)` сравнивает значения с результатом запроса. Само наличие этого условия не добавляет зависимости внутрь подзапроса.",
+                "source_of_confusion": "Сопоставление `IN` выглядит как связь между двумя уровнями. Но корреляция означает зависимость самой внутренней выборки от текущей внешней строки.",
+                "if_it_were_true": "Если бы ссылка на внешний алиас была запрещена, приведённое сравнение с AVG по своей стране пришлось бы переписать, например через дополнительный агрегирующий запрос.",
+                "how_it_should_be": "Проверь, нужен ли общий набор для всех пользователей или отдельное условие для текущего пользователя. Для второго случая передай внешнюю ссылку во внутренний предикат или используй `correlate` в Criteria."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Spring Data Specifications?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Specification` хранит готовые строки JPQL, `and`/`or` склеивают их, а `JpaSpecificationExecutor` выполняет получившийся запрос.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Specification.toPredicate` получает `Root`, `CriteriaQuery` и `CriteriaBuilder` и возвращает предикат Criteria. В примере `cb.equal` создаёт выражение дерева. В него не нужно передавать текст JPQL.",
+                "source_of_confusion": "Композиция фильтров внешне похожа на склейку фрагментов `WHERE`. Обе операции дают комбинацию условий, но используют разные представления.",
+                "if_it_were_true": "Если бы спецификация хранила строку JPQL, `hasEmail` должен был бы возвращать строку `u.email = :email` и передавать имя алиаса между компонентами.",
+                "how_it_should_be": "Формируй выражения через CriteriaBuilder в контексте переданного корня. Для фиксированного JPQL используй `@Query` и отдельную привязку параметров."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Specification` описывает предикат Criteria, `and`/`or` комбинируют предикаты, а `JpaSpecificationExecutor` исполняет спецификацию.",
+              "correct": true,
+              "sections": {
+                "explanation": "Спецификация получает контекст строящегося запроса и возвращает ограничение для этого корня. `spec.and(other)` создаёт новую композицию. `unrestricted()` не вносит предикат, поэтому тот же начальный объект подходит для последовательного добавления заданных фильтров.",
+                "example": "При фильтре `minAge=18`, `country=DE` и пустом email итог по примеру эквивалентен `age > 18 AND country = 'DE'`. Пользователь 18 лет не пройдёт, а пользователь 19 лет из DE пройдёт независимо от email.",
+                "when_to_apply": "Используй `JpaSpecificationExecutor<User>` для репозитория, где независимо включаются фильтры и нужен повторно используемый код по каждому атрибуту. Результат каждой композиции сохраняй, как в `spec = spec.and(...)`.",
+                "edge_cases": "`Specification.unrestricted()` доступен с Spring Data JPA 3.5.2. В 4.x используй его вместо передачи `null`. Если применяешь пагинацию, отделяй изменение fetch-плана от предикатов и проверяй пригодность спецификации для запроса подсчёта.",
+                "related": "Criteria API позволяет реализовать те же условия непосредственно в `EntityManager`. Спецификации дают удобный слой композиции и выполнения поверх него."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Specification` описывает предикат Criteria, `and`/`or` добавляют условия в тот же экземпляр, а `JpaSpecificationExecutor` читает накопленные изменения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Композиция возвращает новый объект спецификации. Если вызвать `spec.and(olderThan(18))` без присваивания при `spec = unrestricted()`, при `findAll(spec)` ограничение по возрасту не появится.",
+                "source_of_confusion": "Некоторые строительные API меняют объект и возвращают `this`. Методы `and` и `or` внешне выглядят так же, как их fluent-операции.",
+                "if_it_were_true": "Если бы объект менялся на месте, добавление `country=DE` к переиспользуемой базовой спецификации могло бы изменить и соседний запрос, которому этот фильтр не нужен.",
+                "how_it_should_be": "Присваивай результат каждого `and` или строй цепочку выражением. Для альтернативы из нескольких условий сначала собери группу через `or`, потом соедини её с обязательной частью через `and`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Specification` описывает предикат Criteria, `and`/`or` комбинируют условия, а `unrestricted()` при `or` возвращает все строки как обычный предикат `TRUE`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`unrestricted()` исключается из композиции. Для `unrestricted().or(inCountry(\"DE\"))` остаётся только предикат страны. Это отличается от `cb.conjunction()`, который создаёт истинный предикат.",
+                "source_of_confusion": "Оба стартовых выражения по отдельности дают выборку без фильтра. Это легко принять за одинаковую семантику внутри `OR`.",
+                "if_it_were_true": "Если бы `unrestricted()` давал `TRUE`, добавленный через `or` фильтр страны перестал бы влиять на выборку, и France проходила бы наряду с DE.",
+                "how_it_should_be": "Для пропуска отсутствующего ограничения используй `unrestricted()`. Если нужен именно логический `TRUE` как часть выражения, используй `cb.conjunction()` и учитывай его действие в `or`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое @NamedQuery и когда его использовать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@NamedQuery` объявляет JPQL с именем сущности в качестве локальной области. Выполнение идёт через `createNamedQuery`, а два класса могут объявить одинаковое имя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Имена именованных запросов имеют область persistence unit. Префикс `User.` у `User.findByEmail` является соглашением и помогает выделить уникальное имя. Передача `User.class` задаёт ожидаемый результат, а не пространство имён.",
+                "source_of_confusion": "Аннотация расположена рядом с сущностью и часто использует её имя как префикс. Возникает впечатление, что провайдер ищет запрос сначала в классе результата.",
+                "if_it_were_true": "Если бы область была локальной, два запроса `findByEmail` из разных сущностей можно было бы однозначно вызвать нетипизированным `createNamedQuery(\"findByEmail\")` без указания класса.",
+                "how_it_should_be": "Используй уникальные имена в каждой persistence unit. Для привязки запроса к методу конкретного репозитория можно расположить его в `@Query`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@NamedQuery` объявляет JPQL с общим именем и позволяет вызывать его через `createNamedQuery`. По умолчанию Hibernate проверяет его только при первом исполнении.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При включённой штатной startup-проверке Hibernate разбирает именованные HQL/JPQL-запросы во время запуска `EntityManagerFactory`. Синтаксическая ошибка или отсутствующий атрибут могут сорвать старт даже без вызова метода.",
+                "source_of_confusion": "Строки, передаваемые `createQuery`, динамически разбираются провайдером в момент использования. Это поведение ошибочно переносят на запросы, зарегистрированные заранее.",
+                "if_it_were_true": "Если бы проверка происходила лишь при первом вызове, опечатка в `User.countActive` осталась бы незамеченной при старте заведомо использующего штатную проверку приложения.",
+                "how_it_should_be": "Держи startup-проверку включённой, когда важно обнаруживать дефекты объявленных запросов заранее. Интеграционные тесты всё равно нужны для выполнения SQL и проверки данных."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@NamedQuery` объявляет JPQL с именем в persistence unit и позволяет вызывать его через `createNamedQuery`. Штатная startup-проверка Hibernate ловит ошибки запроса заранее.",
+              "correct": true,
+              "sections": {
+                "explanation": "Метаданные запроса регистрируются при создании persistence unit. Hibernate при штатной startup-проверке разбирает JPQL и сверяет обращения с моделью. Вызов `createNamedQuery` выбирает объявление по имени. Значения `:email` привязываются при выполнении конкретного вызова.",
+                "example": "Если в `User.findByEmail` опечататься в `u.email`, написав `u.emali`, старая модель не найдёт атрибут на старте при включённой проверке. После исправления `createNamedQuery(\"User.findByEmail\", User.class).setParameter(\"email\", \"alice@example.com\")` использует ту же форму для любого адреса.",
+                "when_to_apply": "Выбирай именованный запрос для статичного JPQL, который вызывают из нескольких мест по общему имени. Держи название уникальным и отдельно проверяй его фактическое выполнение.",
+                "edge_cases": "Startup-проверка настраивается через `hibernate.query.startup_check`. Она не прогоняет запрос с реальными значениями и не проверяет, что результат будет ровно один для `getSingleResult()`. Повторное использование разбора не гарантирует постоянный план выполнения СУБД.",
+                "related": "`@NamedNativeQuery` регистрирует запрос к физической SQL-схеме. `@Query` Spring Data держит объявление рядом с методом репозитория и имеет свой жизненный цикл проверки."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@NamedQuery` объявляет JPQL с общим именем и позволяет вызывать его через `createNamedQuery`. Успешная startup-проверка фиксирует рабочий план SQL и подтверждает корректность результата.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hibernate может разобрать и закешировать интерпретацию запроса. Из этого не следует, что БД проверила права, физические таблицы, количество строк или выбрала неизменный план. Например, `getSingleResult()` может получить несколько пользователей с заданным email.",
+                "source_of_confusion": "Слово «валидация» часто означает выполнение запроса на тестовых данных. Проверка синтаксиса и отображённых атрибутов даёт более узкую гарантию.",
+                "if_it_were_true": "Если бы старт подтверждал будущий результат, изменение данных после запуска не могло бы вызвать `NonUniqueResultException`. Такое исключение зависит от фактического результата выполнения.",
+                "how_it_should_be": "Оставь startup-проверку для формы JPQL. Проверяй SQL и его план на целевой БД, а уникальность email закрепляй ограничением данных, если она нужна бизнес-операции."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать native SQL запросы?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`createNativeQuery` выполняет SQL по схеме БД. Тип сущности автоматически выводится из имени таблицы, поэтому параметры результата нужны только для агрегатов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Имя таблицы в тексте не выбирает тип результата. Без указания маппинга одна колонка обычно возвращается как скаляр, несколько как `Object[]`. `createNativeQuery(sql, User.class)` явно поручает провайдеру собрать `User`.",
+                "source_of_confusion": "При JPQL `SELECT u FROM User u` корень уже связан с моделью сущности. Это ожидание ошибочно переносят на `SELECT * FROM users`.",
+                "if_it_were_true": "Если бы таблица задавала результат, `SELECT email FROM users` пришлось бы превращать в неполный `User`, хотя запрос возвращает одно строковое значение.",
+                "how_it_should_be": "Укажи `User.class` для полной отображённой сущности. Для выборки `email` оставь скаляр, а для DTO либо задай result mapping, либо преобразуй строки явно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`createNativeQuery` выполняет SQL по схеме БД. Даже при `User.class` результат detached, поэтому изменение email всегда требует явного `merge`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Native-запрос с корректным маппингом на сущность может вернуть managed-объект в текущем persistence context. В обычной транзакции запись изменений выполняется при синхронизации, пока сущность управляется и доступна для записи.",
+                "source_of_confusion": "Ручной SQL ассоциируется с JDBC-строками, а результаты DTO действительно не управляются контекстом. Ошибка переносит это свойство на entity mapping.",
+                "if_it_were_true": "Если бы результат всегда был detached, два запроса по одному ID в одном persistence context могли бы давать независимые экземпляры, а изменения никогда не отслеживались бы без `merge`.",
+                "how_it_should_be": "Проверь тип маппинга и состояние сущности через `em.contains`. Используй DTO для отчёта без отслеживания изменений. Для изменения сущности используй управляемый объект в подходящей транзакции."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`createNativeQuery` выполняет SQL по схеме БД. Если указан `User.class`, Hibernate дополнит отсутствующие поля строки и сделает именованные параметры переносимыми.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Маппинг сущности требует данных для её отображённых полей, включая необходимые FK. Спецификация не обещает достроить произвольный неполный результат. Она гарантирует переносимую привязку позиционных параметров в native SQL, тогда как именованные зависят от провайдера.",
+                "source_of_confusion": "Hibernate действительно поддерживает `:email` в native-запросе, а ленивые ассоциации иногда догружаются. Обе возможности легко принять за общие гарантии Jakarta Persistence.",
+                "if_it_were_true": "Если бы `SELECT email FROM users` дополнялся как сущность, Hibernate должен был бы узнать даже её ID без возвращённого идентификатора и надёжной связи со строкой.",
+                "how_it_should_be": "Для entity projection выбирай все нужные для маппинга колонки. Для частичных данных объявляй скалярное или DTO-отображение. Если важна совместимость с другими провайдерами, выбирай переносимую привязку."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`createNativeQuery` выполняет SQL по схеме БД. Маппинг задают через класс сущности или описание результата, а значения передают через параметры.",
+              "correct": true,
+              "sections": {
+                "explanation": "Native SQL сохраняет диалект и физические имена. Аргумент `User.class` задаёт маппинг результата на сущность. `@SqlResultSetMapping` позволяет описать комбинацию сущности и скаляра или DTO через `@ConstructorResult`. Без маппинга Hibernate возвращает значения колонок по обычным правилам native query.",
+                "example": "`em.createNativeQuery(\"SELECT u.* FROM users u WHERE u.email = ?\", User.class).setParameter(1, \"alice@example.com\")` вернёт `User` при наличии строки и всех требуемых колонок. С маппингом `UserWithOrderCount` из примера строка для Alice с двумя заказами содержит `User` и `2L`.",
+                "when_to_apply": "Выбирай native SQL для конкретных возможностей СУБД, например `crosstab()` PostgreSQL, или для точного управления запросом при подтверждённой потребности. Проверь отображение и выполнение на целевой БД.",
+                "edge_cases": "Результат `User.class` может быть managed, DTO и скаляр не участвуют в dirty checking. Именованные параметры native SQL зависят от провайдера. Для переносимости Jakarta Persistence используй позиционную привязку с нумерацией API от 1. [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)",
+                "related": "В Spring Data аналогичное выполнение задают через `@Query(nativeQuery = true)`. Для bulk update путь выполнения и синхронизация persistence context проектируются отдельно."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое @EntityGraph и как он предотвращает проблему N+1?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@EntityGraph` задаёт загружаемые связи для конкретного вызова и обязывает провайдер получить их одним SQL с join.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Граф требует загрузить указанные атрибуты, но оставляет провайдеру выбор SQL. Поэтому из графа `orders` и `profile` нельзя вывести точное число команд. В зависимости от маппинга и способа загрузки возможны join и дополнительные выборки.",
+                "source_of_confusion": "Граф часто реализуется через SQL join, а один запрос является наблюдаемым результатом некоторых конфигураций. Пример успешного измерения легко принять за обещание API.",
+                "if_it_were_true": "Если бы один SQL был гарантирован, граф с двумя коллекциями всегда заставлял бы провайдер соединить их в одной плоской выборке, даже при сильном размножении строк.",
+                "how_it_should_be": "Для конкретной ассоциации сформулируй явный fetch join, если нужен join в запросе. Считай SQL на целевой конфигурации с реальным набором сущностей. Для дорогих связей сравни пакетную загрузку и отдельную проекцию."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@EntityGraph` задаёт загружаемые связи для конкретного вызова и помогает избежать отдельных lazy-запросов. Способ загрузки и число SQL определяет провайдер.",
+              "correct": true,
+              "sections": {
+                "explanation": "Граф описывает fetch-план отдельно от JPQL. При загрузке набора `User` с графом для `orders` провайдер должен загрузить эту связь. Код при последующем обходе загруженных `orders` уже не инициирует lazy-запросы для этой связи. Количество SQL, затраченных на сам fetch, зависит от провайдера и конфигурации.",
+                "example": "Метод `findByCountry` из примера возвращает пользователей с загруженными `orders.items` и `profile`. Для трёх пользователей вызов `getOrders()` сразу после выполнения не должен подгружать заказы по одному. Чтобы понять, сколько SQL выполнилось при загрузке самого списка, посмотри лог выполнения на тех же данных.",
+                "when_to_apply": "Задай граф для операции, которая точно использует несколько связей, когда остальным вызовам эти данные не нужны. Применяй его к конкретному запросу, а N+1 оцени по измерению полного сценария доступа.",
+                "edge_cases": "В `fetchgraph` атрибуты вне графа трактуются как LAZY по семантике графа, а в `loadgraph` сохраняют настройки маппинга. Провайдер может загружать дополнительные данные. Граф на `orders` без нужного подграфа сам по себе не обещает загрузку конкретной lazy-связи внутри `Order`. [Jakarta Persistence 3.2, Entity Graphs](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2#entity-graphs)",
+                "related": "`JOIN FETCH` задаёт join-загрузку в тексте запроса. Batch fetching уменьшает число дополнительных SQL для отложенных связей, сохраняя раздельную физическую загрузку."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@EntityGraph` задаёт загружаемые связи для всей сущности и меняет её mapping. После первого вызова остальные методы используют тот же план.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Объявление именованного графа регистрирует описание. План действует при явном использовании графа, например через Spring Data `@EntityGraph` или JPA hint. Обычный `find` без графа по-прежнему руководствуется маппингом и своим контекстом.",
+                "source_of_confusion": "`@NamedEntityGraph` стоит на классе сущности рядом с `@OneToMany`. Это напоминает постоянную настройку `fetch` аннотации связи.",
+                "if_it_were_true": "Если бы первый вызов менял mapping, метод чтения краткого списка начал бы выбирать заказы после любого вызова подробного метода даже в новом persistence context.",
+                "how_it_should_be": "Переиспользуй граф, указывая его в нужных методах. Для постоянного поведения задавай маппинг осознанно и учитывай, что EAGER тоже не обещает один SQL."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@EntityGraph` задаёт связи для фильтрации конкретного запроса. Связи из списка `attributePaths` ограничивают результат родителями, у которых они заполнены.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`attributePaths` говорит, что загрузить для сущностей, прошедших исходный фильтр. `findByCountry(\"DE\")` не превращается в условие «есть заказы и профиль» из-за добавления графа.",
+                "source_of_confusion": "Физический join часто используется для загрузки графа. SQL `INNER JOIN` действительно способен убрать родителя, но объявление графа не выражает бизнес-предикат существования.",
+                "if_it_were_true": "Если бы путь графа был фильтром, добавление `orders` для отображения пустой коллекции убирало бы всех пользователей без заказов из отчёта.",
+                "how_it_should_be": "Для критерия существования добавь `EXISTS` или соответствующий join в запрос. Граф используй для выбора данных, которые будут доступны после загрузки подходящих сущностей."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие типичные ошибки при работе с JPQL?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В показанном запросе лимит применяется в JVM после чтения соединения, а корневые повторы Hibernate убирает при материализации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для указанного Hibernate 7.4 и PostgreSQL лимит можно перенести внутрь SQL до загрузки коллекции. Повторы корневых сущностей после fetch join действительно убирает Hibernate, но из этого не следует чтение всей выборки до ограничения.",
+                "source_of_confusion": "В Hibernate 6.6 и до 7.4 такой запрос действительно применял пагинацию в памяти. Это правило легко перенести на все версии, поскольку JPQL остался тем же.",
+                "if_it_were_true": "Если бы старое поведение действовало здесь, первая страница из десяти пользователей при большой выборке требовала бы передачи строк заказов всех подходящих пользователей.",
+                "how_it_should_be": "Проверь версию, диалект и hint `org.hibernate.limitInMemory`. Для ветки с пагинацией в памяти используй отдельный запрос страницы ID и загрузку по ним либо подходящий обновлённый диалект и версию."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В показанном запросе лимит применяется к строкам итогового join в SQL, а корневые повторы Hibernate убирает при материализации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В условиях задачи Hibernate лимитирует корневую выборку внутри SQL, до выдачи строк заказов. Прямая отсечка итоговых строк привела бы к потере детей или корней, и устранение повторов после чтения не восстановило бы пропуски.",
+                "source_of_confusion": "Для обычного SQL-запроса страницы `LIMIT 10` часто расположен после `JOIN` и вычисляется по результирующим строкам. Отсюда возникает путаница единиц пагинации.",
+                "if_it_were_true": "Если бы десять строк относились к одному пользователю с двенадцатью заказами, запрос вернул бы одного пользователя и неполную коллекцию, несмотря на доступность других пользователей.",
+                "how_it_should_be": "Для страницы сущностей ограничивай корни. При самостоятельной реализации сначала выбери упорядоченные ID подходящих родителей, затем загрузи их коллекции и восстанови исходный порядок страницы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В показанном запросе лимит применяется к корневой выборке в SQL, а корневые повторы Hibernate убирает при материализации.",
+              "correct": true,
+              "sections": {
+                "explanation": "Hibernate ORM 7.4 при поддержке ограничения в подзапросе переносит offset и limit на выборку родителей. PostgreSQL с указанным диалектом поддерживает это. Затем Hibernate загружает полные коллекции для выбранных родителей и исключает повторные корневые сущности из списка. `DISTINCT` вручную для этого результата не нужен. [Hibernate ORM 7.4, Limits and Fetch Joins](https://docs.hibernate.org/orm/7.4/whats-new/#limits-and-fetch-joins)",
+                "example": "Если десять первых подходящих пользователей имеют по три заказа, соединение для страницы даст 30 строк, а список содержит десять `User` с тремя заказами у каждого. Из-за обычного `JOIN FETCH` пользователи без заказов не входят в круг подходящих корней.",
+                "when_to_apply": "При коллекционном fetch join смотри фактический SQL и количество обработанных строк. Фиксируй детерминированный порядок корней. Когда SQL-пагинация недоступна, выбирай страницу ID отдельным запросом, затем делай fetch для этих ID.",
+                "edge_cases": "Hibernate 6.6 и ветки 7.x до 7.4 применяют лимит в памяти в таком сценарии при выключенной fail-настройке. В 7.4 тот же fallback возможен при неподходящем диалекте или `org.hibernate.limitInMemory=true`. `hibernate.query.fail_on_pagination_over_collection_fetch=true` переводит необходимость лимита в памяти в ошибку. [Hibernate 7.4 QuerySettings](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/cfg/QuerySettings.html#FAIL_ON_PAGINATION_OVER_COLLECTION_FETCH)",
+                "related": "Удаление повторов корней в Hibernate 6+ не определяет кратность DTO и скалярных проекций. Для других частых ошибок помни, что JPQL выбирает алиас или выражения вместо `SELECT *`, коллекцию можно связать с `IN :values` или `IN ?1` с отдельной обработкой пустого списка, а объявленному Spring Data bulk DML нужны `@Modifying` и транзакция."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В показанном запросе лимит применяется к корневой выборке в SQL, а `DISTINCT` нужен, чтобы Hibernate вернул каждый корень один раз.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Перенос лимита на корни в условиях задачи описан верно. Устранение повторов корневой сущности от fetch join Hibernate выполняет автоматически с версии 6. `DISTINCT` на уровне SQL не склеит строки с разными колонками заказов.",
+                "source_of_confusion": "Многие примеры старых версий Hibernate добавляли `select distinct u`. При перезаписи кода этот приём остаётся в памяти как обязательная часть коллекционного fetch join.",
+                "if_it_were_true": "Если бы Hibernate 7.4 требовал `DISTINCT`, три заказа из примера могли бы дать три ссылки на одного `User` в списке. Фактически этот список уже содержит одну ссылку на корень.",
+                "how_it_should_be": "Сначала определи тип результата. Для корневой сущности при fetch join Hibernate 6+ отдельный `DISTINCT` ради повторов не нужен. Для уникальных скалярных значений или специальной проекции формулируй дедупликацию отдельно."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Projection в JPQL/Criteria?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Projection задаёт состав результата в `SELECT`. Значения можно получить как `Object[]`, DTO через конструктор, `Tuple` из Criteria или интерфейс Spring Data.",
+              "correct": true,
+              "sections": {
+                "explanation": "JPQL выбирает выражения, а не обязательно корневую сущность. При двух скалярах строка результата содержит два значения, а `SELECT new` передаёт их подходящему конструктору. Criteria может собрать `Tuple` для доступа к отдельным элементам. Закрытая интерфейсная проекция Spring Data экспонирует объявленные свойства и допускает оптимизацию состава выборки.",
+                "example": "`SELECT new com.example.UserDto(u.id, u.email) FROM User u` для `id=7` и `email=alice@example.com` создаст `UserDto(7L, \"alice@example.com\")`. Если поменять порядок аргументов при неизменном конструкторе `(Long, String)`, корректное сопоставление типов потеряется.",
+                "when_to_apply": "Выбирай DTO или скалярную проекцию для списка, которому нужны только указанные данные и не требуется изменять сущности. Для типизированного контракта между слоями DTO обычно удобнее массива с позиционными индексами.",
+                "edge_cases": "Стандартный JPQL constructor expression требует полное имя класса. Если проекция содержит саму сущность, она может быть managed. DTO из одних скаляров не отслеживается. Для Criteria `Tuple` можно использовать `select(cb.tuple(...))`, в актуальном API `multiselect` помечен deprecated.",
+                "related": "Fetch-план отвечает за связи загружаемой сущности. Projection определяет форму результата. Замена `JOIN FETCH` на проекцию меняет контракт потребителя, даже когда SQL читает сходные таблицы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Projection задаёт состав результата в `SELECT`. При выборе `Object[]`, DTO, `Tuple` или интерфейса Hibernate сначала загружает полный `User` и затем извлекает поля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В скалярном `select u.id, u.email` Hibernate может получить нужные колонки без загрузки `User` как сущности. DTO-конструктор принимает именно выбранные значения. Некоторые проекции со вложенными представлениями могут приводить к более широкой выборке, но это зависит от формы.",
+                "source_of_confusion": "Интерфейсную или DTO-проекцию нередко создают вручную из `User` в Java. Это похоже на результат объявления, однако способ выполнения отличается.",
+                "if_it_were_true": "Если бы полный объект требовался всегда, даже `SELECT COUNT(u) FROM User u` пришлось бы материализовывать через загрузку всех пользователей.",
+                "how_it_should_be": "Выбирай явную скалярную или DTO-проекцию и проверяй SQL. Если нужен объект с отслеживанием изменений, явно выбирай `u` и настрой fetch-план."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Projection задаёт состав результата в `SELECT`. `Object[]`, DTO, `Tuple` и интерфейс наследуют отслеживание изменений от исходной сущности `User`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кортеж или DTO, содержащий только скалярные значения, не представлен как managed `User`. Если изменить mutable DTO с email после чтения, flush не запишет это изменение в таблицу.",
+                "source_of_confusion": "Идентификатор и email в DTO представляют одного пользователя, как и поля сущности. Наличие ID ошибочно принимают за регистрацию объекта в persistence context.",
+                "if_it_were_true": "Если бы результат DTO отслеживался, два независимых DTO с одним ID и разным email могли бы обновить одну строку без явного выбора, какие данные сохранять.",
+                "how_it_should_be": "Для изменения загрузи и измени managed-сущность или выполни явную операцию обновления в транзакции. Для чтения оставь проекции с необходимыми полями."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Projection задаёт состав результата в `SELECT`. `Object[]`, DTO, `Tuple` и интерфейс выбирают автоматически, подставляя простой тип Java в `SELECT new`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В стандартном JPQL выражение `SELECT new` ссылается на класс по полному имени и требует подходящего конструктора. Для `Object[]` выбирают несколько выражений без `new`, `Tuple` задают типом запроса Criteria, а прокси интерфейсной проекции строит Spring Data.",
+                "source_of_confusion": "Hibernate поддерживает дополнительные удобства при работе с типизированными результатами, а Spring Data может переписывать некоторые запросы. Иногда их принимают за универсальную форму JPQL.",
+                "if_it_were_true": "Если бы простого имени хватало по стандарту, провайдер должен был бы сам выбрать между `com.example.UserDto` и одноимённым DTO из другого пакета.",
+                "how_it_should_be": "Для переносимого DTO явно задай FQN и проверь типы и порядок аргументов. Для именованного доступа в Criteria выбери `Tuple` и укажи алиасы элементов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать pagination в JPA?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В JPA передай номер страницы в `setFirstResult` и её размер в `setMaxResults`. В Spring Data `Page` получает общий размер из отдельного подсчёта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`setFirstResult` принимает число результатов, которые нужно пропустить, с началом от нуля. Для страницы с индексом 2 и размером 20 значение равно 40. Spring Data `Pageable` как раз преобразует номер и размер в смещение.",
+                "source_of_confusion": "В `PageRequest.of(2, 20)` первый аргумент действительно номер страницы. Легко передать то же значение в низкоуровневый API, видя похожую пару аргументов.",
+                "if_it_were_true": "Если бы `setFirstResult(2)` означал начало третьей страницы, первые две страницы по 20 строк были бы полностью пропущены. В действительности будут пропущены только две строки.",
+                "how_it_should_be": "Выражай смещение как `pageIndex * pageSize`, если вызываешь JPA вручную. Передавай `PageRequest.of(pageIndex, pageSize, sort)` в Spring Data и обрабатывай большие значения на границе API."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В JPA передай смещение в `setFirstResult` и размер в `setMaxResults`. В Spring Data `Page` получает общий размер из длины текущей выборки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Эти два параметра ограничивают контент. По двадцати строкам полной страницы нельзя узнать, существуют ли ещё двадцать или две тысячи строк. `Page` опирается на отдельный подсчёт или выводит итог там, где положение и неполный результат позволяют это сделать.",
+                "source_of_confusion": "На первой неполной странице размер результата действительно может совпасть с total. Такое совпадение подсказывает ложное правило для любой страницы.",
+                "if_it_were_true": "Если бы размер списка всегда был `totalElements`, то при 76 активных пользователях полная страница по 20 дала бы total 20 и одну страницу.",
+                "how_it_should_be": "Для общего количества используй согласованный с выборкой `COUNT` или `Page`. Если клиенту нужна только информация о следующей порции, используй `Slice`, для которой достаточно проверить наличие ещё одного элемента."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В JPA передай смещение в `setFirstResult` и размер в `setMaxResults`. В Spring Data `Pageable` задаёт страницу, а `Page` добавляет общий размер при необходимости через `COUNT`.",
+              "correct": true,
+              "sections": {
+                "explanation": "JPA ограничивает результат запроса смещением от нуля и максимумом результатов. Для totals выполняют отдельный запрос, который считает ту же логическую выборку. Spring Data получает offset, limit и сортировку из `Pageable`. `Page` предоставляет контент и метаданные, а `COUNT` может быть пропущен, если итог можно вывести из неполной страницы.",
+                "example": "Для третьей страницы по 20 при 76 активных пользователях и стабильных данных `setFirstResult(40).setMaxResults(20)` вернёт 20 записей начиная с 41-й. При сортировке `createdAt DESC, id DESC` и подсчёте по тому же `active=true` итог равен 76, число страниц равно четырём.",
+                "when_to_apply": "Используй `Page`, когда интерфейсу нужны точные total и число страниц. Для ручной реализации повтори предикаты в запросе подсчёта, сохраняя логическую единицу результата. Если join размножает пользователей, считай уникальные ID или убери join из подсчёта через `EXISTS`.",
+                "edge_cases": "Если у нескольких записей совпадает `createdAt`, добавь уникальный ID как последний ключ порядка. Даже стабильный порядок не защищает offset при вставках и удалениях между запросами. При `JOIN FETCH` коллекции место применения лимита зависит от версии Hibernate, диалекта и настроек.",
+                "related": "`Slice` полезен для «показать ещё» без total, а keyset pagination использует значения последней строки как границу и помогает при глубоких страницах с подходящим индексом. Контент и отдельный count могут читать разные снимки при параллельных изменениях."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В JPA передай смещение в `setFirstResult` и размер в `setMaxResults`. В Spring Data `Page` гарантирует устойчивое разбиение без `ORDER BY` за счёт подсчёта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`COUNT` даёт количество, а не порядок. Без `ORDER BY` запросы двух страниц могут получать строки в различном порядке. Даже `ORDER BY createdAt` не задаёт порядок между строками с равным временем.",
+                "source_of_confusion": "База часто возвращает записи в похожей последовательности на маленьких таблицах. Это производит впечатление гарантированного физического порядка.",
+                "if_it_were_true": "Если бы count фиксировал порядок, изменение плана со сканирования таблицы на индексное не могло бы менять состав страницы даже без `ORDER BY`. SQL такой гарантии не даёт.",
+                "how_it_should_be": "Задай полный порядок с уникальным последним ключом. Для последовательного просмотра на изменяющихся данных рассмотри keyset, а для одного согласованного отчёта обеспечь подходящий снимок чтения."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие best practices при работе с JPA queries?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Для простого поиска используй derived-метод, для фиксированного запроса используй `@Query`, для динамических условий используй передачу `null` в derived-методы, для диалектных функций используй native SQL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Derived-метод из примера имеет фиксированный набор условий. В типичном сравнении `findByEmailAndActive(null, true)` означает проверку `email IS NULL`, а не поиск по всем email. Для динамической формы требуется явное проектирование условий.",
+                "source_of_confusion": "Имя метода скрывает построение запроса, поэтому передача `null` выглядит как естественная команда убрать фильтр. Для необязательного ввода `null` в Java действительно часто означает отсутствие.",
+                "if_it_were_true": "Если бы derived-метод исключал отсутствующий фильтр, `findByEmail(null)` возвращал бы все строки, хотя имя сообщает о фильтрации по email.",
+                "how_it_should_be": "Одно необязательное условие можно явно описать в JPQL. Для многих независимых условий собери их через Specifications или Criteria, оставляя derived-методы короткими и однозначными."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для простого поиска используй derived-метод, для фиксированного запроса сложнее используй `@Query`, для меняющихся условий используй Specifications, для диалектных возможностей используй native SQL.",
+              "correct": true,
+              "sections": {
+                "explanation": "Форма запроса определяет удобный уровень API. Derived-метод выражает короткий набор предикатов. `@Query` делает видимым заранее известный JPQL с join или проекцией. Specifications компонуют условия до выполнения, а native SQL даёт прямой доступ к диалекту ценой привязки к схеме.",
+                "example": "`findByEmailAndActive` достаточно для фильтра по двум обязательным полям. Фиксированный экран с парой полей пользователя можно читать JPQL DTO-запросом. Для поиска с опциональными возрастом, страной и активностью отдельные спецификации собирают нужное сочетание без метода на каждую комбинацию.",
+                "when_to_apply": "При выборе добавь требование к результату. Для отчётов выбирай поля, для работы с сущностями задай связи через fetch join или граф. На критичном пути сравни число SQL, объём результатов и план на реальных данных.",
+                "edge_cases": "Даже удобный `JOIN FETCH` требует анализа пагинации коллекций и кратности строк. Для Spring Data `@Query` с bulk `UPDATE` или `DELETE` добавь `@Modifying` и выполняй в транзакции. Поскольку bulk DML не синхронизирует уже загруженные объекты автоматически, при необходимости очищай или обновляй контекст.",
+                "related": "Hibernate Statistics или SQL-трассировка позволяют проверить, устранил ли выбранный fetch-план N+1. Статический метамодел дополняет Specifications проверяемыми путями атрибутов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для простого поиска используй derived-метод, для фиксированного запроса используй `@Query`, для динамических условий используй Specifications, для диалектных возможностей используй `@EntityGraph`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@EntityGraph` управляет загрузкой атрибутов сущностей после отбора. Он не добавляет в язык запроса CTE, табличную функцию или диалектную проекцию. Остальные перечисленные способы соответствуют их типичным задачам.",
+                "source_of_confusion": "Граф меняет сгенерированный SQL без правки JPQL. Это может создать впечатление, что через граф можно запросить любую форму SQL.",
+                "if_it_were_true": "Если бы граф менял возможности языка, список `attributePaths` мог бы определить рекурсивный набор строк. Эти пути адресуют ассоциации и атрибуты, а не источники SQL.",
+                "how_it_should_be": "Для формы отчёта используй JPQL-проекцию или подходящее HQL-расширение. Для специфичной возможности БД задай native SQL. Граф оставь для загрузки связей сущности."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для простого поиска используй derived-метод, для фиксированного запроса используй native SQL, для динамических условий используй Specifications, а для диалектных функций используй `@Query` с JPQL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сложность фиксированного запроса сама по себе не требует native SQL. JPQL способен выражать маппинговые join, группировки и DTO. Аннотация `@Query` может исполнять native SQL только в явно выбранном native-режиме. JPQL `FUNCTION` покрывает некоторые вызовы, но не произвольные диалектные конструкции.",
+                "source_of_confusion": "На проекте миграции многие сложные отчёты уже написаны в SQL. Это удобно, пока схема стабильна, но ошибочно превращать локальную практику в общее правило выбора.",
+                "if_it_were_true": "Если бы SQL был необходим для любого фиксированного запроса с join, обычный JPQL по связям утратил бы основную практическую роль. Если бы `@Query` расширял JPQL, одна аннотация заменяла бы диалектный API.",
+                "how_it_should_be": "Начинай с языка, который выражает требование с доступными отображениями. Перейди к native SQL, когда нужна конкретная возможность БД или точный контроль запроса с подтверждённой причиной."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "(!) Какие возможности есть в HQL 6.6 и JPQL по Jakarta Persistence 3.2 (set-операции, оконные функции, CTE)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "HQL 6.6 поддерживает set-операции с `ALL`, окна и CTE. JPQL 3.2 поддерживает `UNION` с `ALL`, а `INTERSECT` и `EXCEPT` остаются расширениями вместе с окнами и CTE.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JPQL 3.2 определяет `UNION`, `INTERSECT` и `EXCEPT` и разрешает суффикс `ALL` у каждой операции. HQL 6.6 также поддерживает эти формы плюс окна и CTE.",
+                "source_of_confusion": "Во многих старых сравнениях JPQL с HQL весь блок set-операций считается расширением. При частичном обновлении знаний легко запомнить только наиболее знакомый `UNION`.",
+                "if_it_were_true": "Если бы стандарт добавил только `UNION`, общий набор идентификаторов двух выборок нельзя было бы выразить стандартным `INTERSECT` на провайдере 3.2.",
+                "how_it_should_be": "Сверяй грамматику нужной версии стандарта и версию реализации. Все три операции доступны в JPQL 3.2 при совместимых ветвях выборки. Для окон или CTE используй HQL или native SQL."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "HQL 6.6 поддерживает set-операции с `ALL`, окна и CTE. JPQL 3.2 поддерживает те же set-операции и окна, а CTE остаются расширением HQL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оконный `rank() over (...)` из примера является конструкцией HQL 6.6. JPQL 3.2 стандартизует операции над результатами, но не оконное выражение `OVER` и не `WITH`.",
+                "source_of_confusion": "У JPQL есть агрегатные функции и `FUNCTION(...)` для расширений. Синтаксис окна напоминает вызов функции, хотя `OVER` требует отдельной грамматики.",
+                "if_it_were_true": "Если бы стандарт включал окна, пример с `rank()` можно было бы перенести на любой соответствующий 3.2 провайдер с поддерживающей БД без смены языка запроса.",
+                "how_it_should_be": "Для ранжирования на стороне БД применяй HQL с поддержкой диалекта или native SQL. Для переносимого JPQL выбери другое выражение задачи или дополнительную обработку результата, оценив объём данных."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "HQL 6.6 поддерживает set-операции с `ALL` и окна. JPQL 3.2 поддерживает те же set-операции, а CTE, включая рекурсивные, доступны в обоих случаях только через native SQL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HQL 6.6 поддерживает `with` и распознаёт рекурсивную ссылку. У рекурсивного CTE нужен диалект с возможностью рекурсии. В стандарте JPQL 3.2 грамматики `WITH` нет.",
+                "source_of_confusion": "В SQL нередко пишут `WITH RECURSIVE`, а HQL использует `with` без отдельного ключевого слова `recursive`. Привычный синтаксис SQL подталкивает к выводу, что рекурсия недоступна на уровне HQL.",
+                "if_it_were_true": "Если бы CTE требовал native SQL, запрос дерева сотрудников через HQL `with team as (...)` был бы отклонён парсером до генерации SQL даже на БД с рекурсией.",
+                "how_it_should_be": "Когда проект остаётся на Hibernate, можно написать рекурсивный CTE в HQL и проверить диалект. Когда требуется только стандарт JPQL, меняй алгоритм или выделяй отдельный native-запрос."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "HQL 6.6 поддерживает set-операции с `ALL`, окна и CTE. JPQL 3.2 поддерживает те же set-операции, а окна и CTE остаются расширениями за пределами стандарта.",
+              "correct": true,
+              "sections": {
+                "explanation": "Оба языка поддерживают `UNION`, `INTERSECT`, `EXCEPT` и их формы с `ALL`. Стандарт Jakarta Persistence 3.2 описывает их для совместимых выборок. В HQL 6.6 `OVER` выражает окно, а `WITH` объявляет CTE, в том числе рекурсивный через ссылку на самого себя. Hibernate 6.6 здесь рассматривается по возможностям HQL, а совместимость провайдера с Jakarta Persistence 3.2 проверяется отдельно. [Jakarta Persistence 3.2, §4.2.1.1](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2#_set_operators_in_select_statements)",
+                "example": "Показанный `rank()` при зарплатах `[300, 300, 200]` внутри одного отдела даст ранги `[1, 1, 3]` при поддержке диалекта. `UNION ALL` двух запросов одного допустимого типа с результатами `[7]` и `[7, 9]` сохраняет оба вхождения `7`, тогда как `UNION` оставляет одно.",
+                "when_to_apply": "Для переносимого объединения результатов проверь Jakarta Persistence 3.2 и совместимость элементов проекций каждой ветви. HQL-окна используй, когда требуется ранг по группе без свёртки строк, а CTE подходит для повторного использования выборки или обхода иерархии.",
+                "edge_cases": "Hibernate может переписать некоторые нерекурсивные CTE в подзапросы, если диалект не поддерживает CTE. Рекурсия требует поддержки со стороны БД. В HQL не добавляй слово `RECURSIVE` после `WITH`, а задай самоссылку. Поддержку конкретной оконной функции также проверяй для диалекта. [Руководство HQL 6.6](https://docs.hibernate.org/orm/6.6/querylanguage/html_single/)",
+                "related": "`GROUP BY` сворачивает строки в группы, тогда как оконный результат вычисляется для каждой строки. Операции `UNION` и `UNION ALL` задают кратность на уровне всего результата, независимо от оконной обработки его ветвей."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

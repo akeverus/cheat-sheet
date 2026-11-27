@@ -87,6 +87,12 @@ em.createNativeQuery("SELECT * FROM users WHERE email = ?", User.class)
 
 ## Q3. Как использовать параметры в JPQL?
 
+```java
+String namedJpql = "SELECT u FROM User u WHERE u.email = :email";
+String positionalJpql = "SELECT u FROM User u WHERE u.email = ?1";
+String email = "alice@example.com";
+```
+
 Параметры — единственный безопасный способ подставлять значения в запрос. Есть два вида: **named** (`:email`, читаемее и не зависят от порядка) и **positional** (`?1`, legacy). Главное правило: всегда параметризуйте — никогда не склеивайте значения в строку запроса, иначе открываете дорогу SQL injection.
 
 ```java
@@ -171,7 +177,19 @@ List<User> results = em.createQuery(cq).getResultList();
 
 На практике поверх Criteria в Spring почти всегда берут Specifications (см. Q8) — они дают ту же динамику, но без ручной возни с `CriteriaBuilder`.
 
-## Q6. Что такое JPA Metamodel и как его использовать?
+## Q6. Что такое JPA Metamodel и как Hibernate Processor реализует `@Find`?
+
+```java
+@Entity
+class Book {
+    @Id String isbn;
+    String title;
+}
+
+interface BookQueries {
+    @Find Book byIsbn(String isbn);
+}
+```
 
 **Metamodel** — это сгенерированные на этапе компиляции классы-двойники entity (для `User` — `User_`), где каждое поле описано как типизированный атрибут. Они дают type-safe доступ к полям в Criteria: вместо строки `user.get("email")` пишут `user.get(User_.email)`. Разница в том, что строку компилятор не проверяет, а `User_.email` — да.
 
@@ -207,13 +225,9 @@ cq.select(user)
 
 **Генерация metamodel:** для Hibernate 7.1 подключите `org.hibernate.orm:hibernate-processor` как *annotation processor* (например, через Gradle `annotationProcessor`), с версией, согласованной с `hibernate-core`. Прежний артефакт `hibernate-jpamodelgen` встречается в старых руководствах. Процессор при сборке создаёт `*_.java` классы. Главная выгода — рефакторинг становится безопасным: переименовали или удалили поле `User.email` → исчезает `User_.email` → код, где использовалось старое имя, перестаёт компилироваться. Со строковым `"email"` такая ошибка всплыла бы только в рантайме. [Hibernate 7: compile-time tooling](https://docs.hibernate.org/orm/7.1/introduction/html_single/).
 
-**Hibernate-расширение `@Find`:** начиная с Hibernate **6.3** процессор умеет генерировать реализацию finder-метода по сигнатуре интерфейса или абстрактного класса. Это не отдельный язык запросов: для поиска по ID генерируется вызов `EntityManager.find()`, для других полей — Criteria query. Имена **и типы параметров** должны совпадать с постоянными полями entity; имя самого метода условие поиска не определяет.
+**Hibernate-расширение `@Find`:** начиная с Hibernate **6.3** процессор умеет генерировать реализацию finder-метода по сигнатуре интерфейса или абстрактного класса. В Hibernate 7.1 для поиска по первичному ключу процессор может сгенерировать вызов `EntityManager.find()`. Если параметры точно соответствуют всем полям `@NaturalId`, он может сгенерировать вызов `Session.byNaturalId()`. Для остальных сочетаний постоянных полей используется Criteria. [Hibernate 7.1, finder methods](https://docs.hibernate.org/orm/7.1/introduction/html_single/). Имена **и типы параметров** должны совпадать с постоянными полями entity; имя самого метода условие поиска не определяет.
 
 ```java
-interface BookQueries {
-    @Find Book byIsbn(String isbn); // Book.isbn — поле с @Id
-}
-
 Book book = BookQueries_.byIsbn(entityManager, isbn); // сгенерированный метод
 ```
 
@@ -422,6 +436,15 @@ User user = em.find(User.class, 1L, hints);
 
 ## Q12. Какие типичные ошибки при работе с JPQL?
 
+```java
+// Hibernate ORM 7.4, PostgreSQL 17 (PostgreSQLDialect).
+// User.orders: коллекция. Подсказка org.hibernate.limitInMemory отсутствует.
+// hibernate.query.fail_on_pagination_over_collection_fetch=false.
+TypedQuery<User> query = em.createQuery(
+    "SELECT u FROM User u JOIN FETCH u.orders ORDER BY u.id", User.class);
+query.setFirstResult(0).setMaxResults(10);
+```
+
 Подборка граблей, на которые наступают чаще всего — половина из них компилируется и падает только в рантайме или тихо роняет производительность.
 
 1. **`SELECT *` не работает** — JPQL оперирует entity, а не колонками; нужно либо выбрать алиас entity, либо перечислить поля:
@@ -459,13 +482,11 @@ void deactivateOld(@Param("threshold") LocalDateTime threshold);
 int deactivateOld(@Param("threshold") LocalDateTime threshold);
 ```
 
-4. **`JOIN FETCH` вместе с пагинацией** — Hibernate не может применить `LIMIT` на уровне SQL (строк после JOIN больше, чем сущностей), поэтому тянет всё в память и режет страницу там, выдавая warning `HHH000104`:
+4. **Пагинация с `JOIN FETCH` коллекции.** В примере Hibernate ORM 7.4 с PostgreSQL применяет лимит в SQL к родительским сущностям до загрузки их коллекций. PostgreSQL поддерживает лимит и смещение в подзапросе. Лимит на строки итогового соединения мог бы обрезать коллекцию.
 
-```java
-// ПЛОХО — Hibernate выдаст warning и сделает pagination в памяти!
-em.createQuery("FROM User u JOIN FETCH u.orders", User.class)
-    .setFirstResult(0).setMaxResults(10);
-```
+   В Hibernate 6.6 и версиях 7.x до 7.4 в таком запросе лимит применяется в JVM. В 7.4 пагинация в памяти используется, если диалект не поддерживает лимит в подзапросе или запрос задаёт `org.hibernate.limitInMemory=true`. Если включить `hibernate.query.fail_on_pagination_over_collection_fetch`, запрос, которому потребовалась бы пагинация в памяти, завершится исключением. По умолчанию настройка выключена. При таком ограничении диалекта можно выбрать страницу ID отдельным запросом и затем загрузить коллекции для выбранных ID.
+
+   [Hibernate ORM 7.4, Limits and Fetch Joins](https://docs.hibernate.org/orm/7.4/whats-new/#limits-and-fetch-joins), [Hibernate 7.4 QuerySettings](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/cfg/QuerySettings.html#FAIL_ON_PAGINATION_OVER_COLLECTION_FETCH), [Hibernate 6.6 QuerySettings](https://docs.hibernate.org/orm/6.6/javadocs/org/hibernate/cfg/QuerySettings.html#FAIL_ON_PAGINATION_OVER_COLLECTION_FETCH).
 
 5. **Дубли при `JOIN FETCH` коллекции.** SQL-соединение даёт несколько строк для одного родителя. Hibernate 6 после материализации сам убирает повторы корневых сущностей, вызванные fetch join. Для этого случая добавлять `DISTINCT` вручную не требуется. Это свойство Hibernate 6 для результата с корневой сущностью. Для скалярных и DTO-проекций кратность следует проверять отдельно.
 
@@ -548,7 +569,7 @@ int totalPages = page.getTotalPages();
 List<User> content = page.getContent();
 ```
 
-**Проблема pagination + JOIN FETCH** — см. Q12.4.
+**Пагинация с `JOIN FETCH` коллекции.** Место применения лимита зависит от версии Hibernate, диалекта и настроек. См. Q12, пункт 4.
 
 ## Q15. Какие best practices при работе с JPA queries?
 
@@ -575,7 +596,7 @@ Optional<User> findActiveByEmail(@Param("email") String email);
 
 5. **Native SQL** только когда JPQL недостаточен (DB-specific features).
 
-6. **JOIN FETCH** для предотвращения N+1, но не с pagination.
+6. **`JOIN FETCH`** помогает устранить N+1. При пагинации с fetch join коллекции проверьте, где применяется лимит. См. Q12, пункт 4, и Q14.
 
 7. **Projections** для отчётов — возвращайте только нужные поля.
 
@@ -585,9 +606,9 @@ Optional<User> findActiveByEmail(@Param("email") String email);
 
 10. **Не забывайте `@Modifying` + `@Transactional`** для UPDATE/DELETE.
 
-## Q16. (!) Что HQL 6 добавляет поверх стандартного JPQL (set-операции, оконные функции, CTE)?
+## Q16. (!) Какие возможности есть в HQL 6.6 и JPQL по Jakarta Persistence 3.2 (set-операции, оконные функции, CTE)?
 
-`HQL` — язык запросов Hibernate. Граница стандартного JPQL зависит от версии Jakarta Persistence. В версии **3.2** JPQL включает `UNION`, `INTERSECT`, `EXCEPT` и варианты с `ALL`. Провайдер должен поддерживать эту версию спецификации, чтобы на неё можно было рассчитывать. Оконные функции и CTE остаются расширениями HQL относительно JPQL 3.2. [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2).
+HQL в Hibernate ORM **6.6** и стандартный JPQL в Jakarta Persistence **3.2** поддерживают `UNION`, `INTERSECT`, `EXCEPT` и вариант `ALL` для каждой операции. Для переносимости этих запросов нужен провайдер с поддержкой Jakarta Persistence 3.2. HQL 6.6 также поддерживает оконные функции и CTE. Грамматика JPQL 3.2 их не включает. [Jakarta Persistence 3.2, §4.2.1.1](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2#set-operators-in-select-statements).
 
 ```java
 // Оконная функция в HQL 6.6

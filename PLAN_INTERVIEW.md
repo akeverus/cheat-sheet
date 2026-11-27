@@ -32,9 +32,17 @@
 диапазона, включая Notification System и Java Functional Interface, не входят
 в счётчик 55. Для учёта достаточно путей и записей о передаче полного файла.
 
-Из 55 файлов партии 30 восстановлены в `master`. Вне этой партии уже
+Из 55 файлов партии 31 восстановлены в `master`. Вне этой партии уже
 закоммичены Notification System, Java Functional Interface, Vector Databases
 и JDBC и пулы соединений.
+
+- **Hibernate JPQL and Criteria**. MCQ-чат передал полный JSON в ходе
+  `01a21d9f-4e44-7fa2-9449-504f608c8220`. Использованы исходный JSON темы
+  из `b28a1c807` и согласованный Markdown (SHA-256
+  `2dd34fe9c5042dc66ef9c57db6b41289c145d2f99f18256f5ffbf1375fe45884`).
+  Полный JSON перенесён как есть из
+  `work/hibernate-jpql-criteria-recovery-full-regeneration/hibernate-jpql-criteria-interview.json`
+  вместе с согласованной теорией.
 
 - **MongoDB**. MCQ-чат передал полный JSON в ходе
   `01a21d91-256e-7283-9a49-950b1c9a0c69`. Использованы согласованная теория
