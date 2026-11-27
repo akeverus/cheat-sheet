@@ -118,18 +118,18 @@ updated: "2026-10-07"
 |----------|----------|
 | **Atomicity** (атомарность) | Транзакция выполняется целиком или не выполняется вовсе. Частичное применение изменений невозможно |
 | **Consistency** (консистентность) | Транзакция переводит БД из одного согласованного состояния в другое. Все ограничения (`constraints`, `triggers`) соблюдаются |
-| **Isolation** (изоляция) | Параллельные транзакции не влияют друг на друга так, как если бы они выполнялись последовательно |
+| **Isolation** (изоляция) | Допустимые эффекты параллельного выполнения зависят от уровня изоляции. При сериализуемой изоляции результат соответствует некоторому последовательному выполнению |
 | **Durability** (долговечность) | После коммита данные сохраняются даже при сбое системы |
 
 ```mermaid
-graph LR
-    T[Транзакция] --> A[Atomicity<br/>Всё или ничего]
-    T --> C[Consistency<br/>Целостность данных]
-    T --> I[Isolation<br/>Независимость транзакций]
-    T --> D[Durability<br/>Сохранность после коммита]
+flowchart LR
+    App[Приложение] --> T[Операция перевода]
+    T --> A[Списание со счёта A]
+    T --> B[Зачисление на счёт B]
+    C[Другой клиент] --> DB[Чтение счетов в БД]
 ```
 
-На практике полное соблюдение всех свойств `ACID` стоит дорого с точки зрения производительности, поэтому СУБД предлагают разные **уровни изоляции**, позволяя разработчику выбирать баланс между строгостью и скоростью.
+При переводе атомарность связывает списание с зачислением. Консистентность требует сохранить правила учёта, изоляция определяет, что увидит параллельный читатель, а долговечность относится к сохранности подтверждённого перевода. Влияние уровня изоляции на производительность зависит от нагрузки и реализации СУБД. [Транзакции PostgreSQL 19](https://www.postgresql.org/docs/19/tutorial-transactions.html)
 
 ## Q2. Как обеспечивается атомарность транзакции на уровне СУБД?
 
@@ -196,24 +196,20 @@ ROLLBACK;
 | `SERIALIZABLE` | Невозможен | Невозможен | Невозможен |
 
 ```mermaid
-graph LR
-    RU[READ UNCOMMITTED<br/>Минимальная изоляция] --> RC[READ COMMITTED<br/>Нет dirty read]
-    RC --> RR[REPEATABLE READ<br/>Нет non-repeatable read]
-    RR --> S[SERIALIZABLE<br/>Полная изоляция]
-    
-    style RU fill:#ff6b6b
-    style RC fill:#ffd93d
-    style RR fill:#6bcf7f
-    style S fill:#4ecdc4
+sequenceDiagram
+    participant T1 as Транзакция чтения
+    participant DB as База данных
+    participant T2 as Транзакция записи
+    T1->>DB: Запрос по условию
+    T2->>DB: Изменение подходящей строки
+    T2->>DB: COMMIT
+    T1->>DB: Повтор того же запроса
 ```
 
-Шкала строгости (каждый шаг вправо снимает ещё одну аномалию ценой конкурентности):
-
-```
- слабее изоляция, выше конкурентность ───────────▶ строже, меньше аномалий
-
- READ UNCOMMITTED ──▶ READ COMMITTED ──▶ REPEATABLE READ ──▶ SERIALIZABLE
-   всё допустимо        нет dirty           нет non-repeat       нет аномалий
+```text
+T1 дважды выполняет один запрос по условию.
+Между чтениями T2 меняет строку, подходящую под условие, и фиксирует изменение.
+Какие гарантии даёт каждый уровень изоляции по стандарту SQL?
 ```
 
 Две детали про `PostgreSQL`, на которых ловят на собеседовании:
@@ -229,10 +225,11 @@ graph LR
 
 Транзакция читает данные, изменённые другой **незакоммиченной** транзакцией. Если та откатится, прочитанные данные окажутся невалидными -- вы прочитали то, чего на самом деле в БД нет.
 
-```
-Транзакция A:  UPDATE accounts SET balance = 500 WHERE id = 1;  (не коммитит)
-Транзакция B:  SELECT balance FROM accounts WHERE id = 1;  -- читает 500 (dirty read!)
-Транзакция A:  ROLLBACK;  -- баланс возвращается к исходному
+```text
+В начале баланс счёта 1 равен 1000. СУБД допускает показанное наблюдение.
+A: UPDATE accounts SET balance = 500 WHERE id = 1;
+B: SELECT balance FROM accounts WHERE id = 1; получено 500
+A: ROLLBACK;
 ```
 
 ### Non-Repeatable Read (неповторяемое чтение)
@@ -259,13 +256,17 @@ graph LR
 
 **Lost update** (потерянное обновление) -- две транзакции читают одно и то же значение, каждая считает на его основе новое и записывает обратно; та, что записывает второй, затирает результат первой, и одно из изменений бесследно исчезает. Это аномалия не чтения, а конкурентной записи по схеме «прочитал -- посчитал -- записал».
 
+```text
+PostgreSQL 19. Обе транзакции работают в READ COMMITTED.
+Исходный баланс счёта 1 равен 1000. Каждый клиент хранит результат своего SELECT.
+
+A: SELECT balance FROM accounts WHERE id = 1;   -> balanceA
+B: SELECT balance FROM accounts WHERE id = 1;   -> balanceB
+A: UPDATE accounts SET balance = :balanceA + 100 WHERE id = 1; COMMIT;
+B: UPDATE accounts SET balance = :balanceB - 200 WHERE id = 1; COMMIT;
 ```
-Транзакция A:  SELECT balance FROM accounts WHERE id = 1;  -- 1000
-Транзакция B:  SELECT balance FROM accounts WHERE id = 1;  -- 1000
-Транзакция A:  UPDATE accounts SET balance = 1000 + 100 WHERE id = 1; COMMIT;  -- 1100
-Транзакция B:  UPDATE accounts SET balance = 1000 - 200 WHERE id = 1; COMMIT;  -- 800
--- Ожидали 900, получили 800. Обновление A потеряно!
-```
+
+A записывает 1100, затем B записывает 800 на основе того же исходного баланса. Если бы B учла изменение A, баланс составил бы 900. Здесь запись A теряется.
 
 Пример воспроизводится в PostgreSQL 19, если обе транзакции работают в `READ COMMITTED`. В PostgreSQL запрос уровня `READ UNCOMMITTED` также выполняется с семантикой `READ COMMITTED`. В `REPEATABLE READ` транзакция B из примера получит `40001` при попытке изменить строку, которую A обновила после снимка B. Повторять нужно всю транзакцию с новым чтением. Для другой СУБД проверяйте правила её реализации изоляции. [PostgreSQL 19 — Transaction Isolation](https://www.postgresql.org/docs/19/transaction-iso.html)
 
@@ -328,30 +329,27 @@ SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 ```mermaid
 sequenceDiagram
     participant T1 as T1 читатель
-    participant DB as PostgreSQL
+    participant DB as PostgreSQL 19
     participant T2 as T2 писатель
-
-    T1->>DB: BEGIN, снимок ещё не получен
+    Note over T1,DB: Начальное значение 10. Сравните READ COMMITTED и REPEATABLE READ
+    T1->>DB: BEGIN
     T2->>DB: BEGIN
-    T2->>DB: UPDATE, новое значение 42
-    T1->>DB: Первый SELECT, снимок S1
-    DB-->>T1: Старое значение, T2 ещё активна
+    T2->>DB: UPDATE со значением 42
+    T1->>DB: Первый SELECT
     T2->>DB: COMMIT
     T1->>DB: Второй SELECT
-    Note over T1,DB: READ COMMITTED, новый снимок S2, значение 42<br/>REPEATABLE READ, прежний снимок S1, старое значение
 ```
 
+```text
+PostgreSQL 19. До начала обеих транзакций значение строки равно 10.
+T1: BEGIN. Сравните READ COMMITTED и REPEATABLE READ.
+T2: BEGIN, UPDATE той же строки со значением 42.
+T1: первый обычный SELECT этой строки.
+T2: COMMIT.
+T1: второй обычный SELECT этой строки.
 ```
- T1                       PostgreSQL                 T2
- BEGIN ─────────────────▶ (без снимка)
-                           ◀──────────────────────── BEGIN
-                           ◀──────────── UPDATE, значение 42
- Первый SELECT ──────────▶ снимок S1, T2 ещё активна
- ◀──────────────────────── старое значение
-                           ◀──────────────────────── COMMIT
- Второй SELECT ──────────▶ RC: новый снимок S2 → 42
-                           RR: прежний снимок S1 → старое значение
-```
+
+При первом чтении в обоих режимах видна версия со значением 10. При втором чтении `READ COMMITTED` получает новый снимок и видит 42. `REPEATABLE READ` использует снимок первого чтения и снова видит 10.
 
 ## Q12. Как MVCC реализован в PostgreSQL?
 
@@ -545,7 +543,6 @@ graph LR
             │      ▲                    │      ▲
             │      └──── ждёт A ────────┘      │
             └──────────── ждёт B ──────────────┘
-                  (цикл ожидания → deadlock)
 ```
 
 **Пример:**
@@ -608,25 +605,18 @@ WHERE NOT granted;
 
 В стандартном режиме Spring перехватывает вызов через AOP-прокси. Для императивного метода перехватчик запрашивает транзакцию у менеджера. Например, при `REQUIRED` менеджер присоединяет метод к существующей транзакции или открывает новую (см. Q20). После вызова перехватчик применяет правила завершения. Физический коммит общей транзакции происходит на внешней границе.
 
-```mermaid
-sequenceDiagram
-    participant C as Caller
-    participant P as Transaction Interceptor
-    participant S as Service
-    participant TM as TransactionManager
+```java
+// Spring Framework 6.2. Клиент получил orderService из контейнера.
+orderService.performOperation(order);
 
-    C->>P: вызов через прокси
-    P->>TM: получить транзакцию согласно propagation
-    P->>S: вызов метода
-    alt Метод вернул результат
-        S-->>P: return
-        P->>TM: завершить текущую область
-    else Метод выбросил исключение
-        S-->>P: throw
-        P->>TM: применить правило отката
-    end
-    P-->>C: результат или исключение
+// Метод бина OrderService
+@Transactional
+public void performOperation(Order order) {
+    orderRepository.save(order);
+}
 ```
+
+Перехватчик получает транзакцию перед вызовом метода. После выполнения тела он обрабатывает результат или исключение, завершает транзакционную область по настроенным правилам и возвращает управление клиенту.
 
 Даже при нормальном возврате внешнего метода менеджер может откатить общую транзакцию, уже помеченную `rollback-only`. Разбор такого случая — в Q22.
 
@@ -667,14 +657,16 @@ public void performOperation() { ... }
 | `NEVER` | Выбрасывает исключение, если транзакция существует | Операции, несовместимые с транзакциями |
 
 ```java
+// Spring Framework 6.2. Клиент вызывает createOrder через полученный из контейнера бин.
+// В этом запуске auditService.log() завершается нормально.
 @Service
 public class OrderService {
 
     @Transactional(propagation = Propagation.REQUIRED)
     public void createOrder(Order order) {
         orderRepository.save(order);
-        // Аудит сохранится даже если createOrder откатится
         auditService.log("Order creation attempted: " + order.getId());
+        throw new IllegalStateException("Order rejected");
     }
 }
 
@@ -722,23 +714,26 @@ public BigDecimal calculateTotalBalance(Long userId) {
 В стандартной конфигурации `Spring @Transactional` откатывает транзакцию при `RuntimeException` и `Error`. Checked-исключения (наследники `Exception`, но не `RuntimeException`) сами по себе откат не вызывают: при выходе такого исключения Spring попытается закоммитить транзакцию. `rollbackFor` задаёт типы для отката, `noRollbackFor` — типы без отката. Если правила пересекаются, выигрывает наиболее конкретное совпадение, а не порядок атрибутов. Правило без отката не отменяет `rollback-only`, уже установленный другим участником или ресурсом.
 
 ```java
-// Откат при любом Exception (включая checked)
+// Spring Framework 6.2, стандартные глобальные правила отката.
+// Каждый метод отдельно вызывается через прокси.
+// Перед выходом исключения транзакция не помечена rollback-only.
+// В riskyOperation запись проходит, Files.write выбрасывает IOException.
 @Transactional(rollbackFor = Exception.class)
 public void riskyOperation() throws IOException {
     repository.save(entity);
-    Files.write(path, data); // IOException после записи в БД
+    Files.write(path, data);
 }
 
-// Не откатывать при бизнес-исключении
 @Transactional(
     rollbackFor = Exception.class,
     noRollbackFor = InsufficientFundsException.class
 )
 public void transfer(Long from, Long to, BigDecimal amount) {
-    // Для InsufficientFundsException Spring не помечает транзакцию к откату.
-    // Если она уже rollback-only, коммит всё равно невозможен.
+    throw new InsufficientFundsException();
 }
 ```
+
+При выходе `IOException` из `riskyOperation()` срабатывает правило отката для `Exception`. В `transfer()` выигрывает более конкретное правило для `InsufficientFundsException`. Само это исключение не вызывает откат.
 
 Типичная ошибка -- забыть про `rollbackFor`:
 
@@ -767,21 +762,24 @@ public void processFile() throws IOException {
 - **Прокси на основе класса (CGLIB)** создаёт подкласс, поэтому не может переопределить `private`, `final` и `static` методы; аннотация на `private` методе через такой прокси не сработает.
 
 ```java
+// Spring Framework 6.2, стандартный proxy-режим.
+// Клиент вызывает processPayment() на бине из контейнера.
 @Service
 public class PaymentService {
-    
-    @Transactional  // Внешний вызов проходит через прокси
+
+    @Transactional
     public void processPayment(Payment payment) {
-        // ...
-        updateBalance(payment);  // Самовызов: REQUIRES_NEW не применяется
+        updateBalance(payment);
     }
-    
+
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    private void updateBalance(Payment payment) {  // ОШИБКА: private + @Transactional
-        // Новая транзакция НЕ создаётся; выполняется внутри текущей processPayment
+    private void updateBalance(Payment payment) {
+        balanceRepository.update(payment);
     }
 }
 ```
+
+Внешний вызов `processPayment()` проходит через прокси и открывает транзакцию, если активной ещё нет. Прямой вызов `private` метода выполняется в текущей транзакции. `REQUIRES_NEW` на этом методе отдельную транзакцию не запускает.
 
 Правила:
 - Для интерфейсного прокси нужен `public` метод интерфейса. Начиная со Spring Framework 6.0, прокси на основе класса по умолчанию поддерживает также `protected` и package-private методы при внешнем вызове; `private` не поддерживается.
@@ -797,14 +795,15 @@ public class PaymentService {
 **Self-invocation** -- вызов `@Transactional` метода **из того же класса** через `this`. Прокси оборачивает только ссылку на бин, которую раздаёт контейнер; внутри объекта `this` указывает на сам экземпляр, а не на прокси. Поэтому внутренний вызов идёт напрямую, минуя обёртку, и аннотация на целевом методе просто не срабатывает -- ни новая транзакция, ни смена propagation/isolation не применяются.
 
 ```java
+// Spring Framework 6.2, стандартный proxy-режим.
+// Клиент без активной транзакции вызывает processOrder() на бине из контейнера.
 @Service
 public class OrderService {
-    
+
     public void processOrder(Order order) {
-        // self-invocation: вызов через this, прокси не участвует!
-        this.saveOrder(order);  // @Transactional НЕ сработает
+        this.saveOrder(order);
     }
-    
+
     @Transactional
     public void saveOrder(Order order) {
         orderRepository.save(order);
@@ -957,21 +956,16 @@ public class PaymentService {
 ```mermaid
 sequenceDiagram
     participant App as Приложение
-    participant PG as PostgreSQL
+    participant PG as PostgreSQL 19
     participant WAL as Хранилище WAL
     participant Data as Файлы данных
 
+    Note over PG,Data: Журналируемая таблица, synchronous_commit = on, без синхронных реплик
     App->>PG: UPDATE
-    Note over PG: Изменение страницы в shared buffers<br/>и добавление записи в WAL
-    Note over PG,WAL: Перед записью страницы<br/>PostgreSQL сбрасывает её WAL
-    PG->>WAL: Сброс WAL до записи об изменении
-    PG->>Data: Запись изменённой страницы
     App->>PG: COMMIT
-    PG->>WAL: Сброс WAL до записи о коммите
-    PG-->>App: Подтверждение коммита
 ```
 
-На схеме показан один возможный порядок для обычной журналируемой таблицы без синхронных реплик. PostgreSQL может записать страницу ещё до коммита. Само наличие версии строки в файле данных не делает её видимой другим транзакциям — видимость определяется снимком и состоянием транзакции (см. Q11–Q12).
+Один возможный порядок такой: PostgreSQL меняет страницу в памяти, сбрасывает WAL с записью об изменении, затем записывает страницу. На `COMMIT` сервер сбрасывает WAL до записи о коммите включительно и отвечает клиенту. PostgreSQL может записать страницу ещё до коммита. Само наличие версии строки в файле данных не делает её видимой другим транзакциям. Видимость определяется снимком и состоянием транзакции (см. Q11–Q12).
 
 Сброс страниц происходит и вне checkpoint; checkpoint гарантирует, что изменения до определённой точки уже отражены в файлах данных, и ограничивает объём WAL для crash recovery.
 
@@ -1001,18 +995,22 @@ SELECT pg_current_wal_insert_lsn() AS insert_lsn,
 Допустим, `order_items.product_id` ссылается на каталог через внешний ключ с немедленной проверкой. Товар 100 отсутствует, а товар 200 есть. Команды выполняются по очереди. После ошибки внешнего ключа приложение отдельно отправляет `ROLLBACK TO SAVEPOINT`.
 
 ```sql
+-- PostgreSQL 19. FK order_items.product_id проверяется сразу.
+-- Товара 100 в каталоге нет, товар 200 существует.
+-- Приложение отправляет команды по очереди, в том числе после ошибки.
 BEGIN;
 INSERT INTO orders (id, status) VALUES (1, 'NEW');
 
 SAVEPOINT sp1;
 INSERT INTO order_items (order_id, product_id) VALUES (1, 100);
--- PostgreSQL: SQLSTATE 23503. Следующая команда восстанавливает транзакцию.
 ROLLBACK TO SAVEPOINT sp1;
 
 INSERT INTO order_items (order_id, product_id) VALUES (1, 200);
 RELEASE SAVEPOINT sp1;
-COMMIT;  -- фиксируем заказ и позицию с product_id=200
+COMMIT;
 ```
+
+Вставка позиции с товаром 100 завершается ошибкой внешнего ключа (`SQLSTATE 23503`). После отката к `sp1` заказ остаётся в открытой транзакции. Успешный `COMMIT` фиксирует заказ и позицию с товаром 200.
 
 В Spring `Propagation.NESTED` использует savepoint **в одной локальной JDBC-транзакции**, например с `DataSourceTransactionManager`. В стандартном proxy-режиме вызов вложенного метода должен пройти через транзакционный прокси. В примере это вызов другого Spring-бина. Обе операции используют одну транзакционную `DataSource`:
 
@@ -1036,23 +1034,13 @@ public void processOrder(long orderId) {
 **2PC** (`Two-Phase Commit`) -- протокол согласования одного решения `commit` или `rollback` для нескольких транзакционных участников. Сначала координатор выясняет, может ли каждый участник зафиксировать свою ветку; затем принимает и доводит до них общее решение. Цель -- атомарная фиксация, но она требует поддержки подготовки всеми участниками, сохранения решения координатора и восстановления после сбоев. Само название протокола не означает, что произвольные БД, очередь или внешний вызов уже участвуют в одной транзакции.
 
 ```mermaid
-sequenceDiagram
-    participant C as Координатор
-    participant P1 as Участник 1 (БД)
-    participant P2 as Участник 2 (Очередь)
-    
-    Note over C,P2: Фаза 1: Prepare (голосование)
-    C->>P1: PREPARE
-    C->>P2: PREPARE
-    P1-->>C: READY (да, могу закоммитить)
-    P2-->>C: READY
-    
-    Note over C,P2: Фаза 2: Commit
-    C->>P1: COMMIT
-    C->>P2: COMMIT
-    P1-->>C: ACK
-    P2-->>C: ACK
+flowchart LR
+    C[Координатор] --- P1[Участник 1: БД]
+    C --- P2[Участник 2: очередь]
+    A[Одна операция приложения] --> C
 ```
+
+Оба ресурса поддерживают подготовку транзакционной ветки. Если оба готовы, обмен с каждым участником выглядит как `PREPARE → READY → COMMIT → ACK`. [Двухфазные транзакции PostgreSQL 19](https://www.postgresql.org/docs/19/two-phase.html)
 
 **Фаза 1 (Prepare/Vote):**
 - Координатор запрашивает подготовку у каждого участника.
@@ -1240,21 +1228,22 @@ ALTER TABLE orders SET (
 **Savepoint** — промежуточная точка сохранения внутри транзакции. `ROLLBACK TO SAVEPOINT` откатывает только изменения, сделанные **после** этой точки, а всё, что было до неё, остаётся и продолжает работать в той же транзакции. Это даёт «частичный откат»: можно отменить неудавшийся шаг и попробовать другой, не теряя уже выполненную работу.
 
 ```sql
+-- PostgreSQL 19. order_discounts.code имеет немедленное ограничение UNIQUE.
+-- Для другого заказа уже есть PROMO100. Кода PROMO90 в таблице нет.
+-- Приложение отправляет команды по очереди, в том числе после ошибки.
 BEGIN;
-  INSERT INTO orders (id, status) VALUES (1, 'PENDING');
+INSERT INTO orders (id, status) VALUES (1, 'PENDING');
 
-  SAVEPOINT after_order;   -- создаём точку
+SAVEPOINT after_order;
+INSERT INTO order_discounts (order_id, code) VALUES (1, 'PROMO100');
+ROLLBACK TO SAVEPOINT after_order;
 
-  INSERT INTO order_discounts (order_id, code) VALUES (1, 'PROMO100');
-  -- Ошибка при локальной записи в эту же БД
-  ROLLBACK TO SAVEPOINT after_order;  -- откатываем только локальную запись скидки
-
-  -- Order ещё есть внутри транзакции, но пока не зафиксирован.
-  INSERT INTO order_discounts (order_id, code) VALUES (1, 'PROMO90');
-  RELEASE SAVEPOINT after_order;  -- необязательно; пока транзакция ещё активна
-COMMIT;  -- фиксируем заказ и второй вариант скидки
-
+INSERT INTO order_discounts (order_id, code) VALUES (1, 'PROMO90');
+RELEASE SAVEPOINT after_order;
+COMMIT;
 ```
+
+Первая вставка скидки завершается ошибкой уникальности. Откат к `after_order` сохраняет сделанную до этой точки вставку заказа в открытой транзакции. Успешный `COMMIT` фиксирует заказ и скидку `PROMO90` для него.
 
 **Ручной savepoint в локальной JDBC-транзакции Spring:**
 
@@ -1566,9 +1555,19 @@ FROM pg_stat_replication;
 **Write skew** — две транзакции читают один и тот же инвариант, но меняют **разные строки** так, что после обоих коммитов инвариант нарушается. Например, в смене должны оставаться хотя бы один дежурный врач. Изначально `on_call = true` у Анны и Бориса. Каждая транзакция видит двоих дежурных и снимает с дежурства только **своего** врача. Если оба снимка получены до коммита любой из транзакций и показывают исходное состояние в PostgreSQL `REPEATABLE READ`, они могут успешно закоммитить изменения разных строк: дежурных не останется. Это не lost update одной строки; отсутствие phantom read на этом уровне тоже не спасает.
 
 ```text
-T1: читает Анну=true, Бориса=true  → обновляет Анну=false
-T2: читает Анну=true, Бориса=true  → обновляет Бориса=false
-После двух коммитов: Анна=false, Борис=false; инвариант нарушен.
+PostgreSQL 19. Правило: хотя бы один врач дежурит.
+Изначально Анна и Борис дежурят. Каждая транзакция читает обе строки
+и снимает с дежурства своего врача, если в прочитанном состоянии дежурят оба.
+
+Расписание на REPEATABLE READ:
+1. T1 и T2 читают исходное состояние до первого COMMIT.
+2. T1 устанавливает Анна.on_call = false.
+3. T2 устанавливает Борис.on_call = false.
+4. T1 выполняет COMMIT, затем T2 выполняет COMMIT.
+Какие исходы фиксации возможны и что будет с правилом дежурства?
+
+Отдельная попытка: тот же сценарий на SERIALIZABLE.
+Что должно повторить приложение, если получает SQLSTATE 40001?
 ```
 
 Если проверка инварианта и оба изменения выполняются в PostgreSQL `SERIALIZABLE`, СУБД отслеживает зависимости чтения/записи. При таком конфликте **одна транзакция должна прерваться**, чтобы результат подтверждённых транзакций соответствовал некоторому последовательному порядку. При `SQLSTATE 40001` приложение открывает **новую транзакцию** и заново выполняет всю бизнес-логику: чтение, решение «можно ли снять врача», SQL и коммит. Повтор одного `UPDATE` или только `COMMIT` со старым решением некорректен. `40001` возможен и на `REPEATABLE READ` при конфликтующем обновлении; само по себе его отсутствие там не доказывает отсутствие write skew.
