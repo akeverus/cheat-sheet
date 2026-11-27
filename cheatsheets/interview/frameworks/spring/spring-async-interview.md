@@ -125,31 +125,20 @@ userService.findUserAsync(1L)
 
 ## Q3. Как работает @Async под капотом?
 
-`@Async` работает через **Spring AOP proxy**. При старте `@EnableAsync` находит бины с `@Async`-методами и оборачивает каждый в прокси. Когда вы зовёте такой метод, обращение сначала попадает в прокси: он не выполняет тело сам, а упаковывает его в задачу и отдаёт `TaskExecutor`, после чего мгновенно возвращает управление вызывающему (`CompletableFuture`, если метод его возвращает, либо `null`). Реальное тело метода исполняется уже на worker-потоке пула.
-
-Именно отсюда растут все ограничения `@Async` — они следствие того, что между вызывающим и методом стоит прокси.
+В приложении включён режим `PROXY`. Один Spring-бин вызывает метод другого бина. Метод помечен `@Async` и возвращает `CompletableFuture`.
 
 ```mermaid
 sequenceDiagram
-    participant Caller
-    participant Proxy as AOP Proxy
+    participant Caller as Вызывающий бин
+    participant Service as Сервис
     participant Executor as TaskExecutor
-    participant Target as Target Method
 
-    Caller->>Proxy: asyncMethod()
-    Proxy->>Executor: submit(task)
-    Proxy-->>Caller: return (CompletableFuture or null)
-    Note over Caller: continues работу
-    Executor->>Target: execute on worker thread
-    Target->>Target: method body
-    Target-->>Executor: result
-    Executor-->>Proxy: complete CompletableFuture
+    Caller->>Service: asyncMethod()
 ```
 
-**Последствия proxy-подхода (почему так):**
-- Работает только для **public**-методов — прокси перехватывает лишь то, что видит снаружи (CGLIB-ограничение).
-- Не работает при self-invocation (`this.asyncMethod()`) — внутренний вызов идёт мимо прокси напрямую к объекту (см. Q9).
-- Не работает для `@Async`-методов, вызванных из `@PostConstruct` — на этом этапе прокси для async ещё не «обвязал» бин.
+При `@EnableAsync` постпроцессор `AsyncAnnotationBeanPostProcessor` добавляет async-перехватчик к существующему прокси или создаёт прокси для подходящего бина. Вызов через прокси попадает в этот перехватчик. Он передаёт оставшуюся часть цепочки исполнителю. При работе с пулом тело метода исполняется в рабочем потоке, а вызывающий получает `CompletableFuture`, по которому можно дождаться результата или узнать об ошибке. Для метода с типом возврата `void` вызывающий не получает future.
+
+Для JDK-прокси вызов должен проходить через метод интерфейса. Прокси на основе подкласса перехватывает доступные переопределяемые методы. Прямой вызов `this.asyncMethod()` обходит перехватчик (см. Q9). Для асинхронного запуска при инициализации используйте отдельный Spring-бин, который из своего lifecycle-метода вызывает async-метод через прокси.
 
 ## Q4. (!) Какой executor используется по умолчанию?
 
@@ -312,26 +301,26 @@ public class CustomAsyncExceptionHandler implements AsyncUncaughtExceptionHandle
 
 ## Q9. (!) Почему @Async не работает при self-invocation?
 
-Потому что `@Async` живёт в прокси, а не в самом объекте. Spring внедряет другим бинам не ваш объект, а прокси-обёртку вокруг него; именно прокси отправляет вызов на пул потоков. Когда метод того же класса зовёт `@Async`-метод как `this.method()`, вызов идёт напрямую к объекту `this`, минуя прокси, — async-логика не подключается, и метод выполняется синхронно в текущем потоке.
-
-То есть проблема не в `@Async` как таковом, а в общем свойстве Spring AOP: любые прокси-аннотации (`@Async`, `@Transactional`, `@Cacheable`) не работают при self-invocation по одной и той же причине.
-
-**Не работает:**
+**Исходный вызов в режиме `PROXY`**
 ```java
 @Service
 public class OrderService {
 
     public void processOrder(Order order) {
         validateOrder(order);
-        sendEmailAsync(order);  // this.sendEmailAsync() — обход proxy!
+        this.sendEmailAsync(order);
     }
 
     @Async
     public void sendEmailAsync(Order order) {
-        emailClient.send(order);  // выполнится синхронно
+        emailClient.send(order);
     }
 }
 ```
+
+Потому что `@Async` живёт в прокси, а не в самом объекте. Spring внедряет другим бинам не ваш объект, а прокси-обёртку вокруг него; именно прокси отправляет вызов на пул потоков. Когда метод того же класса зовёт `@Async`-метод как `this.method()`, вызов идёт напрямую к объекту `this`, минуя прокси, — async-логика не подключается, и метод выполняется синхронно в текущем потоке.
+
+То есть проблема не в `@Async` как таковом, а в общем свойстве Spring AOP: любые прокси-аннотации (`@Async`, `@Transactional`, `@Cacheable`) не работают при self-invocation по одной и той же причине.
 
 **Решения** (суть одна — пройти через прокси, а не через `this`):
 
@@ -371,38 +360,47 @@ public class OrderService {
 
 ## Q10. (!) Как @Async взаимодействует с @Transactional?
 
-**Ключевое: транзакция не передаётся в async-метод.** Spring хранит активную транзакцию (соединение с БД, статус) в `ThreadLocal`, то есть привязывает её к конкретному потоку. `@Async` уходит на другой поток пула, где этот `ThreadLocal` пуст, — значит, метод не видит транзакцию вызывающего и работает вне её.
-
-Если на async-методе стоит свой `@Transactional`, он откроет **новую, независимую** транзакцию на своём потоке. Откат транзакции вызывающего на неё уже не повлияет.
+В примере включены `@Async` и управление императивными транзакциями в режиме `PROXY`. Внешний вызов `processOrder` проходит через прокси, а исполнитель для async-задач использует отдельные рабочие потоки. Действуют стандартный порядок перехватчиков и настройки `@Transactional`.
 
 ```java
-@Transactional
-public void processOrder(Order order) {
-    // Транзакция №1 открыта в этом потоке
-    orderRepository.save(order);
-    
-    sendNotification(order);  // Запускается в другом потоке!
-    // Транзакция №1 НЕ видна в sendNotification
+// Режим PROXY. Внешний вызов processOrder проходит через прокси.
+// Async-исполнитель использует отдельные рабочие потоки.
+// Порядок перехватчиков и propagation оставлены по умолчанию.
+@Service
+public class OrderService {
+    @Autowired
+    private OrderRepository orderRepository;
+    @Autowired
+    private NotificationService notificationService;
+
+    @Transactional
+    public void processOrder(Order order) {
+        orderRepository.save(order);
+        notificationService.sendNotification(order);
+    }
 }
 
-@Async
-@Transactional  // Откроет НОВУЮ транзакцию
-public void sendNotification(Order order) {
-    notificationRepository.save(new Notification(order));
+@Service
+public class NotificationService {
+    @Autowired
+    private NotificationRepository notificationRepository;
+
+    @Async
+    @Transactional
+    public void sendNotification(Order order) {
+        notificationRepository.save(new Notification(order));
+    }
 }
 ```
 
-**Подводные камни:**
-- Не читайте в async-методе данные, только что сохранённые в транзакции вызывающего: его транзакция ещё не закоммичена, и на другом потоке этих строк просто не видно — получите устаревшие данные или `null`.
-- Классический баг: послать async-уведомление о заказе, который ещё не закоммичен; если транзакция вызывающего откатится, уведомление об уже несуществующем заказе уйдёт.
-- Правильный паттерн — связать запуск async-обработки с фактом коммита через `@TransactionalEventListener(phase = AFTER_COMMIT)` + `@Async` (см. ниже), а не звать async-метод напрямую.
+Spring привязывает императивную транзакцию вызывающего к его потоку. При стандартном порядке перехватчиков async-перехватчик передаёт работу исполнителю до входа в транзакционный перехватчик `sendNotification`. В рабочем потоке транзакция вызывающего недоступна. При стандартном `REQUIRED` и отсутствии активной транзакции в этом потоке Spring открывает отдельную транзакцию. Откат в `processOrder` сам по себе её не отменит.
+
+До фиксации заказа асинхронная операция может попытаться прочитать ещё не видимые ей данные. Если обработку нужно запускать только после успешного коммита, опубликуйте событие внутри транзакции заказа и привяжите слушателя к фазе `AFTER_COMMIT`.
 
 ```java
-// Правильный паттерн: событие после коммита + async обработка
 @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
 @Async
 public void onOrderPlaced(OrderPlacedEvent event) {
-    // Гарантированно после commit и в отдельном потоке
     notificationService.send(event.getOrderId());
 }
 ```
@@ -434,13 +432,32 @@ public class DataProcessor {
 
 ## Q12. Как комбинировать несколько @Async вызовов?
 
-Запустите независимые операции как `@Async`-методы, возвращающие `CompletableFuture`, а потом объедините их через `CompletableFuture.allOf(...)`. Поскольку каждый метод стартует на своём потоке, три вызова идут параллельно, а не друг за другом — общее время равно самому медленному из них, а не их сумме. Это типичный приём для сбора одного ответа из нескольких источников (профиль + заказы + данные пользователя).
+Сервис собирает профиль, заказы и основные данные пользователя из трёх независимых источников. В примере `userLookup` внедрён как отдельный Spring-бин. Обработка `@Async` включена в режиме `PROXY`.
 
-Идиома: сначала собрать все future (этот момент неблокирующий), затем `allOf().thenApply(...)` склеивает результаты, забирая каждый через `join()`; финальный `join()` блокирует ровно до готовности всех трёх.
+```java
+// UserAggregateService получает UserLookup через конструктор.
+// У исполнителя @Async три свободных рабочих потока.
+// Вызовы независимы и завершаются успешно за 200, 400 и 600 мс соответственно.
+void requestParts(Long id) {
+    CompletableFuture<User> user = userLookup.fetchUser(id);
+    CompletableFuture<List<Order>> orders = userLookup.fetchOrders(id);
+    CompletableFuture<Profile> profile = userLookup.fetchProfile(id);
+}
+```
+
+Объедините три future через `CompletableFuture.allOf(...)`. При доступных рабочих потоках операции могут перекрываться по времени. В этом примере суммарное ожидание при пренебрежимо малых накладных расходах близко к 600 мс. Реальное время зависит от запуска задач и доступности внешних ресурсов.
+
+`allOf` завершается после всех переданных future. Если хотя бы одна завершается с ошибкой, общая стадия также завершается с ошибкой. После успешного завершения `thenApply` забирает готовые результаты через `join()`. Внешний `join()` нужен, если метод должен вернуть сам агрегат и вызывающий готов ждать. Для дальнейшей асинхронной обработки можно вернуть объединённую future.
 
 ```java
 @Service
-public class UserAggregateService {
+public class UserLookup {
+    @Autowired
+    private UserApi userApi;
+    @Autowired
+    private OrderApi orderApi;
+    @Autowired
+    private ProfileApi profileApi;
 
     @Async
     public CompletableFuture<User> fetchUser(Long id) {
@@ -456,16 +473,24 @@ public class UserAggregateService {
     public CompletableFuture<Profile> fetchProfile(Long id) {
         return CompletableFuture.completedFuture(profileApi.get(id));
     }
-    
-    // Параллельный сбор
+}
+
+@Service
+public class UserAggregateService {
+    private final UserLookup userLookup;
+
+    public UserAggregateService(UserLookup userLookup) {
+        this.userLookup = userLookup;
+    }
+
     public UserAggregate aggregate(Long id) {
-        CompletableFuture<User> userF = fetchUser(id);
-        CompletableFuture<List<Order>> ordersF = fetchOrders(id);
-        CompletableFuture<Profile> profileF = fetchProfile(id);
-        
-        return CompletableFuture.allOf(userF, ordersF, profileF)
-            .thenApply(v -> new UserAggregate(userF.join(), ordersF.join(), profileF.join()))
-            .join();  // блокирующий итог
+        CompletableFuture<User> user = userLookup.fetchUser(id);
+        CompletableFuture<List<Order>> orders = userLookup.fetchOrders(id);
+        CompletableFuture<Profile> profile = userLookup.fetchProfile(id);
+
+        return CompletableFuture.allOf(user, orders, profile)
+            .thenApply(ignored -> new UserAggregate(user.join(), orders.join(), profile.join()))
+            .join();
     }
 }
 ```

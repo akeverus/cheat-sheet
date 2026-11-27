@@ -1,27 +1,905 @@
-{"topic_slug":"spring-async-interview","questions":[
-{"q_number":1,"blocks":[{"block_idx":0,"question_text":"Что такое @Async и как его включить?","options":[
-{"label":"A","order":0,"text":"Включить `@EnableAsync`, отметить метод `@Async` и вызвать его через прокси Spring, который передаст работу executor.","correct":true,"sections":{"explanation":"Аннотация помечает вызов для выполнения через executor, а конфигурация включает обработку аннотации.","example":"Сервис заказа вызывает метод отправки письма на внедрённом бине уведомлений.","when_to_apply":"Когда ответ вызывающему не зависит от немедленного завершения работы.","edge_cases":"При синхронном executor тело выполнится в вызывающем потоке.","related":"В режиме PROXY прямой вызов внутри бина обходит перехватчик."}},
-{"label":"B","order":1,"text":"Включить `@EnableScheduling`, отметить метод `@Async` и вызвать его через прокси Spring, который передаст работу scheduler.","correct":false,"sections":{"what_actually":"Планирование и обработка асинхронных вызовов включаются отдельно.","source_of_confusion":"Обе аннотации работают с инфраструктурой Spring для фоновых задач.","if_it_were_true":"Одна конфигурация планирования включала бы и обработку вызовов по запросу.","how_it_should_be":"Для обработки вызовов установить `@EnableAsync`."}},
-{"label":"C","order":2,"text":"Включить `@EnableAsync`, отметить метод `@Async` и вызвать его через `this`, чтобы Spring передал работу executor.","correct":false,"sections":{"what_actually":"В режиме PROXY вызов через `this` идёт прямо в целевой объект.","source_of_confusion":"Конфигурация регистрирует прокси, и его легко принять за сам бин.","if_it_were_true":"Для внутреннего вызова Spring перехватывал бы каждое обращение к методу.","how_it_should_be":"Вызвать метод через прокси другого бина."}},
-{"label":"D","order":3,"text":"Зарегистрировать `TaskExecutor`, отметить метод `@Async` и вызвать его через прокси Spring без `@EnableAsync`.","correct":false,"sections":{"what_actually":"Наличие executor само по себе не регистрирует обработчик `@Async`.","source_of_confusion":"Executor нужен обработчику, поэтому его регистрацию принимают за включение механизма.","if_it_were_true":"Объявление любого executor меняло бы способ вызова аннотированных методов.","how_it_should_be":"Включить поддержку отдельно через `@EnableAsync`."}}
-]}]},
-{"q_number":2,"blocks":[{"block_idx":0,"question_text":"Какие типы возврата поддерживает @Async?","options":[
-{"label":"A","order":0,"text":"`void` для вызова без результата, `CompletionStage<T>` и `Future<T>` для результата.","correct":false,"sections":{"what_actually":"Один только объявленный `CompletionStage` не удовлетворяет контракту.","source_of_confusion":"`CompletableFuture` реализует оба интерфейса.","if_it_were_true":"Можно было бы оставить `CompletionStage` в сигнатуре асинхронного метода.","how_it_should_be":"Объявить `CompletableFuture<T>`, если нужна композиция."}},
-{"label":"B","order":1,"text":"`void` для вызова без результата, `Future<T>` и `CompletableFuture<T>` для результата.","correct":true,"sections":{"explanation":"Прокси возвращает дескриптор асинхронной задачи, совместимый с объявленным типом.","example":"Реализация возвращает `CompletableFuture.completedFuture(value)` после вычисления результата.","when_to_apply":"Используйте `CompletableFuture`, когда вызывающий строит цепочку шагов.","edge_cases":"Ошибку в `void` обрабатывает `AsyncUncaughtExceptionHandler`.","related":"`Future.get()` позволяет получить результат с таймаутом."}},
-{"label":"C","order":2,"text":"`void` для вызова без результата, `Optional<T>` и `CompletableFuture<T>` для результата.","correct":false,"sections":{"what_actually":"`Optional<T>` описывает наличие значения и не представляет незавершённую работу.","source_of_confusion":"Оба типа оборачивают результат метода.","if_it_were_true":"В `Optional` пришлось бы различать ожидание и отсутствие результата.","how_it_should_be":"Объявить `CompletableFuture<Optional<T>>`, когда результат может отсутствовать."}},
-{"label":"D","order":3,"text":"`void` для вызова без результата, `Callable<T>` и `Future<T>` для результата.","correct":false,"sections":{"what_actually":"`Callable<T>` описывает задачу, которую ещё надо вызвать.","source_of_confusion":"Spring может использовать `Callable` для внутренней отправки работы.","if_it_were_true":"Перехватчик возвращал бы вызывающему саму функцию для запуска.","how_it_should_be":"Объявить `Future<T>` или `CompletableFuture<T>`."}}
-]}]}
-,{"q_number":3,"blocks":[{"block_idx":0,"question_text":"Как работает @Async под капотом?","options":[{"label":"A","order":0,"text":"Прокси ставит вызов в очередь scheduler","correct":false,"sections":{"what_actually":"Планировщик обслуживает запуск по расписанию","source_of_confusion":"Обе инфраструктуры используют фоновые потоки","if_it_were_true":"Вызов зависел бы от расписания","how_it_should_be":"Для вызова по запросу используется executor"}},{"label":"B","order":1,"text":"Прокси сам создаёт поток для вызова","correct":false,"sections":{"what_actually":"Потоками распоряжается executor","source_of_confusion":"Прокси инициирует отправку задачи","if_it_were_true":"Каждый вызов создавал бы поток даже при настроенном пуле","how_it_should_be":"Выбирать политику потоков через executor"}},{"label":"C","order":2,"text":"Прокси отправляет вызов в выбранный executor","correct":true,"sections":{"explanation":"Перехватчик выбирает executor и отправляет задачу","example":"Вызов сервиса возвращает future задачи","when_to_apply":"Когда нужно делегировать выполнение целого метода","edge_cases":"При CallerRunsPolicy задача может исполниться в вызывающем потоке","related":"Выбор executor можно задать в @Async"}},{"label":"D","order":3,"text":"Прокси вызывается только после завершения метода","correct":false,"sections":{"what_actually":"Прокси перехватывает вызов перед исполнением тела","source_of_confusion":"Другие advice могут работать после вызова","if_it_were_true":"Тело выполнилось бы синхронно до передачи задачи","how_it_should_be":"Передавать в executor само выполнение тела"}}]}]},
-{"q_number":4,"blocks":[{"block_idx":0,"question_text":"Какой executor используется по умолчанию?","options":[{"label":"A","order":0,"text":"Framework ищет подходящий бин или использует SimpleAsyncTaskExecutor","correct":true,"sections":{"explanation":"Без явного выбора Spring ищет уникальный TaskExecutor, затем Executor с именем taskExecutor","example":"При отсутствии подходящего бина стандартный перехватчик использует SimpleAsyncTaskExecutor","when_to_apply":"Учитывайте это при настройке чистого Spring Framework","edge_cases":"Boot может предоставить executor автоконфигурацией, в том числе для виртуальных потоков","related":"AsyncConfigurer задаёт executor для неквалифицированных вызовов"}},{"label":"B","order":1,"text":"Framework ищет подходящий бин или использует ForkJoinPool.commonPool","correct":false,"sections":{"what_actually":"Common pool характерен для CompletableFuture без явно заданного executor","source_of_confusion":"Оба API выполняют работу асинхронно","if_it_were_true":"Задачи Spring делили бы common pool с цепочками JDK","how_it_should_be":"Различать правила выбора executor"}},{"label":"C","order":2,"text":"Framework ищет подходящий бин или использует SyncTaskExecutor","correct":false,"sections":{"what_actually":"SyncTaskExecutor надо назначить явно","source_of_confusion":"Оба класса реализуют TaskExecutor","if_it_were_true":"Методы без подходящего бина выполнялись бы в потоке вызывающего","how_it_should_be":"Назначать синхронный executor осознанно"}},{"label":"D","order":3,"text":"Framework ищет подходящий бин или использует кэшируемый пул JDK","correct":false,"sections":{"what_actually":"SimpleAsyncTaskExecutor не переиспользует потоки как пул","source_of_confusion":"Новый поток для задачи похож на расширение кэшируемого пула","if_it_were_true":"Повторные вызовы могли бы использовать свободные потоки","how_it_should_be":"Для переиспользования настроить ThreadPoolTaskExecutor"}}]}]},
-{"q_number":5,"blocks":[{"block_idx":0,"question_text":"Как сконфигурировать кастомный TaskExecutor?","options":[{"label":"A","order":0,"text":"Объявить именованный пул и указать его имя в @EnableAsync","correct":false,"sections":{"what_actually":"@EnableAsync включает поддержку на уровне конфигурации","source_of_confusion":"Обе аннотации относятся к одной инфраструктуре","if_it_were_true":"Имя пула можно было бы выбрать при включении обработки","how_it_should_be":"Использовать значение @Async или AsyncConfigurer"}},{"label":"B","order":1,"text":"Объявить именованный пул и указать его имя в @Async","correct":true,"sections":{"explanation":"Spring выбирает executor по значению @Async","example":"Бин mailExecutor используется методом @Async(\"mailExecutor\")","when_to_apply":"Когда рабочим нагрузкам нужны разные параметры пула","edge_cases":"Пул обычно растёт сверх corePoolSize после заполнения очереди","related":"RejectedExecutionHandler задаёт реакцию на насыщение"}},{"label":"C","order":2,"text":"Объявить именованный пул и указать его имя в @Qualifier на методе","correct":false,"sections":{"what_actually":"@Qualifier на бизнес-методе не задаёт executor перехватчику","source_of_confusion":"Перехватчик сам разрешает квалификатор из аргумента @Async","if_it_were_true":"Общая аннотация DI меняла бы выбор executor этого вызова","how_it_should_be":"Указать квалификатор в @Async"}},{"label":"D","order":3,"text":"Объявить именованный пул и указать его имя в @Scheduled","correct":false,"sections":{"what_actually":"@Scheduled управляет планированием","source_of_confusion":"Периодическая задача тоже может требовать пула","if_it_were_true":"Настройка scheduler управляла бы вызовом @Async","how_it_should_be":"Задавать executor у @Async"}}]}]}
-,{"q_number":6,"blocks":[{"block_idx":0,"question_text":"Что такое AsyncConfigurer?","options":[{"label":"A","order":0,"text":"Контракт для настройки executor отдельного метода","correct":false,"sections":{"what_actually":"Для метода используется аргумент @Async","source_of_confusion":"AsyncConfigurer тоже участвует в выборе executor","if_it_were_true":"Каждый метод мог бы передаваться в конфигуратор при выборе пула","how_it_should_be":"Использовать именованный бин и квалификатор"}},{"label":"B","order":1,"text":"Контракт для настройки executor по умолчанию и обработчика исключений","correct":true,"sections":{"explanation":"AsyncConfigurer предоставляет executor для вызовов без квалификатора и обработчик ошибок void","example":"Конфигурация переопределяет getAsyncExecutor и getAsyncUncaughtExceptionHandler","when_to_apply":"Когда политика исполнения общая для нескольких сервисов","edge_cases":"Явный квалификатор @Async выбирает другой executor","related":"Именованные бины удобны для разделения нагрузок"}},{"label":"C","order":2,"text":"Контракт для настройки scheduler по умолчанию и обработчика исключений","correct":false,"sections":{"what_actually":"AsyncConfigurer настраивает исполнение вызовов","source_of_confusion":"Синхронизация и планирование тоже имеют конфигураторы","if_it_were_true":"Этот интерфейс управлял бы периодическими задачами","how_it_should_be":"Для планирования использовать SchedulingConfigurer"}},{"label":"D","order":3,"text":"Контракт для настройки executor по умолчанию и повторных попыток","correct":false,"sections":{"what_actually":"В контракте предусмотрен обработчик исключений void","source_of_confusion":"Передача ошибки в обработчик выглядит как точка для повтора","if_it_were_true":"Настройка могла бы автоматически переотправлять упавшие задачи","how_it_should_be":"Определять повторы отдельно от AsyncConfigurer"}}]}]},
-{"q_number":7,"blocks":[{"block_idx":0,"question_text":"Как обрабатывать исключения в @Async методах?","options":[{"label":"A","order":0,"text":"Использовать try/catch вокруг вызова для void и Future","correct":false,"sections":{"what_actually":"Исключение тела возникает после отправки задачи","source_of_confusion":"При обычном вызове исключение видно синхронно","if_it_were_true":"Try/catch вызывающего поймал бы сбой worker","how_it_should_be":"Читать ошибку Future или обрабатывать её в handler"}},{"label":"B","order":1,"text":"Обрабатывать void и Future через AsyncUncaughtExceptionHandler","correct":false,"sections":{"what_actually":"Handler предназначен для ошибок вызовов без Future","source_of_confusion":"Оба вида ошибки возникают при выполнении задачи","if_it_were_true":"В Future мог бы потеряться сигнал о сбое","how_it_should_be":"Обрабатывать exceptional completion на стороне потребителя"}},{"label":"C","order":2,"text":"Обрабатывать void через handler, а Future через его результат","correct":true,"sections":{"explanation":"Ошибка тела async-метода с Future сохраняется в результате задачи","example":"У CompletableFuture ошибку можно обработать через exceptionally или handle","when_to_apply":"Выбирать способ обработки по объявленному типу возврата","edge_cases":"Отказ отправки в перегруженный executor возможен на стороне вызывающего","related":"Для void задаётся AsyncUncaughtExceptionHandler"}},{"label":"D","order":3,"text":"Обрабатывать void и Future через колбэк executor","correct":false,"sections":{"what_actually":"Контракт Spring передаёт ошибку через Future или handler","source_of_confusion":"Executor непосредственно исполняет задачу","if_it_were_true":"Работа с ошибками зависела бы от реализации пула","how_it_should_be":"Использовать механизмы Spring и Future"}}]}]},
-{"q_number":8,"blocks":[{"block_idx":0,"question_text":"Что такое AsyncUncaughtExceptionHandler?","options":[{"label":"A","order":0,"text":"Обработчик аварий worker-потока для всех задач","correct":false,"sections":{"what_actually":"Обработка относится к async-вызову Spring","source_of_confusion":"Название похоже на Thread.UncaughtExceptionHandler","if_it_were_true":"Обработчик перехватывал бы аварии произвольных задач worker","how_it_should_be":"Настраивать обработчик для void-вызовов"}},{"label":"B","order":1,"text":"Обработчик ошибок Future при вызове get","correct":false,"sections":{"what_actually":"Get сообщает о сбое Future через ExecutionException","source_of_confusion":"Оба механизма делают ошибку доступной приложению","if_it_were_true":"Даже результат с Future зависел бы от глобального обработчика","how_it_should_be":"Считывать exceptional completion напрямую"}},{"label":"C","order":2,"text":"Обработчик отказов в постановке задач в очередь","correct":false,"sections":{"what_actually":"Handler получает исключение тела метода","source_of_confusion":"Отклонение задачи тоже может дать исключение","if_it_were_true":"Перегрузка пула попадала бы сюда до запуска тела","how_it_should_be":"Настраивать реакцию на отклонение в executor"}},{"label":"D","order":3,"text":"Обработчик необработанных исключений из void-методов @Async","correct":true,"sections":{"explanation":"Spring передаёт обработчику исключение, Method и аргументы","example":"Можно записать метрику ошибки отправки уведомления","when_to_apply":"Для фоновых вызовов без результата для вызывающего","edge_cases":"Не выводите аргументы с секретами в лог","related":"Пользовательский handler задаётся через AsyncConfigurer"}}]}]},
-{"q_number":9,"blocks":[{"block_idx":0,"question_text":"Почему @Async не работает при self-invocation?","options":[{"label":"A","order":0,"text":"Внутренний вызов теряет executor при доступе к полям","correct":false,"sections":{"what_actually":"До выбора пула дело не доходит","source_of_confusion":"Executor обычно приходит из контекста Spring","if_it_were_true":"Внедрение пула восстановило бы проксирование","how_it_should_be":"Разнести методы по бинам и вызвать через прокси"}},{"label":"B","order":1,"text":"Внутренний вызов идёт напрямую через целевой объект","correct":true,"sections":{"explanation":"В режиме PROXY перехват возможен на входе в прокси","example":"Метод placeOrder вызывает notify через внедрённый бин уведомлений","when_to_apply":"Когда два метода одного сервиса требуют разных границ исполнения","edge_cases":"AspectJ weaving имеет другую семантику перехвата","related":"То же ограничение есть у типичного прокси @Transactional"}},{"label":"C","order":2,"text":"Внутренний вызов автоматически наследует Future вызывающего","correct":false,"sections":{"what_actually":"Java-вызов не наследует Future","source_of_confusion":"Внешний прокси может вернуть future вызывающему","if_it_were_true":"Возвращаемый тип внешнего метода управлял бы исполнением вложенного","how_it_should_be":"Проводить нужный вызов через прокси"}},{"label":"D","order":3,"text":"Внутренний вызов отправляется в очередь текущей транзакции","correct":false,"sections":{"what_actually":"Транзакция не маршрутизирует вызовы в async-очередь","source_of_confusion":"Обе аннотации могут использовать advice","if_it_were_true":"Наличие транзакции меняло бы путь обычного вызова","how_it_should_be":"Обеспечить прохождение вызова через async-прокси"}}]}]},
-{"q_number":10,"blocks":[{"block_idx":0,"question_text":"Как @Async взаимодействует с @Transactional?","options":[{"label":"A","order":0,"text":"Worker присоединяется к транзакции вызывающего через её идентификатор","correct":false,"sections":{"what_actually":"Идентификатор не переносит привязанные к потоку ресурсы","source_of_confusion":"Прикладной correlation ID можно перенести","if_it_were_true":"Два потока разделяли бы жизненный цикл транзакции","how_it_should_be":"Открывать транзакцию на стороне worker"}},{"label":"B","order":1,"text":"Worker получает копию транзакции через executor","correct":false,"sections":{"what_actually":"Executor не копирует транзакционные ресурсы","source_of_confusion":"Контекст логирования можно декорировать","if_it_were_true":"Worker видел бы состояние незавершённой транзакции как своё","how_it_should_be":"Разделять перенос метаданных и управление транзакцией"}},{"label":"C","order":2,"text":"Worker может открыть собственную транзакцию через transactional-прокси","correct":true,"sections":{"explanation":"Обычная императивная транзакция привязана к потоку","example":"Асинхронный сервис вызывает транзакционный сервис на worker","when_to_apply":"Когда фоновая запись должна иметь собственную границу транзакции","edge_cases":"Синхронно исполняющий executor меняет предпосылку о другом потоке","related":"AFTER_COMMIT помогает запускать работу после успешного коммита"}},{"label":"D","order":3,"text":"Worker использует транзакцию вызывающего при propagation REQUIRED","correct":false,"sections":{"what_actually":"REQUIRED проверяет транзакцию текущего потока","source_of_confusion":"При синхронном вложенном вызове возможно присоединение","if_it_were_true":"Worker присоединялся бы к чужому потоку","how_it_should_be":"Вызывать транзакционный метод на worker через прокси"}}]}]}
-,{"q_number":11,"blocks":[{"block_idx":0,"question_text":"Какие есть требования к @Async методам?","options":[{"label":"A","order":0,"text":"Метод должен быть доступен через прокси и объявлять void или поддерживаемый Future","correct":true,"sections":{"explanation":"В режиме PROXY вызов должен пройти через перехватчик","example":"Внешний вызов публичного метода Spring-бина возвращает CompletableFuture","when_to_apply":"Для фонового API сервиса с результатом или без него","edge_cases":"Final-метод нельзя переопределить прокси на основе подкласса","related":"@PostConstruct не следует использовать как точку запуска @Async на том же бине"}},{"label":"B","order":1,"text":"Метод должен быть final и объявлять void или поддерживаемый Future","correct":false,"sections":{"what_actually":"Final мешает переопределению метода прокси-подклассом","source_of_confusion":"Final защищает реализацию от изменения в наследнике","if_it_were_true":"Требование ломало бы обычное проксирование подклассом","how_it_should_be":"Оставить метод перехватываемым выбранным прокси"}},{"label":"C","order":2,"text":"Метод должен быть static и объявлять void или поддерживаемый Future","correct":false,"sections":{"what_actually":"Static-вызов не проходит через прокси экземпляра","source_of_confusion":"Статические методы удобны как точки входа утилит","if_it_were_true":"Прокси экземпляра должен был бы перехватывать вызов класса","how_it_should_be":"Использовать метод Spring-бина"}},{"label":"D","order":3,"text":"Метод должен быть доступен через прокси и объявлять обычный тип результата","correct":false,"sections":{"what_actually":"Обычное значение невозможно вернуть как дескриптор незавершённой задачи","source_of_confusion":"Синхронный метод может возвращать готовое значение","if_it_were_true":"Вызов должен был бы ждать результата или менять тип","how_it_should_be":"Объявить тип Future или void"}}]}]},
-{"q_number":12,"blocks":[{"block_idx":0,"question_text":"Как комбинировать несколько @Async вызовов?","options":[{"label":"A","order":0,"text":"Запускать независимые вызовы через thenCompose и получать список через join","correct":false,"sections":{"what_actually":"ThenCompose связывает результат с зависимым следующим шагом","source_of_confusion":"Оба оператора строят асинхронную композицию","if_it_were_true":"Независимые шаги могли бы выполняться последовательно","how_it_should_be":"Запускать независимые методы до ожидания"}},{"label":"B","order":1,"text":"Запускать независимые вызовы через thenApply и ожидать любой через allOf","correct":false,"sections":{"what_actually":"AllOf ждёт завершения всех и возвращает CompletableFuture<Void>","source_of_confusion":"Названия операторов легко перепутать с anyOf","if_it_were_true":"Агрегат мог бы завершиться при первом ответе","how_it_should_be":"Для барьера использовать allOf, для первого завершения — anyOf"}},{"label":"C","order":2,"text":"Сначала получить futures независимых вызовов, затем объединить их через allOf","correct":true,"sections":{"explanation":"AllOf завершается после всех переданных futures","example":"После allOf можно собрать значения из исходных futures","when_to_apply":"Когда независимые запросы можно выполнить одновременно","edge_cases":"При сбое одного future агрегат завершится с ошибкой после завершения всех","related":"Для зависимого следующего вызова подходит thenCompose"}},{"label":"D","order":3,"text":"Сначала дождаться первого вызова через get, затем запускать остальные через allOf","correct":false,"sections":{"what_actually":"Get перед вторым запуском создаёт последовательное ожидание","source_of_confusion":"Get действительно позволяет дождаться результата","if_it_were_true":"Остальные задачи не перекрывались бы с первой","how_it_should_be":"Получить все futures до ожидания"}}]}]},
-{"q_number":13,"blocks":[{"block_idx":0,"question_text":"Как передать контекст (SecurityContext, MDC) в @Async?","options":[{"label":"A","order":0,"text":"Положить оба контекста в ThreadLocal и читать их в worker","correct":false,"sections":{"what_actually":"ThreadLocal хранится отдельно для каждого потока","source_of_confusion":"В синхронном коде значение доступно на всём стеке","if_it_were_true":"Worker видел бы ThreadLocal отправителя без переноса","how_it_should_be":"Захватывать и устанавливать контекст при передаче задачи"}},{"label":"B","order":1,"text":"Обернуть executor для SecurityContext и установить TaskDecorator для MDC","correct":true,"sections":{"explanation":"Контекст захватывают при отправке и устанавливают на время исполнения задачи","example":"DelegatingSecurityContextAsyncTaskExecutor переносит security, а декоратор копирует MDC","when_to_apply":"Когда фоновые логи и авторизация должны отражать запрос","edge_cases":"В finally очистить контекст задачи и восстановить прежнее состояние worker при необходимости","related":"Пул переиспользует потоки между запросами"}},{"label":"C","order":2,"text":"Установить TaskDecorator для MDC, а SecurityContext читать из пула без обёртки","correct":false,"sections":{"what_actually":"Копирование MDC не устанавливает SecurityContext","source_of_confusion":"Оба контекста часто требуются в одной задаче","if_it_were_true":"Авторизация на worker зависела бы от случайно оставленного состояния","how_it_should_be":"Использовать обёртку Spring Security"}},{"label":"D","order":3,"text":"Обернуть executor для SecurityContext и читать MDC из пула без декоратора","correct":false,"sections":{"what_actually":"Security-обёртка не копирует MDC","source_of_confusion":"Делегирование контекста звучит как перенос всех метаданных","if_it_were_true":"Корреляция логов появилась бы без настройки MDC","how_it_should_be":"Добавить декоратор для MDC"}}]}]},
-{"q_number":14,"blocks":[{"block_idx":0,"question_text":"Как тестировать @Async методы?","options":[{"label":"A","order":0,"text":"Вызывать прокси и проверять побочный эффект сразу после возврата","correct":false,"sections":{"what_actually":"Возврат из прокси может опередить побочный эффект","source_of_confusion":"В синхронном тесте проверка сразу работает","if_it_were_true":"Тест зависел бы от планирования потоков","how_it_should_be":"Ждать наблюдаемое условие с таймаутом"}},{"label":"B","order":1,"text":"Вызывать прокси и ждать побочный эффект фиксированным sleep","correct":false,"sections":{"what_actually":"Sleep не подтверждает завершение","source_of_confusion":"Локально задержка часто оказывается достаточной","if_it_were_true":"Под нагрузкой тест оставался бы нестабильным или медленным","how_it_should_be":"Ожидать конкретный результат или эффект"}},{"label":"C","order":2,"text":"Вызывать целевой объект напрямую и проверять, что прокси вернул future","correct":false,"sections":{"what_actually":"Прямой вызов тестирует целевой объект","source_of_confusion":"Бизнес-логику удобно проверять без контекста","if_it_were_true":"Тест мог бы пройти при выключенной поддержке async","how_it_should_be":"Для проверки инфраструктуры использовать прокси"}},{"label":"D","order":3,"text":"Вызывать прокси и ждать future с таймаутом или эффект ограниченным ожиданием","correct":true,"sections":{"explanation":"Проверку связывают с фактическим завершением работы","example":"Для CompletableFuture подходит get с таймаутом, для void — Awaitility","when_to_apply":"Когда тест сохраняет реальный асинхронный executor","edge_cases":"SyncTaskExecutor подходит для проверки логики без смены потока","related":"Тест проксирования должен вызывать внедрённый бин"}}]}]},
-{"q_number":15,"blocks":[{"block_idx":0,"question_text":"Чем @Async отличается от CompletableFuture.supplyAsync?","options":[{"label":"A","order":0,"text":"@Async передаёт вызов метода executor Spring, supplyAsync отправляет переданный Supplier через API JDK","correct":true,"sections":{"explanation":"@Async в режиме PROXY требует вызова через прокси, supplyAsync можно вызвать напрямую","example":"Для отдельного этапа pipeline вызвать supplyAsync с явным executor","when_to_apply":"@Async удобен на сервисной границе, supplyAsync — для отдельной операции","edge_cases":"Без явного executor supplyAsync обычно использует common pool","related":"Оба подхода позволяют вернуть CompletableFuture"}},{"label":"B","order":1,"text":"@Async всегда использует common pool, supplyAsync автоматически выбирает executor Spring","correct":false,"sections":{"what_actually":"Spring определяет свой executor, а JDK не ищет бины Spring","source_of_confusion":"Оба способа могут использовать один пул при явной передаче","if_it_were_true":"Ненастроенный JDK-вызов зависел бы от контекста приложения","how_it_should_be":"Передавать executor в supplyAsync явно, если нужен заданный пул"}},{"label":"C","order":2,"text":"@Async запускает Supplier через API JDK, supplyAsync отправляет вызов метода через прокси Spring","correct":false,"sections":{"what_actually":"Supplier передаётся в supplyAsync, а вызов метода перехватывает Spring","source_of_confusion":"Обе операции оформляют работу как задачу","if_it_were_true":"JDK-вызов требовал бы Spring-бина","how_it_should_be":"Выбирать API согласно границе задачи"}},{"label":"D","order":3,"text":"@Async и supplyAsync выбирают executor Spring по имени из аннотации","correct":false,"sections":{"what_actually":"Именование применяется в Spring, перегрузка JDK принимает объект Executor","source_of_confusion":"Именованный бин можно внедрить и передать вручную","if_it_were_true":"Аннотация управляла бы произвольными вызовами JDK","how_it_should_be":"Для supplyAsync передавать объект executor"}}]}]}
-] }
+{
+  "topic_slug": "spring-async-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое @Async и как его включить?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "`@Async` передаёт помеченный вызов планировщику. Чтобы включить обработку, на конфигурации нужно поставить `@EnableScheduling`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обработку `@Async` в показанной конфигурации включает `@EnableAsync`. `@EnableScheduling` активирует обработку методов с `@Scheduled`.",
+                "source_of_confusion": "Обе аннотации находятся в одном пакете, а планировщик и исполнитель часто конфигурируются рядом. Легко принять их за единый механизм запуска фоновой работы.",
+                "if_it_were_true": "Если бы `@EnableScheduling` включала `@Async`, одной конфигурации расписания хватило бы, чтобы обычный вызов метода отправки письма попадал в исполнитель.",
+                "how_it_should_be": "Для запуска по запросу пометьте метод `@Async` и включите `@EnableAsync`. Для запуска по cron или интервалу применяйте `@Scheduled` и `@EnableScheduling`."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "`@Async` передаёт помеченный вызов исполнителю. Чтобы включить обработку, на конфигурации нужно поставить `@EnableAsync`.",
+              "correct": true,
+              "sections": {
+                "explanation": "В режиме PROXY `@EnableAsync` регистрирует инфраструктуру, которая добавляет перехватчик к подходящим Spring-бинам. Когда вызов отмеченного метода проходит через прокси, перехватчик отправляет работу исполнителю. При нормальном приёме задачи асинхронным пулом вызывающий продолжает работу до завершения тела метода.",
+                "example": "Контроллер вызывает `notifications.sendEmail(\"user@example.com\", \"Hello\")` на внедрённом бине. Метод помечен `@Async` и возвращает `void`. При свободном потоке HTTP-ответ может уйти до того, как SMTP-сервер подтвердит приём письма.",
+                "when_to_apply": "Выносите из запроса работу, чей результат для ответа не нужен, если есть допустимая политика перегрузки и способ увидеть ошибку выполнения. Для гарантированной доставки после сбоя процесса нужна отдельная долговечная очередь или outbox.",
+                "edge_cases": "При синхронном исполнителе или срабатывании `CallerRunsPolicy` работа может выполняться в вызывающем потоке. Прямой вызов через `this` вообще обходит отправку задачи.",
+                "related": "`TaskExecutor` задаёт модель выполнения, очередь и реакцию на перегрузку. Это отдельное решение поверх декларации `@Async`."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "`@Async` передаёт помеченный вызов исполнителю. Чтобы включить обработку, достаточно объявить бин `TaskExecutor`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Бин `TaskExecutor` можно использовать напрямую, но одна его регистрация не подключает перехватчик аннотации. В обычном контексте без async-инфраструктуры тело выполняется при самом вызове.",
+                "source_of_confusion": "В Boot пул часто появляется автоматически. Из того, что инфраструктура и пул уже есть в рабочем приложении, легко вывести, что первую создаёт второй.",
+                "if_it_were_true": "Если бы присутствие пула активировало аннотацию, добавление пула для совсем другой подсистемы меняло бы поведение вызова помеченного бина.",
+                "how_it_should_be": "Настраивайте активацию и исполнитель независимо. Включите `@EnableAsync`, а затем выберите пул для методов по имени или через конфигурацию по умолчанию."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "`@Async` передаёт помеченный вызов исполнителю. Чтобы включить обработку, на конфигурации нужно поставить `@EnableAspectJAutoProxy`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Общий механизм Spring AOP может создавать прокси для аспектов, но сам по себе не добавляет перехватчик `@Async`. Для показанного подхода его подключает `@EnableAsync`.",
+                "source_of_confusion": "Асинхронность реализуется на базе AOP, поэтому включение AOP легко принять за регистрацию всех его прикладных расширений.",
+                "if_it_were_true": "Если бы общей настройки AOP хватало, сервис с одними аспектами аудита получал бы async-отправку сразу после добавления аннотации на метод.",
+                "how_it_should_be": "Подключите инфраструктуру конкретной аннотации. При отладке проверьте активацию, что целевой объект получен из контейнера и что обращение проходит через его прокси."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие типы возврата поддерживает @Async?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "`@Async` принимает `void` и обычное значение `T`. Spring автоматически превращает значение `T` в `CompletableFuture<T>` для вызывающего.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тип виден вызывающему через Java-сигнатуру метода. Spring Framework 6 и 7 отклоняют прямой тип результата при перехваченном вызове с `IllegalArgumentException`.",
+                "source_of_confusion": "Программный `supplyAsync` действительно принимает функцию, возвращающую обычное значение. У аннотированного метода сигнатура одновременно является контрактом вызывающего кода.",
+                "if_it_were_true": "При такой подмене `findUserAsync`, объявленный с типом `User`, фактически возвращал бы объект, у которого вызывающий ожидает методы `User`.",
+                "how_it_should_be": "Объявите `CompletableFuture<User>` и верните `completedFuture(user)` из тела. Для функции с обычным результатом используйте `supplyAsync` с явно выбранным исполнителем."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "`@Async` принимает `void` и `Future<T>`. `CompletableFuture<T>` требует отдельного запуска через программный API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CompletableFuture` реализует `Future` и имеет отдельный путь отправки задачи в async-перехватчике. Вызывающий получает future, пригодную для композиции.",
+                "source_of_confusion": "У `CompletableFuture` есть собственные фабрики запуска, поэтому его легко воспринимать как альтернативу Spring на уровне всего вызова.",
+                "if_it_were_true": "Если бы Spring исключал `CompletableFuture`, показанная сигнатура `findUserAsync` не позволила бы подписаться на имя пользователя через `thenApply`.",
+                "how_it_should_be": "Используйте `CompletableFuture` как тип возврата для цепочек. Выполните синхронный вызов репозитория в теле задачи и верните готовое значение в future без второго запуска."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "`@Async` принимает `void` и `CompletionStage<T>`. Достаточно объявить интерфейс стадии, если тело возвращает `CompletableFuture<T>`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Перехватчик выбирает способ отправки по объявленному типу до выполнения тела. Сам интерфейс `CompletionStage` не является `Future`, поэтому такая сигнатура не проходит проверку.",
+                "source_of_confusion": "Переменная типа `CompletionStage` действительно может хранить `CompletableFuture`. Ошибка возникает при переносе этого правила присваивания на проверку сигнатуры Spring.",
+                "if_it_were_true": "Если бы учитывался фактический класс результата, Spring пришлось бы сначала исполнить тело, чтобы определить, какой объект вернуть вызывающему.",
+                "how_it_should_be": "Укажите `CompletableFuture<T>` на границе аннотированного метода. При необходимости наружный фасад может отдать его как `CompletionStage<T>` после вызова прокси."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "`@Async` принимает `void`, `Future<T>` и `CompletableFuture<T>`. Вызывающий получает future для результата или не получает значения при `void`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Перехватчик отправляет задачу соответственно объявленной сигнатуре. Для `CompletableFuture` вызывающий получает future от запуска, а тело метода возвращает свою future по контракту Java. Перехватчик извлекает её результат внутри задачи и завершает внешнюю. При `void` будущего результата для клиента нет.",
+                "example": "Для `findUserAsync(1L)` тело загружает пользователя Анну и возвращает `CompletableFuture.completedFuture(user)`. Стадия `thenApply(User::getName)` у вызывающего получает строку «Анна» после выполнения запроса.",
+                "when_to_apply": "Выберите `CompletableFuture`, если значение, сбой или комбинация с другими операциями значимы для вызывающего. `Future` подходит простым контрактам с ожиданием через `get`. Для `void` предусмотрите наблюдаемость сбоя.",
+                "edge_cases": "В Spring 6.0 `ListenableFuture` объявили устаревшим, а в 7.0 его удалили. В современных версиях сигнатуры вроде `User` и `CompletionStage<User>` отклоняются при проксируемом вызове.",
+                "related": "`completedFuture` оборачивает уже вычисленное значение. `supplyAsync` планирует новое вычисление, поэтому их выбор влияет на число переходов между исполнителями."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает @Async под капотом?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Прокси передаёт оставшуюся цепочку вызова в `TaskExecutor`. Вызывающий получает `CompletableFuture` отправленной задачи.",
+              "correct": true,
+              "sections": {
+                "explanation": "`AsyncAnnotationBeanPostProcessor` добавляет async-advisor к подходящему прокси или создаёт его. Перехватчик выбирает executor и передаёт ему задачу, которая продолжает вызов целевого метода. Для асинхронного пула прокси возвращает handle принятой задачи без ожидания её результата. [Javadoc постпроцессора](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/scheduling/annotation/AsyncAnnotationBeanPostProcessor.html)",
+                "example": "Поток `http-1` вызывает `asyncMethod()` на внедрённом бине. Пока `io-1` ждёт ответ каталога, `http-1` уже может повесить обработчик на возвращённую future. Когда каталог отвечает, значение становится доступным через `get`.",
+                "when_to_apply": "При диагностике логируйте имя потока около внешнего вызова и в теле. Сопоставьте его с префиксом выбранного пула и проверьте, что вызов проходит через контейнерный бин.",
+                "edge_cases": "При прямом вызове на экземпляре, созданном через `new`, такого перехвата нет. Если выбран синхронный executor, перехват происходит, но выполнение остаётся в текущем потоке.",
+                "related": "В режиме ASPECTJ точка перехвата появляется через weaving. Это отдельная конфигурация со своими зависимостями и условиями, которая меняет поведение локальных вызовов."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Прокси вызывает тело в текущем потоке и передаёт в `TaskExecutor` только обработку результата. Вызывающий получает `CompletableFuture` этой обработки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Исполнителю передаётся продолжение вызова целевого метода. При обычной работе пула I/O в теле выполняется на worker, даже если тело возвращает уже готовую future.",
+                "source_of_confusion": "Вызов `completedFuture(blockingCall())` внутри обычного метода действительно сначала вычисляет аргумент в текущем потоке. В показанной схеме текущий поток самого тела определяется более ранним перехватом.",
+                "if_it_were_true": "Если бы переносилась только обработка результата, медленный каталог задерживал бы возврат из вызова прокси на всё время сетевого запроса.",
+                "how_it_should_be": "Снимите два замера: длительность вызова прокси и длительность ожидания future. Для переноса всего тела используйте перехватываемый метод и асинхронный executor."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Прокси вызывает тело в текущем потоке и требует, чтобы оно само передало работу в `TaskExecutor`. Вызывающий получает `CompletableFuture` из тела метода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При проксируемом вызове задачу создаёт перехватчик. Вызов дополнительной фабрики запуска в теле создаст ещё одну задачу, хотя первый переход уже состоялся.",
+                "source_of_confusion": "Так действительно устроен обычный метод, возвращающий результат `supplyAsync`. В обоих случаях вызывающий видит один и тот же тип, что скрывает разницу в месте отправки.",
+                "if_it_were_true": "Если бы аннотация требовала ручного запуска, тело с `completedFuture(repository.load())` блокировало бы вызывающего при любой настройке async-пула.",
+                "how_it_should_be": "Запускайте работу либо аннотацией на границе бина, либо программной отправкой. Для первой схемы верните из тела готовую future после вычисления."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Прокси передаёт тело в `TaskExecutor` и ждёт его завершения. Вызывающий получает `CompletableFuture` уже после вычисления результата.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Во время нормальной отправки в асинхронный пул прокси не вызывает `get` на future, которую возвращает клиенту. Ожидание доступно клиенту как отдельная операция.",
+                "source_of_confusion": "Внутри задачи перехватчик может ждать future из тела. Легко приписать это ожидание потоку, который вызвал прокси.",
+                "if_it_were_true": "Если бы прокси всегда ждал, вызов метода, тело которого ждёт освобождения защёлки вызывающим, завис бы до таймаута.",
+                "how_it_should_be": "Различайте момент приёма задачи и завершение значения. Если клиенту нужен результат, используйте композицию или ограниченное ожидание после получения handle."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой executor используется по умолчанию?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Без явного имени Spring всегда использует `SimpleAsyncTaskExecutor`. Настройки Boot применяются только к явно указанному исполнителю.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SimpleAsyncTaskExecutor` в Spring Framework служит запасным вариантом, когда стандартный поиск исполнителя ничего не нашёл. Подходящий автоконфигурированный `AsyncTaskExecutor` Boot может быть выбран для обычного `@Async`.",
+                "source_of_confusion": "В приложении без подходящих executor-бинов действительно виден поток на задачу. Условие отсутствия подходящего бина легко пропустить в описании fallback.",
+                "if_it_were_true": "Если бы fallback имел приоритет, смена префикса автоконфигурированного пула в Boot не меняла бы имена потоков неименованного `@Async` в конфигурации по умолчанию.",
+                "how_it_should_be": "Проверьте, какой бин реально зарегистрирован, есть ли `AsyncConfigurer` и какой executor указан на методе. При необходимости зафиксируйте выбор именем."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Без явного имени Spring всегда использует `ForkJoinPool.commonPool()`. Настройки Boot влияют только на вызываемые напрямую executors.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Async` разрешает executor через Spring и имеет собственный fallback. Общий пул JDK характерен для программного `CompletableFuture.supplyAsync` без executor.",
+                "source_of_confusion": "Метод `@Async` может вернуть `CompletableFuture`, но тип результата не определяет, как запущено вычисление.",
+                "if_it_were_true": "Если бы использовался common pool, настройка `spring.task.execution.thread-name-prefix` не объясняла бы потоки с этим префиксом при запуске задач Boot.",
+                "how_it_should_be": "Для изоляции фоновой нагрузки выберите управляемый executor по имени. Если используете программный запуск, передайте тот же управляемый executor явным аргументом."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Без явного имени Spring разрешает исполнитель из конфигурации или бинов. При отсутствии подходящего кандидата Framework использует `SimpleAsyncTaskExecutor`, а Boot обычно находит автоконфигурированный executor.",
+              "correct": true,
+              "sections": {
+                "explanation": "Если `AsyncConfigurer` не задал executor, базовый поиск Framework пробует однозначно разрешить `TaskExecutor`, затем ищет `Executor` с именем `taskExecutor`. При отсутствии обоих используется `SimpleAsyncTaskExecutor`. Boot обычно предоставляет `applicationTaskExecutor` через автоконфигурацию. [EnableAsync](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/scheduling/annotation/EnableAsync.html), [Task Execution в Boot](https://docs.spring.io/spring-boot/reference/features/task-execution-and-scheduling.html)",
+                "example": "В Boot с автоконфигурированным платформенным пулом YAML из вопроса задаёт 8 основных потоков и очередь 100. Если восемь задач заняли потоки, следующие ждут в очереди. Когда очередь заполнится, очередная подача может увеличить пул до 50 рабочих потоков.",
+                "when_to_apply": "Проверьте условия автоконфигурации при добавлении своего `Executor`. Для предсказуемого поведения под нагрузкой задайте верхнюю границу очереди, лимит параллелизма и обработку отказа.",
+                "edge_cases": "При включённой поддержке виртуальных потоков в Boot и Java 21+ автоконфигурация может создать `SimpleAsyncTaskExecutor` на виртуальных потоках. Параметры размера платформенного пула тогда не задают предел конкурентных запросов к внешней системе.",
+                "related": "`@Async(\"emailExecutor\")` выбирает отдельный executor по имени или квалификатору. Это способ не делить очередь отчётов с отправкой писем."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Без явного имени Spring ищет `taskExecutor`. Если такого имени нет, Framework создаёт платформенный пул, а Boot использует тот же fallback.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Имя `taskExecutor` проверяется после поиска подходящего бина `TaskExecutor`. У fallback-инстанса Framework нет пула переиспользуемых потоков.",
+                "source_of_confusion": "Историческое имя `taskExecutor` и наличие платформенного пула в обычном Boot-приложении можно принять за единое правило Framework.",
+                "if_it_were_true": "Если бы имя было обязательным, один `TaskExecutor` с именем `emailExecutor` не использовался бы неименованным `@Async` даже в простом контексте без других кандидатов.",
+                "how_it_should_be": "Смотрите типы и разрешимость кандидатов, а затем имя запасного кандидата. При нескольких исполнителях укажите выбор в конфигурации или аннотации."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как сконфигурировать кастомный TaskExecutor?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Объявить `ThreadPoolTaskExecutor` как именованный бин и выбрать его в `@Async`. При нагрузке пул растёт до максимума, после чего начинает заполнять очередь.",
+              "correct": false,
+              "sections": {
+                "what_actually": "После достижения core size `ThreadPoolExecutor` сначала пытается положить новую задачу в очередь. Рост сверх core size происходит при неуспешной попытке постановки в очередь и при наличии места до max size.",
+                "source_of_confusion": "Максимум потоков выглядит как первый предел быстрого запуска. Этот порядок похож на поведение при нулевой ёмкости очереди, когда передать задачу свободному worker не удалось.",
+                "if_it_were_true": "Если бы очередь использовалась после max size, при core 5, max 10 и пустой очереди шестая длительная задача запустила бы шестого worker.",
+                "how_it_should_be": "Подберите очередь под допустимое ожидание. При `queueCapacity=0` используется `SynchronousQueue`, и занятый пул может расти сразу сверх core size. При положительной ёмкости учитывайте очередь перед ростом."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Объявить `ThreadPoolTaskExecutor` как именованный бин и выбрать его в `@Async`. При нагрузке сначала задействуются основные потоки, затем очередь, затем рост до максимума.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@Async(\"emailExecutor\")` направляет вызовы в конкретный управляемый executor. Он увеличивает число worker до core size по мере подачи задач, ставит последующие задачи в очередь, после её заполнения пытается расти до max size. Когда насыщены обе границы, срабатывает политика отклонения.",
+                "example": "Пять длительных отправок заняли пять основных потоков. Следующие 100 задач в примере помещаются в очередь. Следующие пять подач могут создать ещё пять worker, пока первые задачи не освободили ресурсы. При полном насыщении показанная `CallerRunsPolicy` выполнит очередную задачу в подающем потоке, если пул ещё работает.",
+                "when_to_apply": "Выделяйте отдельный пул для внешнего сервиса со своим бюджетом конкурентности. Настраивайте его вместе с таймаутом вызова, размером очереди и ожидаемой реакцией HTTP-обработчика на перегрузку.",
+                "edge_cases": "Управляемый бин контейнер инициализирует сам. У экземпляра, созданного и возвращённого из `getAsyncExecutor()` вне управления Spring, жизненный цикл нужно обеспечить самостоятельно. По умолчанию core threads стартуют по мере подачи задач.",
+                "related": "`CallerRunsPolicy` снижает скорость подачи за счёт работы в вызывающем потоке. `AbortPolicy` позволяет сразу увидеть отказ и принять решение о повторе или возврате ошибки."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Объявить `ThreadPoolTaskExecutor` как именованный бин и выбрать его в `@Async`. При нагрузке задачи сначала занимают очередь, а рабочие потоки создаются только после её заполнения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При поступлении задачи и наличии места до core size executor создаёт worker. Ёмкость очереди определяет поведение последующих подач, когда основной размер уже достигнут.",
+                "source_of_confusion": "Диаграммы очереди задач часто показывают worker как потребителя, который уже существует и только забирает работу. Из них ошибочно выводят, что заполнение очереди всегда предшествует старту потоков.",
+                "if_it_were_true": "Если бы пустой пул ждал заполнения очереди, первая отправка в примере не стартовала бы, пока сервис не соберёт примерно сотню задач.",
+                "how_it_should_be": "При расчёте одиночного всплеска сначала учтите свободные основные потоки. Если важна задержка старта после простоя, рассмотрите предварительный запуск core threads."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Объявить `ThreadPoolTaskExecutor` как именованный бин и выбрать его в `@Async`. При нагрузке пул создаёт потоки до основного размера, а заполнение очереди сразу запускает отказ.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Заполнение очереди при числе потоков ниже max size ещё оставляет пулу возможность принять задачу на дополнительном worker. Отказ возникает, когда добавить worker тоже не удалось или пул остановлен.",
+                "source_of_confusion": "Свойства core size и max size дают одинаковый результат, когда они равны. По такому пулу легко сделать вывод, что расширение после очереди вообще отсутствует.",
+                "if_it_were_true": "Если бы полная очередь означала немедленный отказ, в примере `CallerRunsPolicy` срабатывала бы уже при пяти занятых worker, а максимум 10 оставался бы бесполезен.",
+                "how_it_should_be": "Для фиксированной рабочей параллельности установите равные core и max. Для управляемого роста оставьте разницу и следите за активными потоками, очередью и отклонениями."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое AsyncConfigurer?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "`AsyncConfigurer` задаёт executor по умолчанию и обработчик ошибок всех async-методов, включая завершившиеся исключением `CompletableFuture`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Через `getAsyncExecutor()` можно назначить исполнитель по умолчанию. `getAsyncUncaughtExceptionHandler()` используется для исключения из `void`, а метод с future передаёт ошибку в результат.",
+                "source_of_confusion": "Имя «uncaught exception handler» напоминает общую точку сбора ошибок и скрывает зависимость от контракта возврата конкретного метода.",
+                "if_it_were_true": "При таком контракте ошибка запроса, уже доступная через `exceptionally`, также поступала бы центральному обработчику и могла бы вызвать два оповещения.",
+                "how_it_should_be": "Разделите наблюдаемость: для `void` задайте обработчик, для future добавьте обработку на стадии либо логируйте сбой на выбранной границе сервиса."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "`AsyncConfigurer` задаёт исполнитель для каждого имени в `@Async` и обработчик ошибок методов, возвращающих `void`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`getAsyncExecutor()` даёт один executor по умолчанию. Квалификатор из `@Async(\"emailExecutor\")` разрешается отдельно через контейнер.",
+                "source_of_confusion": "Интерфейс похож на центральную фабрику исполнителей. Легко предположить, что Spring передаёт в неё имя из аннотации, хотя метод не принимает такого параметра.",
+                "if_it_were_true": "Если бы именование шло через `AsyncConfigurer`, одного именованного бина `emailExecutor` было бы недостаточно для запуска почтовых задач на нём.",
+                "how_it_should_be": "Объявляйте специальные исполнители как отдельные бины с именами или квалификаторами. Через `AsyncConfigurer` задавайте поведение неименованных вызовов."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "`AsyncConfigurer` задаёт исполнитель для `@Async` без имени и обработчик необработанных ошибок методов, возвращающих `void`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Конфигурация может реализовать `getAsyncExecutor()` и `getAsyncUncaughtExceptionHandler()`. Первый метод задаёт executor неименованных вызовов. Второй возвращает обработчик ошибок, которые вышли из тела `void`-метода и не могут быть переданы в future.",
+                "example": "Если общий исполнитель имеет префикс `app-async-`, вызов `@Async` без аргумента использует его. Соседний `@Async(\"emailExecutor\")` может выполняться на потоке `mail-1`. Если его `void`-тело выбросит исключение, его получит тот же настроенный обработчик.",
+                "when_to_apply": "Используйте интерфейс, когда хотите централизованно задать default либо политику обработки ошибок и сохранить именованные пулы для отдельных нагрузок. Настройте жизненный цикл общего исполнителя.",
+                "edge_cases": "Возврат `null` из `getAsyncExecutor()` сохраняет штатный поиск executor. Async-конфигурация инициализируется рано, поэтому требовательные зависимости конфигурации лучше получать отложенно.",
+                "related": "`AsyncUncaughtExceptionHandler` отвечает за уже запущенные задачи с `void`. Синхронный отказ постановки задачи требует реакции на стороне вызова."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "`AsyncConfigurer` задаёт обработчик ошибок методов, возвращающих `void`. Исполнитель можно выбрать только именем в самой аннотации `@Async`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба параметра можно настроить из одного класса. `getAsyncExecutor()` применяется даже без имени в аннотации, если вернул executor.",
+                "source_of_confusion": "Именование в `@Async` хорошо видно в коде и часто применяется для нескольких пулов. Это создаёт впечатление, что такой выбор обязателен для любого конкретного пула.",
+                "if_it_were_true": "Если бы default нельзя было настроить в интерфейсе, для переноса двадцати методов в общий выделенный пул пришлось бы изменять каждую аннотацию.",
+                "how_it_should_be": "Назначьте общий executor через `getAsyncExecutor()`. Оставьте явный квалификатор там, где задача требует отдельного лимита или политики перегрузки."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обрабатывать исключения в @Async методах?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Ошибку тела `CompletableFuture` передаёт в завершение future. Ошибку тела `void` Spring передаёт в `AsyncUncaughtExceptionHandler`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Когда исключение выходит из запущенного метода, для сигнатуры с future оно завершает возвращённую future с ошибкой. У `void` канала результата нет, поэтому Spring вызывает назначенный обработчик. По умолчанию тот пишет ошибку в журнал.",
+                "example": "Пусть внешнее API отвечает ошибкой вместо данных. У `fetchData().exceptionally(ex -> Data.empty())` следующая стадия получит запасное значение. При такой же ошибке из `void refresh()` настроенный обработчик может увеличить счётчик ошибок обновления.",
+                "when_to_apply": "Используйте future, если клиенту нужно отличить частичный результат, успех и ошибку. Для `void` настройте регистрацию сбоя и решите, кто будет повторять операцию.",
+                "edge_cases": "Вызов `join()` даёт `CompletionException` для обычного сбоя, а `get()` даёт `ExecutionException`. Если executor отвергает задачу при отправке, отказ может быть брошен синхронно ещё до возврата future.",
+                "related": "`exceptionally` превращает ошибку в запасное значение. `whenComplete` можно использовать для наблюдения, сохраняя исходный результат или исключение при успешной работе callback."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Ошибку тела `CompletableFuture` получает `try/catch` вокруг вызова. Ошибку тела `void` получает тот же `try/catch`, если метод вызван через прокси.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При исполнении рабочим потоком исключение из тела поступает в future или в uncaught handler. В точке подачи задачи могут возникнуть другие ошибки, например отказ заполненного пула.",
+                "source_of_confusion": "В обычном вызове синхронного сервиса `try/catch` ловит ошибку метода. В случае `@Async` одинаковый синтаксис обращения скрывает границу запуска.",
+                "if_it_were_true": "Если бы исключение могло прийти в исходный `try/catch` от уже принятой задачи, вызов контроллера должен был бы оставаться в нём, пока операция не завершилась.",
+                "how_it_should_be": "Ловите отказ постановки рядом с вызовом. Ошибку исполнения обрабатывайте в стадии, на ограниченном ожидании результата или через обработчик для `void`."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Ошибку тела `CompletableFuture` Spring передаёт в `AsyncUncaughtExceptionHandler`. Ошибку тела `void` получает тот же обработчик.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обработчик не получает ошибку из тела метода, возвращающего future. Spring сохраняет её в асинхронном результате, откуда её получает вызывающий.",
+                "source_of_confusion": "Единая настройка `AsyncConfigurer` создаёт впечатление единой маршрутизации всех исключений. Однако наличие future меняет канал доставки.",
+                "if_it_were_true": "Если бы обработчик получал оба случая, счётчик в нём рос бы при каждом сбое `fetchData()`, даже когда вызывающий осознанно применил запасное значение.",
+                "how_it_should_be": "Учитывайте тип возврата при выборе наблюдаемости. Для учёта ошибок future добавляйте `whenComplete` или обрабатывайте исключение на границе приложения."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Ошибку тела `CompletableFuture` передаёт в пустой успешный результат. Ошибку тела `void` Spring передаёт в `AsyncUncaughtExceptionHandler`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring завершает future с ошибкой. Превращение сбоя в пустой объект происходит только если это явно сделано в теле либо в зависимой стадии.",
+                "source_of_confusion": "В примере `exceptionally` возвращает `Data.empty()` и следующая стадия работает дальше. Легко приписать этот эффект аннотации, хотя его задаёт код восстановления.",
+                "if_it_were_true": "Если бы успех с пустым результатом был встроен, `exceptionally` не вызвался бы при ошибке API и клиент не смог бы отличить пустой ответ от сбоя.",
+                "how_it_should_be": "Добавляйте запасное значение для тех исключений, которые допустимы в бизнес-сценарии. Остальные ошибки оставляйте исключительным завершением и обрабатывайте отдельно."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое AsyncUncaughtExceptionHandler?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Это обработчик отказа executor для `void @Async`. Spring передаёт ему причину отклонения, исходный метод и аргументы задачи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При отказе постановки тело метода ещё не запущено и async-обработчик этого сбоя не видит. Его точка вызова находится при обработке исключения, вышедшего из выполняемого метода.",
+                "source_of_confusion": "Название обработчика связывают со всеми ошибками асинхронного запуска, хотя ошибки отправки и самой задачи происходят по разные стороны границы executor.",
+                "if_it_were_true": "При таком поведении заполненная очередь почтового пула передала бы отказ в `handleUncaughtException`, а вызывающий код не получил бы сигнал о неприёме задачи.",
+                "how_it_should_be": "Реагируйте на отказ через политику отклонения и обработку вызова. Используйте uncaught handler для ошибок уже выполняющейся `void`-операции."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Это обработчик завершения future с ошибкой. Spring передаёт ему исключение, исходный метод и аргументы задачи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При сигнатуре с future исключительное завершение представляет сам результат. Обработчик служит для исключений из `void`-методов, у которых такого результата нет.",
+                "source_of_confusion": "В обоих случаях тело часто исполняется в одинаковом пуле. Поэтому кажется, что для регистрации ошибки достаточно единственной точки рядом с ним.",
+                "if_it_were_true": "Если бы handler отслеживал future, даже обработанные клиентом через `handle` ошибки могли бы отдельно поднимать алерт из этого handler.",
+                "how_it_should_be": "Для `CompletableFuture` используйте `whenComplete`, `handle` или `exceptionally` в зависимости от того, наблюдаете вы ошибку или восстанавливаете результат."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Это обработчик необработанных ошибок любого потока пула. Executor передаёт ему исключение, рабочий поток и текущий объект задачи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обработчик вызывается инфраструктурой Spring `@Async` и получает `Throwable`, `Method` и аргументы вызова. Задачи, отправленные в тот же пул напрямую, через этот interceptor не проходят.",
+                "source_of_confusion": "В Java есть `Thread.UncaughtExceptionHandler`, а у исполнителей есть собственные хуки. Сходство названий маскирует различие между ошибкой потока и ошибкой аннотированного вызова.",
+                "if_it_were_true": "Если бы это был обработчик пула, сбой задания, отправленного прямым `executor.execute(...)`, тоже попадал бы в него с описанием целевого Spring-метода.",
+                "how_it_should_be": "Подключайте обработчик через `AsyncConfigurer` для `@Async`. Для прямых задач наблюдайте завершение их future или оборачивайте код задачи с учётом используемого API отправки."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Это обработчик исключений, вышедших из тела `void @Async`. Spring передаёт ему исключение, исходный метод и аргументы вызова.",
+              "correct": true,
+              "sections": {
+                "explanation": "`handleUncaughtException(Throwable, Method, Object...)` вызывается, если `void`-метод завершился необработанной ошибкой. Через `AsyncConfigurer.getAsyncUncaughtExceptionHandler()` можно настроить собственную реакцию. Одна регистрация класса как компонента не заменяет эту настройку.",
+                "example": "`sendEmail(42L)` выбрасывает исключение при обращении к SMTP. Handler пишет имя метода, идентификатор задачи и стек исключения. Вызывающий уже продолжил работу, но сбой виден в метрике отправки.",
+                "when_to_apply": "Используйте обработчик для метрики, журнала или оповещения по фоновым операциям без результата. Если ошибка должна инициировать надёжный retry после перезапуска, сохраните состояние задания в очереди или базе.",
+                "edge_cases": "Если тело само перехватило ошибку и завершилось нормально, handler не вызывается. Аргументы могут содержать адреса, токены и персональные данные. Для диагностики лучше выбирать заранее разрешённые поля.",
+                "related": "Обычный `UncaughtExceptionHandler` потока относится к необработанным исключениям на уровне потока. Spring обращается к своему обработчику внутри механизма выполнения аннотированного метода."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему @Async не работает при self-invocation?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "`this.sendEmailAsync(order)` остаётся в текущем потоке, потому что настройка `PROXY` требует JDK-интерфейс. Прокси на основе подкласса отправит этот вызов в пул.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В режиме PROXY локальный вызов на целевом объекте проходит мимо advice и с JDK-прокси, и с прокси на основе подкласса. Смена технологии прокси не меняет приёмника `this` внутри целевого вызова.",
+                "source_of_confusion": "CGLIB перехватывает внешние вызовы через сгенерированный подкласс. Это легко смешать с общим поведением виртуального вызова на объекте-наследнике.",
+                "if_it_were_true": "Если бы смена типа прокси решала проблему, при `proxyTargetClass=true` почта из неизменённого `processOrder` отправлялась бы worker-потоком.",
+                "how_it_should_be": "Направьте вызов через внедрённый контейнером прокси, обычно вынеся отправку в отдельный бин. По имени потока проверьте переход за границу вызова."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "`this.sendEmailAsync(order)` остаётся в текущем потоке, потому что вызов идёт на целевом объекте. Вызов того же метода через Spring-прокси может отправить его в пул.",
+              "correct": true,
+              "sections": {
+                "explanation": "Код внутри `processOrder` обращается к `this`. Даже если кто-то пришёл в `processOrder` через прокси, внутри целевого объекта вызов `sendEmailAsync` не проходит через async-advice. Поэтому `emailClient.send(order)` задерживает возврат `processOrder`.",
+                "example": "При SMTP-задержке около 300 мс вызов из примера занимает эти 300 мс в потоке обработчика. После переноса `sendEmailAsync` в внедрённый `EmailService` с рабочим async-пулом лог отправки появляется на `email-1`.",
+                "when_to_apply": "Вынесите метод в отдельный Spring-бин, если хотите проксируемую границу и ясную ответственность за отправку. При использовании ссылки на собственный прокси проверьте, что внедряется прокси и нужный метод доступен через его тип.",
+                "edge_cases": "Удаление явного `this` оставляет тот же локальный вызов. В режиме ASPECTJ с настроенным weaving вызов в том же классе может обрабатываться без прохода через внешний прокси.",
+                "related": "Самовызов обходит и другие proxy-based advice, например `@Transactional` и `@Cacheable`. Для их диагностики также прослеживайте, какой объект фактически получает вызов."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "`this.sendEmailAsync(order)` остаётся в текущем потоке, потому что у `@Async` тип `void`. При переходе на `CompletableFuture` локальный вызов будет отправлен в пул.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Возвращаемый тип имеет значение, только когда перехватчик уже получил вызов. В этом локальном вызове Spring не выбирает ни executor, ни канал результата.",
+                "source_of_confusion": "Future ассоциируется с фоновым выполнением, но `completedFuture` может оборачивать значение, которое только что синхронно вычислил вызывающий поток.",
+                "if_it_were_true": "Если бы future сама давала перехват, локальный `completedFuture(emailClient.send(order))` откладывал бы вычисление аргумента до запуска worker.",
+                "how_it_should_be": "Сначала обеспечьте вызов через прокси либо явно отправьте работу executor. Затем выбирайте тип результата в зависимости от нужд клиента."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "`this.sendEmailAsync(order)` остаётся в текущем потоке, пока у `@Async` нет имени пула. Указание `@Async(\"emailExecutor\")` заставит локальный вызов попасть в этот пул.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Имя executor читается в async-перехватчике. При вызове через `this` он не запускается, поэтому замена аннотации не меняет поведение.",
+                "source_of_confusion": "У именованного пула легко увидеть собственный префикс потока, что помогает искать ошибки выбора executor. При отсутствии проксирования эта диагностика указывает на другую причину.",
+                "if_it_were_true": "Если бы одного имени было достаточно, в локальном вызове из примера лог SMTP сразу получил бы префикс `email-` после изменения аннотации.",
+                "how_it_should_be": "Отдельно проверьте прохождение через прокси и выбор пула. Для локального программного запуска можно вызвать `executor.execute` явно и определить обработку ошибок."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как @Async взаимодействует с @Transactional?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Прокси переносит транзакцию заказа в worker, поэтому `REQUIRED` присоединяет сохранение уведомления к транзакции `processOrder`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Императивная транзакция связана с ресурсами потока, который вызвал `processOrder`. Async-перехватчик передаёт worker продолжение вызова, а `REQUIRED` на worker открывает отдельную транзакцию при отсутствии текущей.",
+                "source_of_confusion": "Оба метода имеют `@Transactional`, а при обычном синхронном обращении `REQUIRED` действительно может присоединиться к уже активной транзакции.",
+                "if_it_were_true": "Если бы общая транзакция переносилась, запись уведомления и запись заказа имели бы один исход даже при независимом завершении обоих потоков.",
+                "how_it_should_be": "Для атомарной фиксации сохраните заказ и запись о будущем уведомлении в одной локальной транзакции. После коммита отправляйте уведомление отдельным обработчиком outbox."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Прокси открывает транзакцию уведомления в вызывающем потоке, затем передаёт тело в worker, который исполняет запись за пределами этой транзакции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При заданном стандартном порядке async-advice переключает исполнителя до входа в транзакционный advice уведомления. Транзакционный interceptor отрабатывает в worker и открывает там транзакцию `REQUIRED`.",
+                "source_of_confusion": "Для нескольких advice порядок действительно важен. По вложенным аннотациям можно ошибочно решить, что Spring откроет транзакцию перед передачей executor.",
+                "if_it_were_true": "Если бы транзакционный advice целиком оборачивал только отправку, он мог бы завершиться при возврате из `submit`, пока сохранение в worker ещё даже не началось.",
+                "how_it_should_be": "При нестандартном порядке разнесите асинхронную границу и транзакционную работу на два бина. Пусть worker вызывает второй бин через транзакционный прокси."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Прокси передаёт вызов уведомления в worker, где `REQUIRED` открывает отдельную транзакцию. Транзакция заказа остаётся в вызывающем потоке.",
+              "correct": true,
+              "sections": {
+                "explanation": "Императивные ресурсы заказа привязаны к потоку. Async-advice с обычным порядком передаёт оставшуюся цепочку executor. Когда транзакционный advice выполнится на свободном worker, локальной транзакции ещё нет, и `REQUIRED` создаёт её. Исход одной транзакции автоматически не фиксирует и не откатывает другую.",
+                "example": "Если worker начнёт чтение заказа 42 до его коммита, он может не увидеть новую строку, например при `READ COMMITTED`. В таблице без зависимости от заказа уведомление может зафиксироваться, даже если операция создания заказа позже откатится.",
+                "when_to_apply": "Когда выполнение допустимо только после успешного коммита, публикуйте событие из транзакции заказа и используйте `@TransactionalEventListener(AFTER_COMMIT)` с асинхронной обработкой. Передавайте ID и перечитывайте данные в транзакции worker.",
+                "edge_cases": "Если метод вызвать через `this`, переключения executor и транзакционного перехвата этой границы не будет. Синхронный executor также меняет картину: при `REQUIRED` возможна работа в уже активной транзакции вызывающего.",
+                "related": "Outbox связывает запись события с коммитом заказа и позволяет повторять отправку после падения процесса. Внутрипроцессный слушатель после коммита обеспечивает порядок, но сам по себе не сохраняет задачу при сбое."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Прокси передаёт вызов уведомления в worker без транзакции. `REQUIRED` сможет открыть её только после коммита `processOrder`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`REQUIRED` открывает транзакцию при входе в метод на потоке без активной транзакции. Этот режим не отслеживает коммит заказа, который идёт в другом потоке.",
+                "source_of_confusion": "Отдельную транзакцию часто используют именно для обработки после коммита. Если смешать настройку propagation со способом доставки события, получается ошибочное ожидание порядка.",
+                "if_it_were_true": "Если бы `REQUIRED` ждал коммита заказа, прямой вызов отдельного бина гарантировал бы видимость новой строки в worker и отмену запуска при откате заказа.",
+                "how_it_should_be": "Управляйте порядком через фазу транзакционного события или запись в outbox. `REQUIRED` задаёт лишь способ получить транзакцию на стороне исполнителя."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие есть требования к @Async методам?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Приватный метод из примера не перехватывается. Для исправления достаточно сделать его публичным, сохранив вызов из `process()` на том же объекте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Смена видимости делает метод пригодным для некоторых внешних прокси-вызовов. Локальный переход из `process()` всё равно идёт непосредственно на целевой объект, поэтому async-advice не получает вызов.",
+                "source_of_confusion": "Публичность часто советуют как безопасный выбор для сервисного API. Это совет про доступность метода для прокси, а не про маршрутизацию каждого вызова.",
+                "if_it_were_true": "Если бы одной публичности хватало, лог внутри `processInternal()` после смены модификатора перешёл бы на worker при неизменённом `process()`.",
+                "how_it_should_be": "Поменяйте границу вызова. Вынесите операцию в Spring-бин, сделайте её доступной через тип прокси и обращайтесь к внедрённой зависимости."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Приватный метод из примера не перехватывается. Для исправления достаточно вынести метод в отдельный объект и передать `process()` экземпляр, созданный через `new`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ручной объект вне контейнера не получает async-advice. Граница между двумя Java-объектами помогает, когда ссылка указывает на прокси, который построил Spring.",
+                "source_of_confusion": "Вынос метода в отдельный класс действительно решает типичный self-invocation. Легко пропустить роль контейнера, если в рабочем примере зависимость создаётся автоматически.",
+                "if_it_were_true": "При таком правиле ручной `new Worker().processAsync()` запускал бы фоновую работу даже в обычном тесте без Spring.",
+                "how_it_should_be": "Зарегистрируйте выделенный сервис как бин и внедрите его. Если объект должен остаться обычным Java-объектом, передайте в него executor и отправляйте задачи явно."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Приватный метод из примера не перехватывается. Для исправления нужен CGLIB-прокси с публичным методом, поскольку JDK-прокси пропускает все вызовы с `@Async`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JDK-прокси может перехватывать вызовы через интерфейс. Ограничение касается методов, которых нет в доступном интерфейсе. CGLIB-прокси использует переопределение доступного метода класса.",
+                "source_of_confusion": "У бина без интерфейсов часто наблюдают прокси-подкласс. Этот частный случай легко принять за требование аннотации.",
+                "if_it_were_true": "Если бы JDK-прокси пропускал async-advice, вызов интерфейсного `job.run()` всегда выполнялся бы в потоке клиента даже при корректной конфигурации.",
+                "how_it_should_be": "Проверьте тип внедряемой ссылки и метод, через который она вызывается. Для интерфейсного бина используйте доступный интерфейсный метод, для прокси-подкласса доступный переопределяемый метод."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Приватный метод из примера не перехватывается. Для исправления нужен вызов через прокси Spring-бина и метод, доступный этому виду прокси.",
+              "correct": true,
+              "sections": {
+                "explanation": "В режиме PROXY прокси должен получить вызов метода экземпляра. JDK-прокси принимает вызовы через интерфейс, прокси-подкласс переопределяет доступные методы класса. Показанный `private`-метод подкласс переопределить не может, а `process()` вызывает его локально.",
+                "example": "`DataProcessor` может вызвать `worker.processAsync(input)` на внедрённом `Worker`. Если метод объявлен в интерфейсе этого бина и реализация помечена `@Async`, при рабочем пуле вызов через JDK-прокси допускает исполнение на другом потоке.",
+                "when_to_apply": "При проектировании фоновой операции выберите межбиновую границу, проверяемый тип результата и видимость метода в API, через который реально обращаются к бину.",
+                "edge_cases": "`final`-метод нельзя переопределить в CGLIB, а JDK-прокси всё ещё может перехватить вызов интерфейсного метода перед делегированием в финальную реализацию. Доступный `protected`-метод может перехватываться прокси-подклассом при вызове через него.",
+                "related": "Правила Spring AOP действуют до выбора executor. Изменение настроек пула не делает статический или локальный вызов перехватываемым. [Spring AOP proxying mechanisms](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html)"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как комбинировать несколько @Async вызовов?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Отправить три вызова до ожидания и объединить их через `allOf`. Собрать ответы после готовности всех трёх примерно через 600 мс.",
+              "correct": true,
+              "sections": {
+                "explanation": "Вызовы идут через прокси отдельного бина и попадают на свободные worker. Независимые операции могут перекрыться. `allOf` возвращает `CompletableFuture<Void>`, которая завершается после всех трёх, а зависимая стадия строит агрегат из исходных future. При малых накладных расходах время близко к максимуму из 200, 400 и 600 мс.",
+                "example": "После трёх вызовов из условия верните `CompletableFuture.allOf(user, orders, profile).thenApply(ignored -> new UserAggregate(user.join(), orders.join(), profile.join()))`. При успехе исходные future уже готовы в `thenApply`, и агрегат содержит три результата без дополнительного ожидания источников.",
+                "when_to_apply": "Используйте такую композицию для независимых операций, когда ответу нужны все результаты. Возвращайте объединённую future, если клиент умеет продолжать асинхронно, или ждите её с бюджетом времени на синхронной границе.",
+                "edge_cases": "С одним worker запросы в очереди займут около 1200 мс. При сбое одной операции стандартный `allOf` также дождётся остальных и завершится с ошибкой. Он не отменяет соседние задачи.",
+                "related": "`anyOf` сообщает о первом завершении, включая исключительное. `thenCompose` подходит, когда для запуска второй операции нужно значение первой. [CompletableFuture](https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/util/concurrent/CompletableFuture.html)"
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Отправить каждый вызов после `join` предыдущего и объединить результаты через `allOf`. Собрать ответы после готовности всех трёх примерно через 600 мс.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ожидание сразу после каждого запуска отделяет вызовы по времени. Для этих длительностей три стадии займут около 1200 мс даже при доступных worker.",
+                "source_of_confusion": "У каждого метода остаётся аннотация `@Async` и каждый выполняется на worker. Это легко принять за параллельность операций между собой, хотя вызывающий сериализует их подачу.",
+                "if_it_were_true": "Если бы последовательное ожидание давало 600 мс, вызов за 600 мс должен был бы начать работу до того, как закончились первые два, хотя его ещё не отправили.",
+                "how_it_should_be": "Сначала получите все три future, затем ставьте общий барьер. Последовательность оставьте для операций с реальной зависимостью данных или требованием порядка."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Отправить три вызова до ожидания и объединить их через `anyOf`. Собрать ответы после готовности всех трёх примерно через 200 мс.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`anyOf` завершается по первой готовой future. При заданном порядке окончаний примерно в 200 мс готов только `user`. Попытка взять два остальных результата всё ещё ждёт их готовности.",
+                "source_of_confusion": "И `allOf`, и `anyOf` принимают те же future. Быстрая реакция на одно завершение выглядит как ускорение всего агрегата, если не учитывать недостающие поля.",
+                "if_it_were_true": "Если бы все данные были доступны в 200 мс, API профиля с длительностью 600 мс вернул бы значение до завершения собственного запроса.",
+                "how_it_should_be": "Для полного агрегата ждите `allOf`. Для частичного ответа задайте допустимые отсутствующие части и явную политику, по которой можно вернуть результат после первого завершения."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Отправить три вызова до ожидания и объединить их через `allOf`. Взять три готовых значения прямо из результата `allOf` примерно через 600 мс.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Время близко к 600 мс, но общий результат имеет тип `Void`. Значения по-прежнему находятся в исходных future, которые можно прочитать после успешного барьера.",
+                "source_of_confusion": "В некоторых библиотеках операция объединения возвращает список значений. Похожее имя и несколько аргументов создают такое ожидание от JDK API.",
+                "if_it_were_true": "Если бы `allOf` собирал значения, возвращённому объекту требовалось бы представить разные типы `User`, `List<Order>` и `Profile`, хотя сигнатура фиксирует `Void`.",
+                "how_it_should_be": "Сохраните ссылки на исходные future. Соберите типизированный результат в `thenApply` после общего барьера или примените `thenCombine` для попарной композиции независимых результатов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как передать контекст (SecurityContext, MDC) в @Async?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Включить наследуемые `ThreadLocal` для `SecurityContext` и MDC. Worker будет получать свежие значения при каждом запуске задачи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наследование привязано к созданию потока. Пул может исполнять вызовы Алисы и Бориса на одном уже существующем worker, который не создаётся заново для второго запроса. Для MDC также важен контракт конкретного адаптера.",
+                "source_of_confusion": "При эксперименте с новым потоком на запрос наследование может выглядеть рабочим. Этот результат легко перенести на пул, где момент создания потока отделён от подачи задачи.",
+                "if_it_were_true": "Если бы значения наследовались при каждой отправке, один worker без обёртки автоматически видел бы разные `traceId` и пользователя у двух последовательных задач.",
+                "how_it_should_be": "Захватывайте контекст при подаче каждой задачи. Для Security используйте делегирующую обёртку, для MDC установите snapshot перед выполнением и восстановите прежнее состояние при выходе."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Установить `SecurityContext` и MDC через фабрику потоков. Worker получит значения при создании и сможет применять их для каждого запроса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Фабрика потоков настраивает сам worker. Идентичность пользователя и поля трассировки относятся к конкретной задаче. Один worker, созданный с фиксированным контекстом, может обработать множество запросов.",
+                "source_of_confusion": "Префикс имени и некоторые платформенные параметры удобно настраивать в фабрике. Это сходство подталкивает перенести туда переменные, которые должны меняться для каждого запроса.",
+                "if_it_were_true": "Если бы фабрики хватало для передачи текущих значений, при смене пользователя на уже запущенном worker не потребовалось бы менять его окружение.",
+                "how_it_should_be": "Оставьте фабрике параметры потока. Для передачи контекста задачи оберните настроенный executor и дополните его декоратором, который захватывает данные в потоке отправителя."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Обернуть executor для передачи `SecurityContext` и добавить `TaskDecorator` для MDC. Захватывать значения при подаче и восстанавливать прежний контекст после задачи.",
+              "correct": true,
+              "sections": {
+                "explanation": "При обычном `MODE_THREADLOCAL` рабочий поток не получает текущую аутентификацию вызывающего автоматически. `DelegatingSecurityContextAsyncTaskExecutor` устанавливает соответствующий контекст вокруг задачи. Декоратор MDC захватывает карту при отправке, устанавливает её перед выполнением и восстанавливает прежнее состояние в `finally`.",
+                "example": "На одном worker последовательно исполняются задачи запроса с `traceId=ab12` и запроса без поля трассировки. Снимок первой задачи добавит `ab12` в её логи. Для второй декоратор очистит MDC перед вызовом, поэтому `ab12` в её логах не появится.",
+                "when_to_apply": "Настраивайте перенос только в executor, через который реально пойдут async-задачи. Передавайте данные, нужные для авторизации или диагностики, с учётом того, что роль пользователя может измениться до выполнения отложенной операции.",
+                "edge_cases": "Если снимок MDC пуст, очистите карту до запуска задачи. При inline-выполнении или вложенном декораторе простое `clear()` после задачи стирает контекст вызывающего. Восстановление сохранённой карты сохраняет внешний контекст.",
+                "related": "Контекст логирования и аутентификация имеют отдельные механизмы. Императивную транзакцию таким способом переносить нельзя. Для работы с БД на worker задайте собственную транзакционную границу."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Скопировать `SecurityContext` и MDC в рабочий поток перед первой задачей. Оставить значения там, чтобы переиспользовать их при последующих вызовах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Контекст требуется устанавливать отдельно для каждой задачи. Оставленные значения принадлежат предыдущему запросу и могут исказить логи или повлиять на авторизацию следующего.",
+                "source_of_confusion": "Worker переиспользуется ради снижения накладных расходов. Это удобно для технических ресурсов, но контекст пользователя нельзя считать свойством самого worker.",
+                "if_it_were_true": "Если бы переиспользование было безопасным, задача Бориса могла бы использовать аутентификацию Алисы и всё равно проходить проверку от имени правильного пользователя.",
+                "how_it_should_be": "Устанавливайте контекст на время задачи и восстанавливайте предыдущий в блоке `finally`, в том числе при исключении. Для задач без MDC явно используйте пустой контекст."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как тестировать @Async методы?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Оставить рабочий executor для всех тестов. Сразу после вызова проверить `verify` для `void` и `isDone()` для future.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обычный async-executor может принять задачу и вернуть управление до эффекта. Немедленное `verify` или чтение `isDone()` проверяет момент планирования, который может измениться от запуска к запуску.",
+                "source_of_confusion": "Быстрая заглушка репозитория иногда успевает выполниться до утверждения. Успех нескольких локальных прогонов легко принять за гарантию порядка.",
+                "if_it_were_true": "Если бы возврат из async-вызова обозначал завершение, даже задача, которую worker держит на закрытой защёлке, считалась бы выполненной перед проверкой.",
+                "how_it_should_be": "Для результата future дождитесь через `get` с таймаутом. Для `void` подождите наблюдаемого эффекта с дедлайном. Немедленное утверждение подходит при намеренно синхронном исполнении."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Для бизнес-логики выбрать `SyncTaskExecutor`. Для реального пула ждать эффекта `void` через Awaitility, а результата future через `get` с таймаутом.",
+              "correct": true,
+              "sections": {
+                "explanation": "Синхронный исполнитель запускает принятую задачу в текущем потоке и даёт детерминированный тест бизнес-эффекта. При настоящей асинхронности тесту нужна явная точка ожидания. Awaitility проверяет наблюдаемое условие периодически, `get(timeout, unit)` ждёт завершения конкретной future.",
+                "example": "После `service.asyncMethod()` с реальным пулом тест может вызвать `await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> verify(repository).save(any()))`. Для `fetchAsync()` используйте `service.fetchAsync().get(5, SECONDS)` и проверьте конкретное значение или ожидаемую ошибку.",
+                "when_to_apply": "Выбирайте синхронную подмену для бизнес-веток, где модель потоков не входит в контракт теста. Отдельно проверяйте реальный executor, когда важны передача контекста, состояние очереди или изоляция транзакций.",
+                "edge_cases": "Если метод указан как `@Async(\"emailExecutor\")`, замена default-пула не затронет его. Подмените именно именованный executor. В тесте с реальным пулом данные, нужные worker, должны быть доступны вне незакоммиченной тестовой транзакции.",
+                "related": "`get` с таймаутом ограничивает ожидание теста, но сам по себе не отменяет задачу. Для управляемой проверки момента старта или отмены используйте защёлки либо другой явный сигнал."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Оставить рабочий executor для всех тестов. Подождать фиксированное время и затем одновременно проверить `verify` и `isDone()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Фиксированная пауза не привязана к реальному эффекту или завершению. На медленном CI задача может опоздать к моменту проверки, а на локальной машине тест будет ждать лишнее время.",
+                "source_of_confusion": "На одном компьютере длительность часто попадает в тесный диапазон. Так появляется соблазн добавить запас и принять время за надёжный сигнал.",
+                "if_it_were_true": "Если бы пауза гарантировала результат, после неё проверка проходила бы даже при более долгом I/O или когда задача ждёт места в очереди.",
+                "how_it_should_be": "Ждите конкретное условие с дедлайном и полезным сообщением об ошибке. Для задач с результатом проверяйте значение future, для побочного эффекта наблюдайте само изменение."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Для бизнес-логики выбрать `SyncTaskExecutor`. Тем же исполнителем проверить переход на другой поток, вызвав метод через Spring-прокси.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Вызов действительно проходит через перехватчик и подаётся исполнителю, но `SyncTaskExecutor` выполняет задачу прямо в вызывающем потоке. Проверка на смену потока с ним не отражает боевую модель.",
+                "source_of_confusion": "Наличие прокси сохраняет инфраструктурную часть пути. По этому сходству легко предположить, что и размещение работы осталось тем же.",
+                "if_it_were_true": "При такой модели тест локальной транзакции с синхронной подменой и тест с реальным пулом давали бы одинаковую видимость незакоммиченной записи на worker.",
+                "how_it_should_be": "Разделите проверки бизнес-эффекта и потокового поведения. Для второго возьмите настоящий executor и синхронизируйте тест с конкретными этапами выполнения."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем @Async отличается от CompletableFuture.supplyAsync?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "`@Async` запускает вызов через Spring-прокси. `supplyAsync` передаёт лямбду в тот же Spring-executor, если его пропустить в аргументах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Одноаргументный `supplyAsync` использует политику выполнения JDK, обычно common pool. Он не ищет Spring-бин по имени и не читает `AsyncConfigurer`.",
+                "source_of_confusion": "Обе схемы могут использовать один тип будущего результата и даже один физический пул при явной настройке. Это создаёт впечатление, что совпадение работает автоматически.",
+                "if_it_were_true": "Если бы использовался Spring-executor, префикс `db-async-` из конфигурации Spring появлялся бы у поставщика, переданного в `supplyAsync` без дополнительных аргументов.",
+                "how_it_should_be": "Для программного запуска внедрите нужный `Executor` и передайте его во второй аргумент. Подключённые к этому исполнителю границы ресурса и декораторы тогда будут применяться и там."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "`@Async` запускает вызов через Spring-прокси. `supplyAsync` передаёт лямбду в executor только при вызове из другого Spring-бина.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`supplyAsync` работает как статический метод JDK и может отправить задачу из любого обычного Java-метода. Для него важен используемый executor, а не объект, через который пришёл вызов.",
+                "source_of_confusion": "В одном сервисе обе модели могут соседствовать. Правило обхода proxy при self-invocation легко ошибочно распространить на прямой вызов JDK API.",
+                "if_it_were_true": "Если бы JDK зависел от вызова через бин, `CompletableFuture.supplyAsync(() -> 42)` не запускался бы из обычного `main`.",
+                "how_it_should_be": "Выбирайте программный запуск, если задача возникает внутри метода и явный executor упростит код. Для `@Async` сохраняйте контейнерную и проксируемую границу."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "`@Async` запускает вызов через Spring-прокси. `supplyAsync` можно использовать вместо него, но полученную future нельзя комбинировать с future от `@Async`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обе схемы могут дать обычный `CompletableFuture`, а его композиция опирается на состояние завершения. Она не требует, чтобы значения вычислялись на одном executor или запускались одной инфраструктурой.",
+                "source_of_confusion": "Тип запуска влияет на контекст и место выполнения. Из этого легко сделать неверный вывод, что и API композиции привязан к происхождению future.",
+                "if_it_were_true": "Если бы сочетание было запрещено, `allOf` потребовал бы от Spring-стадии специальный тип, прежде чем принять её вместе с future от JDK.",
+                "how_it_should_be": "Комбинируйте обе future по контракту `CompletableFuture`. Для новой тяжёлой стадии выбирайте executor явно через вариант API с суффиксом `Async` и аргументом исполнителя."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "`@Async` запускает подходящий вызов через Spring-прокси с настроенным executor. `supplyAsync` запускает переданный supplier через API JDK с явным executor или его стандартным выбором.",
+              "correct": true,
+              "sections": {
+                "explanation": "Аннотация определяет асинхронную границу метода бина. В варианте `CompletableFuture.supplyAsync(supplier, executor)` отправка видна прямо в теле Java-метода и не требует Spring AOP. Результат обоих способов можно использовать в одной цепочке `CompletableFuture`.",
+                "example": "`orders.fetchOrder(42L)` через прокси запускает загрузку на пуле, указанном в Spring. `CompletableFuture.supplyAsync(() -> orderRepo.findById(42L), dbExecutor)` запускает тот же запрос программно. Если передать один управляемый executor, имена потоков в обоих сценариях будут иметь его префикс.",
+                "when_to_apply": "Выбирайте `@Async` для устойчивой границы сервиса с установленной политикой выполнения. Используйте `supplyAsync` для отдельных шагов и передавайте executor при блокирующем I/O, чтобы нагрузка учитывала лимиты внешней системы.",
+                "edge_cases": "Вызов `supplyAsync` внутри уже запущенного `@Async`-метода добавляет ещё одну отправку. Если обе задачи попали в один насыщенный ограниченный пул, ожидание вложенного результата может лишить его свободных worker.",
+                "related": "Неасинхронный `thenApply` может выполняться в потоке завершения или в потоке, который добавил стадию к уже готовой future. Для управляемого перехода используйте `thenApplyAsync(fn, executor)`."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
