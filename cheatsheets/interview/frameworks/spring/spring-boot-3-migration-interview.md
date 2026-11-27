@@ -74,6 +74,12 @@ import jakarta.validation.constraints.NotNull;
 
 ## Q3. Как выполнить миграцию с Spring Boot 2.7 на 3.x?
 
+```text
+Приложение на Spring Boot 2.7.x собирается Maven.
+Цель миграции: приложение на Spring Boot 3.x.
+Какие шаги нужно выполнить и что проверить на каждом этапе?
+```
+
 Сначала перейдите на Java 17 и последнюю доступную версию 2.7.x, устраните предупреждения и проверьте тесты. Затем обновите Boot и совместимые зависимости вручную либо примените рецепт OpenRewrite и проверьте его diff.
 
 ```text
@@ -103,6 +109,23 @@ import jakarta.validation.constraints.NotNull;
 Рецепт `UpgradeSpringBoot_3_0` уже обновляет версии Boot и может изменить Maven parent. Если он это сделал, повторять вручную тот же шаг не нужно. [OpenRewrite UpgradeSpringBoot_3_0](https://docs.openrewrite.org/recipes/java/spring/boot3/upgradespringboot_3_0-community-edition/).
 
 ## Q4. Какие javax-пакеты НЕ мигрировали на jakarta?
+
+В приложении на Spring Boot 2.7 есть следующие импорты. Какие из них нужно изменить при переходе на Spring Boot 3?
+
+```java
+import javax.sql.DataSource;
+import javax.persistence.Entity;
+import javax.crypto.Cipher;
+import javax.servlet.http.HttpServletRequest;
+import javax.net.ssl.SSLContext;
+import javax.validation.Valid;
+import javax.management.MBeanServer;
+import javax.jms.Message;
+import javax.naming.InitialContext;
+import javax.mail.Session;
+import javax.ws.rs.GET;
+import javax.annotation.PostConstruct;
+```
 
 Переименовывают импорты затронутых API Jakarta EE. Пакеты Java SE из JDK, например JDBC и криптография, сохраняют прежние имена.
 
@@ -355,12 +378,9 @@ spring:
 
 ## Q11. Какие breaking changes в Spring Security 6?
 
-В Spring Security 6 удалены `WebSecurityConfigurerAdapter` и прежние методы выбора matcher, включая `antMatchers` и `mvcMatchers`. Современный вариант задаёт `SecurityFilterChain` и использует `requestMatchers` с Lambda DSL.
-
-Сравнение старого и нового подхода:
-
 ```java
-// ДО (Spring Security 5, SB 2.x)
+// Исходная конфигурация на Spring Security 5 и Spring Boot 2.7.
+// Цель: Spring Security 6 и Spring Boot 3 с сохранением правил доступа.
 @EnableWebSecurity
 class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
@@ -372,8 +392,13 @@ class SecurityConfig extends WebSecurityConfigurerAdapter {
             .formLogin();
     }
 }
+```
 
-// ПОСЛЕ (Spring Security 6, SB 3.x) — WebSecurityConfigurerAdapter удалён
+В Spring Security 6 удалены `WebSecurityConfigurerAdapter` и прежние методы выбора matcher, включая `antMatchers` и `mvcMatchers`. Современный вариант задаёт `SecurityFilterChain` и использует `requestMatchers` с Lambda DSL.
+
+Пример конфигурации на Spring Security 6:
+
+```java
 @Configuration
 @EnableWebSecurity
 class SecurityConfig {
@@ -381,8 +406,8 @@ class SecurityConfig {
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .authorizeHttpRequests(auth -> auth        // authorizeHttpRequests вместо authorizeRequests
-                .requestMatchers("/public").permitAll()  // requestMatchers вместо antMatchers
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/public").permitAll()
                 .anyRequest().authenticated())
             .formLogin(Customizer.withDefaults());
         return http.build();
@@ -398,9 +423,16 @@ class SecurityConfig {
 
 Почему так: переход с наследования на бин делает конфигурацию композируемой — можно объявить несколько `SecurityFilterChain` для разных URL и управлять их порядком, что с единственным `configure()`-методом было неудобно.
 
-## Q12. Что такое декларативный RestClient?
+## Q12. Что такое RestClient и как он связан с HTTP Interface Clients?
 
-`RestClient` — синхронный HTTP-клиент с fluent API из Spring Framework 6.1. Spring Boot 3.2 добавил интеграцию, включая автоконфигурируемый builder. `@HttpExchange` описывает декларативный интерфейс, который может работать поверх `RestClient` через адаптер (Q5). `RestTemplate` — более ранний блокирующий API ветки Framework 6.x.
+```text
+Приложение на Spring Framework 6.1 отправляет GET /orders/123 и POST /orders.
+Для вызова из сервиса нужен синхронный результат. Другой клиентский модуль
+хочет описать те же HTTP-операции в Java-интерфейсе.
+Какие API Spring подходят для каждого способа вызова и как они связаны?
+```
+
+В Spring Framework 6.1 появился `RestClient`, синхронный HTTP-клиент с fluent API. Spring Boot 3.2 добавил интеграцию, включая автоконфигурируемый builder. `@HttpExchange` описывает декларативный интерфейс, для которого `HttpServiceProxyFactory` создаёт прокси. Через `RestClientAdapter` этот прокси выполняет запросы с помощью `RestClient` (см. Q5). В ветке Framework 6.x также доступен более ранний блокирующий API `RestTemplate`.
 
 Типичные операции читаются как одна цепочка вызовов — выбор метода, URI, тела и извлечение результата:
 
@@ -414,11 +446,11 @@ Order order = client.get()
     .retrieve()
     .body(Order.class);
 
-// POST
+// POST. request содержит данные нового заказа.
 OrderResponse response = client.post()
     .uri("/orders")
     .contentType(MediaType.APPLICATION_JSON)
-    .body(new CreateOrderRequest(...))
+    .body(request)
     .retrieve()
     .body(OrderResponse.class);
 
@@ -428,21 +460,24 @@ try {
 } catch (HttpClientErrorException.NotFound ex) {
     log.error("Not found", ex);
 }
-
 ```
 
 `RestClient` выполняет блокирующие вызовы. Обёртка результата `exchange` в `Mono.just(...)` не переносит работу на другой поток и не делает I/O неблокирующим. Для неблокирующего HTTP-клиента используйте `WebClient`. [Spring Framework 6.2 REST Clients](https://docs.spring.io/spring-framework/reference/6.2/integration/rest-clients.html).
 
 ## Q13. Какие изменения в auto-configuration?
 
-Boot 2.7 добавил `@AutoConfiguration` и регистрацию в `AutoConfiguration.imports`. Формат перечисляет по одному классу на строку.
-
-```java
-// Формат до Spring Boot 2.7 — META-INF/spring.factories
+```properties
+# META-INF/spring.factories в библиотеке для Spring Boot 2.7
+# Приложение обновляют до Spring Boot 3.0. Как изменится регистрация класса?
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
     com.example.MyAutoConfiguration
+```
 
-// ПОСЛЕ Spring Boot 3.x — META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports
+Boot 2.7 добавил `@AutoConfiguration` и регистрацию в `AutoConfiguration.imports`. Формат перечисляет по одному классу на строку.
+
+`META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`:
+
+```text
 com.example.MyAutoConfiguration
 ```
 
@@ -481,13 +516,15 @@ The following properties have been renamed:
 
 ## Q15. Какие проблемы часто возникают при миграции?
 
+```text
+Приложение собрано после перехода с Spring Boot 2.7 на 3.0.
+При запуске появляется ошибка:
+java.lang.NoClassDefFoundError: javax/servlet/http/HttpServletRequest
+```
+
 Большинство граблей при переходе на Spring Boot 3 — это не сам Spring, а его окружение: сторонние библиотеки под `javax`, устаревшие версии ORM и переименованные настройки. Типичный список:
 
-1. **Несовместимость библиотек с Jakarta EE.** Старая зависимость скомпилирована под `javax.servlet` и падает в рантайме на новом контейнере:
-```text
-Error: NoClassDefFoundError: javax/servlet/http/HttpServletRequest
-→ Решение: обновить до версии с Jakarta-поддержкой или заменить зависимость
-```
+1. **Несовместимость библиотек с Jakarta EE.** Проверьте стек и дерево зависимостей. Если библиотека скомпилирована под `javax.servlet`, обновите её до версии для Jakarta Servlet или замените. Если старый тип используется в коде самого приложения, обновите соответствующий импорт и пересоберите приложение с совместимыми зависимостями.
 
 2. **Устаревшие версии библиотек.** Многие требуют апгрейда вместе со Spring Boot, иногда с собственными breaking changes:
 ```text
@@ -512,7 +549,7 @@ Error: NoClassDefFoundError: javax/servlet/http/HttpServletRequest
 - [Java Virtual Threads](../../programming-languages/java/java-virtual-threads-interview.md) — поддержка в Spring Boot 3.2+
 - [Java 17-21](../../programming-languages/java/java-17-21-interview.md) — Java 17 baseline, records, sealed classes
 - [GraalVM Native Image](../../jvm/graalvm-native-interview.md) — first-class native support в Spring Boot 3
-- [Spring REST Client](spring-rest-client-interview.md) — RestClient — новый декларативный API
+- [Spring REST Client](spring-rest-client-interview.md), синхронный fluent API и адаптер для HTTP Interface Clients
 - [Micrometer](../../monitoring/micrometer-interview.md) — новая Observation API в Spring 6
 - [Spring Boot Actuator](spring-boot-actuator-interview.md) — изменения в Actuator endpoints
 - [Spring WebFlux](spring-webflux-interview.md) — изменения в WebFlux 6
