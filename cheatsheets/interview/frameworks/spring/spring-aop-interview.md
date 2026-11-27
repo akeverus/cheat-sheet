@@ -96,24 +96,18 @@ updated: "2026-04-25"
 | Retry-логика | Обёртки повсюду | Один аспект |
 
 ```java
-// Без AOP — логирование в каждом методе:
-public Order createOrder(OrderRequest req) {
-    log.info("Creating order...");
-    try {
-        Order order = doCreate(req);
-        log.info("Order created: {}", order.getId());
-        return order;
-    } catch (Exception e) {
-        log.error("Failed to create order", e);
-        throw e;
-    }
+public Order createOrder(OrderRequest request) {
+    log.info("Operation started");
+    return doCreate(request);
 }
 
-// С AOP — бизнес-логика без лишнего:
-public Order createOrder(OrderRequest req) {
-    return doCreate(req);  // логирование в аспекте
+public Order cancelOrder(long orderId) {
+    log.info("Operation started");
+    return doCancel(orderId);
 }
 ```
+
+Общее сообщение можно записывать в advice, а в методах оставить вызовы `doCreate(request)` и `doCancel(orderId)`. Pointcut ограничивает применение advice нужными операциями.
 
 **Итог:** AOP делает код чище, убирает дублирование и упрощает поддержку cross-cutting concerns — каждый метод занимается только своим делом, а сквозная логика живёт отдельно.
 
@@ -121,14 +115,14 @@ public Order createOrder(OrderRequest req) {
 
 Шесть базовых понятий, на которых строится весь AOP. Удобно читать их как ответы на вопросы «где?», «что?» и «когда применяется?»:
 
+```text
+Вызов: orderService.create(request)
+Правило отбора: публичные методы сервисного слоя.
+Действие: записать имя метода перед выполнением.
+Как называются эти три части в терминологии AOP?
 ```
-JoinPoint    — конкретная точка выполнения (вызов метода)
-Pointcut     — предикат: КАКИЕ JoinPoint-ы перехватывать
-Advice       — ЧТО делать при совпадении Pointcut-а
-Aspect       — модуль = Pointcut + Advice(s)
-Weaving      — процесс применения Aspect-а к целевому объекту
-Introduction — добавление нового интерфейса/поведения к классу
-```
+
+Выполнение `create` соответствует join point, правило отбора соответствует pointcut, а запись имени метода соответствует advice. Introduction добавляет интерфейс прокси и предоставляет реализацию этого интерфейса.
 
 Главное запомнить связку: **Aspect = Pointcut (где перехватывать?) + Advice (что делать?)**. Pointcut отбирает точки, Advice описывает действие, а Weaving физически «вплетает» это действие в выполнение — в Spring AOP через прокси.
 
@@ -184,7 +178,7 @@ public interface OrderService { Order create(OrderRequest req); }
 public class UserService { ... }  // нет интерфейса → CGLIB subclass
 ```
 
-CGLIB генерирует подкласс целевого класса в рантайме и переопределяет его методы, вставляя в них вызов advice. Именно из механизма «наследник + override» вытекает ключевое ограничение: **AOP не работает на `final`-классах и `final`-методах** — их нельзя унаследовать или переопределить.
+CGLIB генерирует подкласс целевого класса в рантайме и переопределяет его методы, вставляя в них вызов advice. Именно из механизма «наследник + override» вытекает ключевое ограничение: **CGLIB не позволяет проксировать `final`-класс или перехватить `final`-метод** — их нельзя унаследовать или переопределить. JDK-прокси может перехватить вызов через интерфейс, даже когда класс реализации или сам метод объявлен `final`.
 
 С версии Spring Boot 2.x CGLIB используется по умолчанию даже при наличии интерфейса (`proxyTargetClass=true` выставлен в автоконфигурации), чтобы избежать сюрпризов с инъекцией по конкретному типу.
 
@@ -203,19 +197,24 @@ public class AppConfig { }
 Самый болезненный случай — `@Transactional` и `@Cacheable`: они реализованы через AOP, поэтому при self-invocation новая транзакция или кэширование просто не включаются, и баг проявляется молча.
 
 ```java
+// Spring работает в proxy-режиме. Клиент вызвал processOrder через прокси,
+// и к моменту вызова saveOrder внешняя транзакция уже открыта.
 @Service
 public class OrderService {
-
     @Transactional
     public void processOrder(Long id) {
-        validateOrder(id);     // ⚠️ вызов через this — прокси не задействован!
+        validateOrder(id);
         saveOrder(id);
     }
 
-    @Transactional(propagation = REQUIRES_NEW)
-    public void saveOrder(Long id) { ... }  // транзакция НЕ создастся!
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void saveOrder(Long id) {
+        repository.save(id);
+    }
 }
 ```
+
+В этом примере `saveOrder(id)` вызывается на том же объекте. Перехватчик транзакций для `saveOrder` не запускается, поэтому отдельной транзакции `REQUIRES_NEW` нет. Операция сохранения выполняется в открытой внешней транзакции.
 
 **Обходные пути** (от самого чистого к самому хитрому):
 
@@ -242,7 +241,7 @@ public class OrderService {
 // Нужно @EnableAspectJAutoProxy(exposeProxy = true)
 ```
 
-3. **Переместить метод в другой бин** — лучшее архитектурное решение: вызов между разными бинами всегда идёт через прокси, проблема исчезает сама собой.
+3. **Переместить метод в другой бин** — лучшее архитектурное решение: вызов метода через внедрённый прокси другого бина позволяет применить его транзакционные настройки.
 
 4. **Перейти на AspectJ** — он вплетает advice в байткод, поэтому перехватывает и внутренние вызовы тоже.
 
@@ -261,25 +260,30 @@ public class OrderService {
 7. **Внутренние вызовы (`this.method()`)** — обходят прокси, см. проблему self-invocation в Q5
 
 ```java
-@Aspect
-@Component
-public class LoggingAspect {
-    @Before("execution(* com.example..*(..))")
-    public void log() { }
-}
-
-// НЕ СРАБОТАЕТ:
-UserService service = new UserService();  // не Spring bean
-service.doSomething();
-
-// СРАБОТАЕТ:
-@Autowired UserService service;  // Spring-прокси
-service.doSomething();
+// UserService зарегистрирован в Spring, логирующий аспект настроен
+// на вызовы UserService.doSomething(). Оба вызова выполняются извне.
+UserService manual = new UserService();
+UserService managed = context.getBean(UserService.class);
+manual.doSomething();
+managed.doSomething();
 ```
+
+При обычном создании через `new` вызов через `manual` идёт напрямую. Если Spring обернул бин в подходящий прокси, вызов через `managed` проходит через advice. Ограничения `final` относятся к CGLIB. При JDK-прокси вызов через интерфейс может быть перехвачен даже при `final`-реализации метода. [Механизмы проксирования](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html).
 
 ## Q7. Как объявить аспект в Spring?
 
-Нужны две аннотации: `@Aspect` помечает класс как аспект, а `@Component` (или другой стереотип) регистрирует его как Spring-бин. Без второй Spring вообще не узнает о классе:
+`@Aspect` помечает класс для обработки средствами Spring AOP. Чтобы Spring обработал этот аспект, его экземпляр регистрируют как бин.
+
+```java
+// Поддержка @AspectJ включена, пакет входит в component scan.
+// Класс должен обнаруживаться сканированием и участвовать в Spring AOP.
+public class LoggingAspect {
+    @Before("execution(* com.example.service.*.*(..))")
+    public void logBefore(JoinPoint joinPoint) {
+        log.info("Calling {}", joinPoint.getSignature().getName());
+    }
+}
+```
 
 ```java
 @Aspect              // говорит Spring, что это аспект
@@ -293,16 +297,18 @@ public class LoggingAspect {
 }
 ```
 
-Минимальные требования:
-1. `@Aspect` — маркер для AspectJ annotation processor
-2. `@Component` (или другой стереотип) — чтобы Spring создал бин
-3. Хотя бы один advice-метод с pointcut-выражением
-
-Почему обе аннотации обязательны: `@Aspect` сам по себе бин не создаёт, поэтому без `@Component` Spring аспект не увидит. И наоборот — без `@Aspect` Spring создаст обычный бин, но не станет обрабатывать его advice-методы. Нужны обе.
+При component scan к `@Aspect` добавляют `@Component` или другой подходящий стереотип. При явной регистрации через фабричный метод `@Bean` достаточно оставить `@Aspect` на классе. Advice-методы описывают поведение и точки его применения. [Объявление аспекта](https://docs.spring.io/spring-framework/reference/core/aop/ataspectj/at-aspectj.html).
 
 ## Q8. Что такое `@EnableAspectJAutoProxy` и когда он нужен?
 
-`@EnableAspectJAutoProxy` — это «выключатель» Spring AOP: он регистрирует постпроцессор, который сканирует `@Aspect`-бины и оборачивает целевые бины в прокси. Без него аспекты есть, но не применяются.
+`@EnableAspectJAutoProxy` включает обработку бинов с `@Aspect` и создание прокси для подходящих целевых бинов.
+
+```text
+A. Обычный Spring с Java-конфигурацией, без XML-настройки AOP.
+B. Spring Boot с включённой AOP-автоконфигурацией и AspectJ в classpath.
+В обоих приложениях зарегистрирован бин аспекта.
+В каком случае нужно явно включить обработку аспектов и какие настройки она позволяет задать?
+```
 
 ```java
 @Configuration
@@ -321,7 +327,7 @@ public class AppConfig { }
 - `exposeProxy = true` — класть текущий прокси в `ThreadLocal`, чтобы он был доступен через `AopContext.currentProxy()` (нужно для обхода self-invocation из Q5).
 
 **Когда писать явно:**
-- **Spring Boot** — обычно не нужно. `AopAutoConfiguration` сам включает авто-проксирование при наличии `spring-aop` в classpath (стартер `spring-boot-starter-aop`). Аннотацию пишут руками, только если нужно поменять параметры (например, `exposeProxy = true`).
+- **Spring Boot** — обычно не нужно. `AopAutoConfiguration` сам включает авто-проксирование при наличии AspectJ в classpath (стартер `spring-boot-starter-aop`). Аннотацию пишут руками, только если нужно поменять параметры (например, `exposeProxy = true`).
 - **Plain Spring без Boot** — нужно обязательно: либо `@EnableAspectJAutoProxy`, либо `<aop:aspectj-autoproxy/>` в XML. Иначе аспекты молча не сработают.
 
 ## Q9. Как работает `execution` pointcut-выражение?
@@ -405,6 +411,18 @@ public void onAnnotated(JoinPoint jp, Loggable loggable) {
 Это самый чистый способ применять аспект адресно: вместо хрупкого `execution`-шаблона по пакетам вы помечаете нужные методы своей аннотацией, а pointcut `@annotation(...)` ловит именно их. Три шага: объявить аннотацию с `RUNTIME`-retention, повесить её на методы, написать аспект.
 
 ```java
+// Для вызова create через Spring-бин advice должен получить
+// значение metricName, указанное в аннотации метода.
+@Service
+public class OrderService {
+    @Timed(metricName = "order.create")
+    public Order create(OrderRequest req) {
+        return repository.create(req);
+    }
+}
+```
+
+```java
 // 1. Объявляем аннотацию
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
@@ -424,7 +442,7 @@ public class OrderService {
 @Component
 public class MetricsAspect {
 
-    @Around("@annotation(timed)")
+    @Around(value = "@annotation(timed)", argNames = "timed")
     public Object measureTime(ProceedingJoinPoint pjp, Timed timed) throws Throwable {
         long start = System.currentTimeMillis();
         try {
@@ -437,11 +455,23 @@ public class MetricsAspect {
 }
 ```
 
-**Ключевой момент:** имя в `@annotation(timed)` должно совпадать с именем параметра `Timed timed` в advice-методе — по этому совпадению Spring и связывает аннотацию с параметром, передавая её экземпляр внутрь. Так вы получаете доступ к её атрибутам (здесь — `timed.metricName()`). Аннотация обязана иметь `@Retention(RUNTIME)`, иначе в рантайме её просто не будет видно.
+`@annotation(timed)` связывает экземпляр `Timed` с параметром advice, поэтому внутри доступен `timed.metricName()`. Переменную выражения можно сопоставить параметру явно через `argNames`. В этом списке первый параметр типа `ProceedingJoinPoint` разрешено опустить. Если `argNames` отсутствует, Spring пытается определить имена по метаданным или вывести привязку из выражения и сигнатуры. Runtime retention нужна, чтобы аннотация была доступна при выполнении. Здесь `Timed` является пользовательской аннотацией. [Связывание параметров advice](https://docs.spring.io/spring-framework/reference/7.0/core/aop/ataspectj/advice.html).
 
 ## Q12. Как переиспользовать pointcut-выражение через `@Pointcut`?
 
 `@Pointcut` выносит выражение в отдельный именованный метод-маркер, чтобы не дублировать одну и ту же строку в каждом advice. Это даёт переиспользование, осмысленные имена и возможность комбинировать pointcut-ы между собой через `&&`, `||`, `!`:
+
+```java
+@Before("execution(* com.example.service.*.*(..))")
+public void beforeService(JoinPoint jp) {
+    log.debug("Service method: {}", jp.getSignature());
+}
+
+@Around("execution(* com.example.service.*.*(..)) && @annotation(com.example.annotation.Audited)")
+public Object audit(ProceedingJoinPoint jp) throws Throwable {
+    return auditCall(jp);
+}
+```
 
 ```java
 @Aspect
@@ -478,11 +508,19 @@ public class ServiceAspect {
 
 | Тип | Аннотация | Когда выполняется | Может изменить результат? |
 |---|---|---|---|
-| Before | `@Before` | До метода | Нет |
-| AfterReturning | `@AfterReturning` | После успешного возврата | Да (может изменить returning-объект) |
+| Before | `@Before` | До метода | Может остановить вызов, выбросив исключение |
+| AfterReturning | `@AfterReturning` | После успешного возврата | Может изменить состояние доступного mutable-объекта |
 | AfterThrowing | `@AfterThrowing` | При выбросе исключения | Нет (но может обёртывать) |
 | After (finally) | `@After` | Всегда (finally) | Нет |
 | Around | `@Around` | Оборачивает вызов | Да (полный контроль) |
+
+```text
+На один метод совпали пять advice одного аспекта. Каждый записывает
+своё событие, а внешняя обёртка отмечает вход и выход в finally.
+A. Метод возвращает изменяемый объект Result.
+B. Метод выбрасывает IllegalStateException.
+В каком порядке появятся события A и B? Как заменить возвращаемую ссылку?
+```
 
 ```java
 @Before("serviceLayer()")
@@ -498,13 +536,21 @@ public void afterThrowing(Exception ex) { }
 public void afterFinally() { }  // выполнится даже при исключении
 ```
 
-**Порядок при одном JoinPoint:** `@Around(до proceed) → @Before → метод → @Around(после proceed) → @AfterReturning / @AfterThrowing → @After`
+**Порядок для разных типов advice одного аспекта.** При нормальном возврате порядок такой: вход в `@Around`, `@Before`, метод, `@AfterReturning`, `@After`, выход из `@Around`. При исключении метода вместо `@AfterReturning` выполняется подходящий `@AfterThrowing`. Исключение из вложенной цепочки выходит из `proceed()`, поэтому код после вызова на успешном пути пропускается, а `finally` во внешнем advice выполняется. `@AfterReturning` получает доступ к возвращённому объекту и может изменить его состояние. Чтобы вернуть вызывающему другую ссылку, используют `@Around`. [Порядок advice](https://docs.spring.io/spring-framework/reference/7.0/core/aop/ataspectj/advice.html#_advice_ordering).
 
 **Эмпирическое правило:** если advice только реагирует на событие (залогировать, обновить метрику) — берите подходящий «обзорный» тип; если нужно подменить аргументы/результат, поймать исключение или вовсе не вызывать метод — только `@Around`.
 
 ## Q14. Как работает `@Around` advice?
 
 `@Around` — самый мощный тип advice: он полностью оборачивает вызов и сам решает, когда (и вызывать ли вообще) выполнить целевой метод через `pjp.proceed()`. Код до `proceed()` — это «before», код после — «after», а `try/catch` вокруг — это «throwing/finally» в одном месте. Поэтому через `@Around` реализуют транзакции, retry, кэширование, тайминги.
+
+```text
+Два вызова catalog.find(42) проходят через один аспект.
+Для первого вызова в кэше есть Product, для второго записи нет.
+При попадании репозиторий трогать нельзя. При промахе нужно выполнить
+обычный поиск и вернуть его результат либо дать исключению выйти наружу.
+Как построить advice и что увидит вызывающий код в каждом случае?
+```
 
 ```java
 @Around("execution(* com.example.service.*.*(..))")
@@ -529,9 +575,11 @@ public Object around(ProceedingJoinPoint pjp) throws Throwable {
 - `pjp.proceed()` — вызывает следующий advice в цепочке или, если их больше нет, реальный метод
 - `pjp.proceed(args)` — то же, но с подменёнными аргументами
 - **Забыть `proceed()`** — реальный метод просто не выполнится (частая причина «метод ничего не делает»)
-- **Забыть `return result`** — вызывающий код молча получит `null`
+- Если advice возвращает `null` вместо результата, вызывающий код получит `null` при ссылочном типе возврата
 - **Проглотить исключение** (не пробросить из `catch`) — ошибка потеряется, вызывающий решит, что всё хорошо
-- Сигнатура обязана объявлять `throws Throwable`, потому что `proceed()` может бросить что угодно
+- Если advice пропускает исключения из `proceed()` без обработки, его сигнатура обычно объявляет `throws Throwable`
+
+В сценарии с кэшем advice может вернуть сохранённый `Product` сразу. При промахе он выполняет `proceed()` и возвращает результат вложенной цепочки. При исключении исходный сбой можно пропустить наружу.
 
 ## Q15. Что такое `JoinPoint` и `ProceedingJoinPoint`?
 
@@ -574,16 +622,33 @@ public Object around(ProceedingJoinPoint pjp) throws Throwable {
 Всё начинается с `getSignature()`, который для метода нужно привести к `MethodSignature` — через него открывается доступ к рефлексии: самому `Method`, типу возврата, именам параметров. Аргументы берутся отдельно через `getArgs()`, а целевой класс — через `getTarget().getClass()`:
 
 ```java
+// Клиент обращается к Spring-бину через JDK dynamic proxy.
+interface OrderService {
+    Order create(long customerId, int itemCount);
+}
+
+class DefaultOrderService implements OrderService {
+    @Loggable
+    public Order create(long customerId, int itemCount) {
+        return new Order(customerId, itemCount);
+    }
+}
+
+Order order = orderService.create(42L, 3);
+```
+
+```java
 @Around("@annotation(loggable)")
 public Object logMethod(ProceedingJoinPoint pjp, Loggable loggable) throws Throwable {
     MethodSignature sig = (MethodSignature) pjp.getSignature();
-    Method method = sig.getMethod();
+    Method method = AopUtils.getMostSpecificMethod(
+        sig.getMethod(), pjp.getTarget().getClass());
 
     // Параметры и аргументы
     String[] paramNames = sig.getParameterNames();
     Object[] args = pjp.getArgs();
-    for (int i = 0; i < paramNames.length; i++) {
-        log.debug("  {} = {}", paramNames[i], args[i]);
+    if (paramNames != null) {
+        log.debug("Параметры: {}", Arrays.toString(paramNames));
     }
 
     // Аннотации метода
@@ -599,27 +664,21 @@ public Object logMethod(ProceedingJoinPoint pjp, Loggable loggable) throws Throw
 }
 ```
 
-**Подводный камень:** имена параметров (`getParameterNames()`) доступны только если класс скомпилирован с флагом `-parameters` — иначе вы получите `arg0`, `arg1`. Spring Boot включает этот флаг автоматически, но в plain-проектах его легко забыть.
+При JDK-прокси `MethodSignature.getMethod()` может вернуть метод интерфейса. Аннотация метода реализации читается с метода целевого класса, например через `AopUtils.getMostSpecificMethod`. Если экземпляр аннотации уже передан через `@annotation(loggable)`, можно использовать его напрямую.
+
+`MethodSignature.getParameterNames()` может вернуть `null`, если Spring не нашёл метаданные имён. Для Java обычно сохраняют их с помощью `-parameters`. Синтетические имена вроде `arg0` возвращает Java Reflection через `Parameter.getName()` при отсутствии имени в метаданных. [Реализация MethodInvocationProceedingJoinPoint](https://raw.githubusercontent.com/spring-projects/spring-framework/main/spring-aop/src/main/java/org/springframework/aop/aspectj/MethodInvocationProceedingJoinPoint.java).
 
 ## Q17. Как управлять порядком выполнения аспектов?
 
 Когда к одному методу применяются несколько аспектов, они выстраиваются в цепочку прокси-вокруг-прокси, и порядок задаётся аннотацией `@Order` (или интерфейсом `Ordered`). Правило простое: **меньше число → выше приоритет → аспект «снаружи»**, то есть его `@Before` срабатывает раньше всех, а `@After` — позже всех (как у вложенных скобок).
 
-```java
-@Aspect
-@Component
-@Order(1)   // меньше число = выше приоритет = "снаружи" оборачивает
-public class SecurityAspect { }
-
-@Aspect
-@Component
-@Order(2)
-public class TransactionAspect { }
-
-@Aspect
-@Component
-@Order(3)
-public class LoggingAspect { }
+```text
+Один вызов совпал с тремя @Around advice. Каждое выполняет вложенный
+вызов один раз и пишет события до него и после успешного возврата.
+LoggingAspect     @Order(3)   logging.enter, logging.exit
+SecurityAspect    @Order(1)   security.enter, security.exit
+TransactionAspect @Order(2)   transaction.enter, transaction.exit
+Целевой метод пишет method и завершается успешно. Каков порядок событий?
 ```
 
 ```
@@ -628,13 +687,21 @@ public class LoggingAspect { }
 Возврат        ← Security(1) ← Transaction(2) ← Logging(3) ←
 ```
 
-В примере выше Security оборачивает Transaction, а тот — Logging: на входе цепочка идёт от внешнего к внутреннему, на выходе — в обратном порядке.
+Security оборачивает Transaction, а тот оборачивает Logging. События идут в порядке `security.enter → transaction.enter → logging.enter → method → logging.exit → transaction.exit → security.exit`.
 
 **Подводный камень:** без явного `@Order` порядок между аспектами не определён, поэтому для зависимых аспектов (например, безопасность должна проверяться до открытия транзакции) его задают всегда. Крайние значения: `Ordered.HIGHEST_PRECEDENCE = Integer.MIN_VALUE` (самый внешний), `LOWEST_PRECEDENCE = Integer.MAX_VALUE`.
 
 ## Q18. Как реализовать логирование через AOP?
 
-Классический сценарий: один `@Around`-аспект на сервисный слой логирует вход (имя метода + аргументы), выход (результат + длительность) и ошибки. Так логирование живёт в одном месте, а бизнес-методы остаются чистыми:
+Классический сценарий: один `@Around`-аспект на сервисный слой логирует имя метода, длительность и исход вызова. Так логирование живёт в одном месте, а бизнес-методы остаются чистыми:
+
+```text
+orders.create(requestA) возвращает созданный Order.
+orders.create(requestB) выбрасывает OrderRejectedException.
+Нужно записать имя метода, длительность и исход обоих вызовов.
+Запросы и результаты могут содержать секреты. Вызывающий код должен
+получить прежний результат либо исходное исключение.
+```
 
 ```java
 @Aspect
@@ -648,18 +715,17 @@ public class LoggingAspect {
     @Around("serviceMethods()")
     public Object logCall(ProceedingJoinPoint pjp) throws Throwable {
         String method = pjp.getSignature().toShortString();
-        Object[] args = pjp.getArgs();
-
-        log.debug("→ {} args={}", method, Arrays.toString(args));
+        log.debug("Calling {}", method);
         long start = System.nanoTime();
 
         try {
             Object result = pjp.proceed();
             long elapsed = (System.nanoTime() - start) / 1_000_000;
-            log.debug("← {} result={} [{}ms]", method, result, elapsed);
+            log.debug("{} succeeded in {} ms", method, elapsed);
             return result;
-        } catch (Exception e) {
-            log.error("✗ {} threw {}", method, e.getMessage());
+        } catch (Throwable e) {
+            long elapsed = (System.nanoTime() - start) / 1_000_000;
+            log.debug("{} failed in {} ms ({})", method, elapsed, e.getClass().getSimpleName());
             throw e;
         }
     }
@@ -667,12 +733,21 @@ public class LoggingAspect {
 ```
 
 **Подводные камни:**
-- **Безопасность.** `Arrays.toString(args)` слепо выведет в лог пароли, токены, персональные данные. Фильтруйте чувствительные аргументы по типу/аннотации (`@JsonIgnore`-подобные маркеры) либо вообще не логируйте `args` на чувствительных методах.
+- **Безопасность.** Сырые аргументы, результат и сообщение исключения могут содержать секреты. В примере логируются только имя метода, длительность, исход и класс ошибки.
 - **Уровень логирования.** Используйте `debug`, а не `info`, чтобы детальные трейсы не засоряли прод-логи; включать их по необходимости.
 
 ## Q19. Как реализовать кастомный retry через AOP?
 
 Retry — учебный пример мощи `@Around`: advice крутит `proceed()` в цикле, перехватывает исключение, проверяет, входит ли оно в список «повторяемых», и при необходимости ждёт и пробует снова. Параметры (число попыток, типы исключений, задержка) удобно вынести в свою аннотацию:
+
+```text
+catalog.load(42) можно повторять после TemporaryCatalogException.
+Общий лимит: три попытки, включая первоначальный вызов.
+Пауза между попытками: 100 мс.
+Последовательность исходов: TemporaryCatalogException,
+TemporaryCatalogException, успешный результат.
+Сколько вызовов и пауз будет? Что произойдёт, если третья попытка тоже завершится ошибкой?
+```
 
 ```java
 @Target(ElementType.METHOD)
@@ -690,19 +765,27 @@ public class RetryAspect {
 
     @Around("@annotation(retry)")
     public Object withRetry(ProceedingJoinPoint pjp, Retry retry) throws Throwable {
-        Throwable lastException = null;
-        for (int i = 0; i < retry.attempts(); i++) {
+        int maxAttempts = retry.attempts();
+        long delayMs = retry.delayMs();
+        if (maxAttempts < 1 || delayMs < 0) {
+            throw new IllegalArgumentException("Invalid retry settings");
+        }
+        for (int attempt = 1; ; attempt++) {
             try {
                 return pjp.proceed();
-            } catch (Throwable e) {
-                if (!isRetryable(e, retry.on())) throw e;
-                lastException = e;
-                log.warn("Retry {}/{} for {} after {}ms",
-                    i + 1, retry.attempts(), pjp.getSignature().getName(), retry.delayMs());
-                Thread.sleep(retry.delayMs());
+            } catch (Throwable failure) {
+                if (attempt == maxAttempts || !isRetryable(failure, retry.on())) {
+                    throw failure;
+                }
+                log.warn("Retrying {} after attempt {}", pjp.getSignature().getName(), attempt);
+                try {
+                    Thread.sleep(delayMs);
+                } catch (InterruptedException interrupted) {
+                    Thread.currentThread().interrupt();
+                    throw interrupted;
+                }
             }
         }
-        throw lastException;
     }
 
     private boolean isRetryable(Throwable e, Class<? extends Throwable>[] types) {
@@ -711,11 +794,20 @@ public class RetryAspect {
 }
 ```
 
-**Нюанс:** не повторяемые исключения пробрасываются сразу (`if (!isRetryable(...)) throw e`), а после исчерпания попыток летит последнее пойманное. В проде вместо самописного аспекта обычно берут готовый Spring Retry (`@Retryable`) — он умеет backoff, jitter и recovery-методы, — но самописный вариант показывает, что под капотом работает ровно та же логика на `@Around`.
+В заданном сценарии будет три вызова и две паузы. При повторяемом сбое на последней попытке вызывающему передаётся исходное исключение этой попытки. Метод или интерфейс прокси должен допускать `InterruptedException`, если прерывание нужно передать вызывающему как checked-исключение.
+
+**Нюанс:** не повторяемые исключения пробрасываются сразу, а после исчерпания попыток летит последнее пойманное. Готовые средства retry позволяют настроить задержки и фильтрацию исключений. В Spring Framework 7 есть своя аннотация `@Retryable` из пакета `org.springframework.resilience.annotation`. У неё `maxRetries` задаёт число повторов после первой попытки, тогда как `attempts` в примере задаёт общий лимит. [Spring Framework Resilience Features](https://docs.spring.io/spring-framework/reference/core/resilience.html).
 
 ## Q20. Как измерить время выполнения метода через AOP?
 
-Принцип тот же, что у retry, только проще: `@Around` засекает время вокруг `proceed()` и пишет его в метрику. Чтобы получить полноценную метрику (а не просто лог), результат отдают в `Timer` Micrometer — тогда измерение попадёт в Prometheus/Actuator:
+Принцип тот же, что у retry, только проще: `@Around` засекает время вокруг `proceed()` и пишет его в метрику. Чтобы получить полноценную метрику (а не просто лог), результат отдают в `Timer` Micrometer — запись остаётся в настроенном реестре метрик:
+
+```text
+catalog.load(42) возвращает Product, catalog.load(99) выбрасывает
+CatalogUnavailableException. Нужно добавить обе длительности
+в Micrometer Timer, вернуть исходный Product и сохранить исключение.
+Измеряются синхронные вызовы Spring-бина через прокси.
+```
 
 ```java
 @Target(ElementType.METHOD)
@@ -737,56 +829,39 @@ public class TimingAspect {
             ? pjp.getSignature().toShortString()
             : timed.value();
 
-        return Timer.builder(name)
-            .register(meterRegistry)
-            .record(() -> {
-                try { return pjp.proceed(); }
-                catch (Throwable e) { throw new RuntimeException(e); }
-            });
+        Timer timer = meterRegistry.timer(name);
+        Timer.Sample sample = Timer.start(meterRegistry);
+        try {
+            return pjp.proceed();
+        } finally {
+            sample.stop(timer);
+        }
     }
 }
 ```
 
-**Рекомендация:** в реальных проектах свой аспект почти не пишут — берут готовый `@Timed` из Micrometer (`io.micrometer.core.annotation.Timed`). Внутри он устроен так же (AOP вокруг метода), но уже интегрирован со Spring Boot Actuator и автоматически экспортирует метрики. Самописный вариант полезен, только когда нужна нестандартная логика именования или тегирования.
+`finally` останавливает замер при обычном возврате и исключении. При штатной записи метрики результат или исходное исключение из `proceed()` передаётся дальше без обёртки.
+
+Для произвольного Spring-бина можно зарегистрировать `TimedAspect` как бин с нужным `MeterRegistry`, включить Spring AOP и поставить `io.micrometer.core.annotation.Timed` на метод, доступный через прокси. Для Prometheus отдельно подключают соответствующий registry и настраивают экспорт, например экспозицию `prometheus` в Actuator для сбора по HTTP. [Micrometer Timers](https://docs.micrometer.io/micrometer/reference/concepts/timers.html).
 
 ## Q21. Как Spring Transactions используют AOP под капотом?
 
-`@Transactional` — не магия, а обычный `@Around`-аспект (`TransactionInterceptor`). Прокси перехватывает вызов помеченного метода, открывает транзакцию до `proceed()`, а после — коммитит или откатывает в зависимости от исхода. Схематично:
-
-```
-@Transactional на методе
-        ↓
-Spring создаёт прокси
-        ↓
-TransactionInterceptor (реализует MethodInterceptor)
-        ↓
-@Around advice:
-  1. Открыть транзакцию (begin)
-  2. pjp.proceed() — выполнить метод
-  3. Если ok → commit
-  4. Если RuntimeException → rollback
-  5. Если CheckedException → commit (по умолчанию!)
-```
-
 ```java
-// Под капотом похоже на это:
-@Around("@annotation(Transactional)")
-public Object handleTransaction(ProceedingJoinPoint pjp) throws Throwable {
-    TransactionStatus tx = txManager.getTransaction(txDef);
-    try {
-        Object result = pjp.proceed();
-        txManager.commit(tx);
-        return result;
-    } catch (RuntimeException e) {
-        txManager.rollback(tx);
-        throw e;
-    }
+// Императивный Spring-сервис. Клиент вызывает importOrder через прокси.
+// Активной транзакции до вызова нет. Действуют стандартные правила
+// отката, а insertOrder завершается без ошибок.
+@Transactional(propagation = Propagation.REQUIRED)
+public void importOrder(Order order) throws IOException {
+    repository.insertOrder(order);
+    throw new IOException("Import interrupted");
 }
 ```
 
-Из этой реализации напрямую вытекают две классические особенности `@Transactional`:
-- **Откат только на `RuntimeException`/`Error`** по умолчанию. Checked-исключение приводит к коммиту — если нужен откат, явно указывают `rollbackFor`.
-- **Self-invocation не работает.** Вызов `this.save()` идёт мимо прокси (см. Q5), поэтому `TransactionInterceptor` не запускается и транзакция не создаётся. Это самая частая причина «почему `@Transactional` не сработал».
+`TransactionInterceptor` реализует AOP Alliance `MethodInterceptor`. При вызове через прокси он определяет транзакционные атрибуты метода, обращается к подходящему менеджеру транзакций и вызывает следующую часть цепочки через `MethodInvocation.proceed()`. После вызова инфраструктура завершает транзакцию согласно исходу и правилам отката.
+
+В этом примере `REQUIRED` открывает транзакцию. При стандартных правилах `IOException` как checked-исключение само по себе не вызывает откат. Если транзакция не помечена как rollback-only и коммит проходит успешно, запись фиксируется, а исключение передаётся вызывающему. По умолчанию откат запрашивается для `RuntimeException` и `Error`. Для отката при `IOException` можно задать `rollbackFor = IOException.class`.
+
+При self-invocation вызов аннотированного метода не проходит через прокси. Транзакционные настройки этого внутреннего метода не применяются отдельно, а работа может продолжаться в уже открытой внешней транзакции. [Using @Transactional](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html).
 
 ## Q22. Как тестировать AOP-аспекты?
 
@@ -795,15 +870,29 @@ public Object handleTransaction(ProceedingJoinPoint pjp) throws Throwable {
 **Вариант 1 — Integration test (Spring-контекст).** Берём бин из контекста — он уже обёрнут прокси, аспект задействован. Проверяем сам факт перехвата:
 
 ```java
+// Цель: проверить, отбирает ли pointcut вызов create, и отдельно
+// проверить поведение advice, когда целевой метод бросает исключение.
+@SpringBootTest
+class LoggingAspectTest {
+    @Autowired OrderService orderService;
+
+    @Test
+    void createOrder() {
+        orderService.create(validRequest());
+    }
+}
+```
+
+```java
 @SpringBootTest
 class LoggingAspectTest {
 
     @Autowired OrderService orderService;  // прокси, аспект задействован
-    @SpyBean LoggingAspect aspect;         // шпионить за вызовами
+    @MockitoSpyBean LoggingAspect aspect;
 
     @Test
     void orderCreate_shouldBeLogged() {
-        orderService.create(request);
+        orderService.create(validRequest());
         verify(aspect, times(1)).logCall(any());
     }
 }
@@ -828,6 +917,8 @@ void logMethod_shouldLogCallInfo() throws Throwable {
     assertNotNull(result);
 }
 ```
+
+Для проверки границы pointcut добавь вызов, который должен остаться вне него, и убедись, что количество вызовов advice не выросло. Для проверки аварийной ветки в отдельном unit-тесте настрой `pjp.proceed()` на выброс заранее созданного исключения и проверь через `assertSame`, что advice выбросил тот же экземпляр. `@MockitoSpyBean` доступна в Spring Framework 6.2+. [Bean Overriding in Tests](https://docs.spring.io/spring/reference/testing/testcontext-framework/bean-overriding.html).
 
 **Вариант 3 — AspectJ Weaver в тестах.** Для сложных аспектов, которые тестируют через настоящий weaving: `aspectOf(MyAspect.class)` даёт доступ к текущему инстансу аспекта. Нужен редко.
 
