@@ -116,36 +116,30 @@ updated: "2026-10-05"
 
 ## Q1. (!) Что такое Spring Boot Actuator и зачем он нужен?
 
-**`Spring Boot Actuator`** — модуль, который превращает приложение в наблюдаемое и управляемое: он добавляет готовые production-эндпоинты, доступные через HTTP и `JMX`, без единой строчки кода с вашей стороны. Подключил зависимость — и сразу получил health-проверки, метрики и точки управления.
-
-Зачем он нужен: в production систему мало просто запустить — её надо мониторить, диагностировать и вписать в инфраструктуру (Kubernetes, Prometheus, балансировщики). Actuator закрывает все эти потребности из коробки.
-
-Основные возможности:
-- **Health checks** — проверка состояния приложения и его зависимостей (БД, очереди, внешние сервисы). На этом строятся liveness/readiness-пробы Kubernetes.
-- **Метрики** — сбор данных о производительности (HTTP-запросы, JVM, пулы потоков), готовых к выгрузке в Prometheus.
-- **Аудит** — отслеживание событий безопасности (логины, отказы доступа).
-- **Управление** — изменение уровня логирования на лету и graceful shutdown без перезапуска.
-
-```mermaid
-graph TB
-    A[Spring Boot Application] --> B[Actuator Module]
-    B --> C[HTTP Endpoints]
-    B --> D[JMX Beans]
-    C --> E["/actuator/health"]
-    C --> F["/actuator/metrics"]
-    C --> G["/actuator/info"]
-    C --> H["/actuator/prometheus"]
-    E --> I[Kubernetes Probes]
-    F --> J[Micrometer Registry]
-    H --> K[Prometheus Server]
-    K --> L[Grafana Dashboard]
+```text
+Дежурный сопровождает приложение на Spring Boot. Ему нужно проверить
+состояние приложения, получить метрики и временно изменить уровень
+логирования без пересборки. Какой модуль Spring Boot помогает решить эти задачи?
 ```
 
-В контексте [микросервисной архитектуры](../../architecture/microservices-interview.md) `Actuator` является ключевым элементом [observability](../../monitoring/observability-interview.md)-стека — он предоставляет данные для систем мониторинга и оркестрации.
+**Spring Boot Actuator** добавляет диагностические и управляющие эндпоинты. Их доступность зависит от настроек доступа и экспозиции по HTTP или JMX. В Spring Boot 3.5 по HTTP по умолчанию экспонируется только `health`.
+
+- **Состояние приложения.** `/actuator/health` показывает состояние приложения и подключённых индикаторов зависимостей. Kubernetes может использовать отдельные группы для liveness и readiness.
+- **Метрики.** Micrometer собирает метрики приложения и JVM. `/actuator/metrics` позволяет посмотреть зарегистрированные метрики. Prometheus забирает их с `/actuator/prometheus`, если подключён соответствующий реестр и эндпоинт экспонирован. Grafana может строить графики по данным Prometheus.
+- **Диагностика и аудит.** `/actuator/info` показывает сведения о приложении, а `auditevents` предоставляет события аудита при наличии `AuditEventRepository`.
+- **Управление.** `loggers` позволяет менять уровни логирования во время работы при разрешённых операциях записи. `shutdown` выключен по умолчанию и позволяет штатно остановить приложение с JAR-упаковкой.
+
+В контексте [микросервисной архитектуры](../../architecture/microservices-interview.md) Actuator предоставляет данные для [наблюдаемости](../../monitoring/observability-interview.md) и оркестрации. [Справочник Spring Boot 3.5](https://docs.spring.io/spring-boot/3.5/reference/actuator/endpoints.html)
 
 ---
 
 ## Q2. Как подключить Actuator к проекту?
+
+```text
+Проект на Spring Boot 3.5 уже использует starter-web.
+Actuator в зависимостях отсутствует. Нужен стандартный эндпоинт проверки
+состояния приложения. В проектах используются Gradle или Maven.
+```
 
 Достаточно добавить одну зависимость:
 
@@ -273,7 +267,13 @@ management:
 
 ## Q6. Как изменить базовый путь Actuator?
 
-По умолчанию все эндпоинты живут под префиксом `/actuator/*`. Менять его обычно нужно по двум причинам: избежать конфликта с собственным маршрутом приложения `/actuator` или замаскировать стандартный путь от автоматических сканеров. Базовый путь задаётся одним свойством:
+```text
+GET /actuator/health и GET /actuator/info уже доступны на порту приложения.
+Оба эндпоинта нужно перенести под префикс /management с сохранением их ID.
+Прочие HTTP-маршруты приложения должны остаться на прежних путях.
+```
+
+По умолчанию веб-эндпоинты имеют префикс `/actuator`. В этом сценарии достаточно поменять базовый путь Actuator. При неизменной экспозиции маршруты станут `/management/health` и `/management/info`.
 
 ```yaml
 management:
@@ -296,7 +296,19 @@ management:
 
 ## Q7. Как включить/выключить отдельный эндпоинт?
 
-В Spring Boot 3.4+ доступ к операциям управляется через `management.endpoint.<id>.access`. Уровень `none` удаляет эндпоинт из контекста. Чтобы доступный эндпоинт отвечал по HTTP или JMX, его нужно также экспонировать на нужном транспорте.
+```yaml
+# Spring Boot 3.5. Почему GET /actuator/info недоступен?
+management:
+  endpoints:
+    web:
+      exposure:
+        include: info
+  endpoint:
+    info:
+      access: none
+```
+
+В Spring Boot 3.4+ доступ к операциям управляется через `management.endpoint.<id>.access`. Уровень `none` удаляет эндпоинт из контекста. Поэтому `exposure.include: info` в условии не создаёт маршрут. Экспозиция выбирает транспорт для доступного эндпоинта, а доступ пользователя к маршруту определяется настройками безопасности. Ниже пример с запретом по умолчанию и явным разрешением чтения для трёх эндпоинтов.
 
 ```yaml
 management:
@@ -422,9 +434,18 @@ management:
 
 ## Q10. (!) Как создать кастомный Health Indicator?
 
+```java
+// true: ресурс отвечает; false: ресурс недоступен.
+// При сбое клиента ping() может выбросить IOException.
+// Результат проверки должен входить в общий health-ответ.
+interface ExternalServiceClient {
+    boolean ping() throws IOException;
+}
+```
+
 Нужно создать бин, реализующий интерфейс `HealthIndicator` с единственным методом `health()`. Spring сам найдёт его и подмешает результат в общий `/health`. Внутри метода вы проверяете свой ресурс и возвращаете `Health.up()` или `Health.down()`, при необходимости добавляя диагностические детали через `withDetail(...)`.
 
-**Ключевое правило:** метод `health()` не должен бросать исключения наружу — оборачивайте проверку в `try/catch` и возвращайте `Health.down(e)`. Иначе упавший индикатор может уронить весь эндпоинт.
+Преобразуйте ожидаемую ошибку клиента в результат проверки. В примере диагностическая деталь указывает на сбой связи без передачи текста исключения в HTTP-ответ.
 
 ```java
 @Component
@@ -439,25 +460,26 @@ public class ExternalServiceHealthIndicator implements HealthIndicator {
     @Override
     public Health health() {
         try {
+            long start = System.nanoTime();
             boolean reachable = client.ping();
             if (reachable) {
                 return Health.up()
                     .withDetail("service", "external-api")
-                    .withDetail("responseTime", "45ms")
+                    .withDetail("responseTimeMs", Duration.ofNanos(System.nanoTime() - start).toMillis())
                     .build();
             }
             return Health.down()
                 .withDetail("service", "external-api")
                 .withDetail("error", "Service unreachable")
                 .build();
-        } catch (Exception e) {
-            return Health.down(e).build();
+        } catch (IOException e) {
+            return Health.down().withDetail("error", "ping failed").build();
         }
     }
 }
 ```
 
-Имя компонента в ответе выводится автоматически из имени класса с отброшенным суффиксом `HealthIndicator` (`ExternalServiceHealthIndicator` → `externalService`). Если нужно другое имя — задайте его в `@Component("myName")`.
+По умолчанию имя компонента получают из имени бина с отброшенным суффиксом `HealthIndicator` (`ExternalServiceHealthIndicator` → `externalService`). Своё имя можно задать через `@Component("myName")`.
 
 ```json
 {
@@ -467,7 +489,7 @@ public class ExternalServiceHealthIndicator implements HealthIndicator {
       "status": "UP",
       "details": {
         "service": "external-api",
-        "responseTime": "45ms"
+        "responseTimeMs": 45
       }
     }
   }
@@ -480,46 +502,40 @@ public class ExternalServiceHealthIndicator implements HealthIndicator {
 
 ## Q11. Что такое Health Groups?
 
-`Health Groups` позволяют собрать подмножество индикаторов под отдельным именем и выставить его на собственном пути (`/actuator/health/<group>`). Зачем это нужно: разным потребителям интересны разные проверки.
-
-Главный сценарий — `Kubernetes`, где **liveness и readiness отвечают на разные вопросы**, и смешивать их нельзя. Liveness — «жив ли процесс вообще» (проверять зависимости тут опасно: недоступная БД не повод убивать pod). Readiness — «готов ли инстанс принимать трафик» (вот тут проверка БД и кэша уместна — без них запросы упадут). Группы как раз и дают развести эти наборы:
-
-```yaml
-management:
-  endpoint:
-    health:
-      group:
-        liveness:
-          include: livenessState,ping
-          show-details: always
-        readiness:
-          include: readinessState,db,redis
-          show-details: always
-        critical:
-          include: db,redis
-          show-details: always
+```text
+Оркестратор проверяет, жив ли процесс. Балансировщик проверяет, можно ли
+направлять запросы в экземпляр, которому для работы нужны PostgreSQL и Redis.
+Оба потребителя обращаются к одному приложению и должны получать результаты
+разных наборов проверок. Как настроить их и какие URL будут доступны?
 ```
 
-Группы доступны по путям:
-- `/actuator/health/liveness`
-- `/actuator/health/readiness`
-- `/actuator/health/critical`
+**Health Groups** объединяют выбранные индикаторы под одним именем. Если `health` экспонирован по HTTP, при стандартном префиксе и без дополнительного контекстного пути группа доступна по адресу `/actuator/health/<group>`.
 
-```mermaid
-graph LR
-    H["/actuator/health"] --> L["/health/liveness"]
-    H --> R["/health/readiness"]
-    H --> C["/health/critical"]
-    L --> LS[livenessState]
-    L --> P[ping]
-    R --> RS[readinessState]
-    R --> DB[db]
-    R --> RD[redis]
-    C --> DB2[db]
-    C --> RD2[redis]
-```
+Liveness проверяет, нужен ли процессу перезапуск. Внешние зависимости в эту проверку не включают, чтобы их сбой не вызвал каскад перезапусков. Readiness показывает, готов ли экземпляр принимать запросы. В примере ниже в readiness включены зависимости, обязательные для обработки запросов. Все перечисленные индикаторы должны быть зарегистрированы.
 
-Группа проверяет только указанных участников. Добавляйте внешнюю зависимость в readiness с учётом её роли: отказ общей БД может одновременно убрать из балансировки все реплики.
+### Пример конфигурации
+
+    management:
+      endpoint:
+        health:
+          group:
+            liveness:
+              include: livenessState,ping
+              show-details: always
+            readiness:
+              include: readinessState,db,redis
+              show-details: always
+            critical:
+              include: db,redis
+              show-details: always
+
+В этом примере HTTP-пути и состав групп такие.
+
+- `/actuator/health/liveness` включает `livenessState` и `ping`.
+- `/actuator/health/readiness` включает `readinessState`, `db` и `redis`.
+- `/actuator/health/critical` включает `db` и `redis`.
+
+Здесь `show-details: always` раскрывает подробности всем, кому доступен маршрут. Отказ общей БД, включённой в readiness, может одновременно убрать из балансировки все реплики. [Health Groups в Spring Boot 3.5](https://docs.spring.io/spring-boot/3.5/reference/actuator/endpoints.html#actuator.endpoints.health.groups)
 
 ---
 
@@ -745,7 +761,14 @@ Content-Type: application/json
 
 ## Q17. (!) Как создать кастомный Actuator endpoint?
 
-Кастомный эндпоинт — это бин, помеченный `@Endpoint(id = "...")`, методы которого описаны операциями `@ReadOperation`, `@WriteOperation`, `@DeleteOperation`. Преимущество перед обычным `@RestController` в том, что один такой эндпоинт автоматически доступен **и по HTTP, и по JMX**, подчиняется правилам экспозиции/безопасности Actuator и попадает в discovery endpoint — то есть ведёт себя как «родной» management-эндпоинт.
+```text
+Хранилище флагов: Map<String, Boolean> на основе ConcurrentHashMap.
+Операции: Map<String, Boolean> getAllFeatures(), boolean getFeature(String name),
+void setFeature(String name, boolean enabled), void deleteFeature(String name).
+Нужно опубликовать управление флагами через Actuator под ID features.
+```
+
+Кастомный эндпоинт — это бин, помеченный `@Endpoint(id = "...")`, методы которого описаны операциями `@ReadOperation`, `@WriteOperation`, `@DeleteOperation`. Один бин описывает операции для HTTP и JMX. Boot публикует их с учётом access и настроек экспозиции для каждого транспорта. Экспонированные HTTP-эндпоинты могут попасть на страницу обнаружения Actuator.
 
 Типичный сценарий — управляющая ручка: фиче-флаги, ручной сброс кэша, переключение режима. Пример эндпоинта фиче-флагов:
 
@@ -825,6 +848,12 @@ public class WebStatusEndpoint {
 
 ## Q19. Как расширить существующий эндпоинт?
 
+```text
+GET /actuator/info возвращает {"app":{"name":"orders"}}.
+Нужно сохранить исходные поля и добавить serverTime в ответ HTTP.
+Ответ для клиентов JMX должен остаться прежним.
+```
+
 Если нужно не создать новый эндпоинт, а **дополнить или изменить ответ существующего** (например, добавить поле в `/info` или подменить HTTP-код у `/health`), используют `@EndpointWebExtension`. Расширение оборачивает оригинальный эндпоинт через делегирование: вы инжектите его бин (`InfoEndpoint`), вызываете его метод и обогащаете результат своими данными, оставаясь web-специфичным.
 
 ```java
@@ -883,6 +912,14 @@ graph TB
 ---
 
 ## Q21. Какие типы метрик поддерживает Micrometer?
+
+```text
+Сервис наблюдает три величины:
+- число созданных заказов с момента запуска;
+- текущий размер очереди, который меняется в обе стороны;
+- длительность завершённых запросов и число таких запросов.
+Какие типы измерений Micrometer выбрать?
+```
 
 Выбор типа метрики (meter) определяется характером измеряемой величины. Базовое правило: **только растёт — `Counter`; может расти и падать — `Gauge`; нужно и считать события, и мерить их длительность — `Timer`**. Остальные типы — специализации под конкретные задачи.
 
@@ -1179,34 +1216,41 @@ public class ActuatorSecurityConfig {
 
 ## Q27. Как вынести Actuator на отдельный порт?
 
-Достаточно задать `management.server.port`, отличный от `server.port`, — и Actuator поднимется на отдельном embedded-сервере. Это базовая production-практика: management-порт не выставляют в интернет, а оставляют доступным только внутренней сети (мониторингу, kubelet), закрывая снаружи файрволом или NetworkPolicy. Так даже при ошибке в конфигурации Spring Security чувствительные эндпоинты физически недоступны извне.
-
-```yaml
-server:
-  port: 8080                    # основной порт приложения
-
-management:
-  server:
-    port: 9090                  # порт Actuator
-    address: 127.0.0.1          # только localhost
-    ssl:
-      enabled: true             # отдельный SSL для management
+```text
+Основное приложение принимает запросы на порту 8080.
+Для Actuator выделен порт 9090. Локальный клиент находится в том же
+сетевом пространстве, что приложение. В другом сценарии Prometheus
+работает в отдельном Pod, а kubelet отправляет HTTP-пробы по IP Pod приложения.
+Как настроить management-адрес для каждого случая?
 ```
 
 ```mermaid
-graph LR
-    I[Internet] -->|":8080"| LB[Load Balancer]
-    LB --> A[App Port 8080]
-    N[Internal Network] -->|":9090"| M[Management Port 9090]
-    A --- APP[Spring Boot App]
-    M --- APP
-    M --> P[Prometheus]
-    M --> K[Kubernetes Probes]
+flowchart LR
+    App["Приложение, порт 8080"]
+    subgraph Pod["Pod приложения"]
+        App
+        Local["Локальный клиент"]
+    end
+    Prom["Prometheus в другом Pod"]
+    Kubelet["kubelet на узле"]
 ```
 
-При использовании отдельного порта `Actuator` запускает собственный embedded-сервер с независимой конфигурацией SSL и адресов.
+Задайте `management.server.port`, отличный от `server.port`. Spring Boot поднимет отдельный встроенный сервер для management-эндпоинтов. Его адрес и TLS можно настроить независимо от основного сервера.
 
-Привязка к `127.0.0.1` рассчитана на локальный доступ. Удалённый Prometheus и HTTP-пробы kubelet по IP Pod до такого listener не достучатся. Для них используйте доступный сетевой адрес и ограничьте доступ сетевыми правилами и авторизацией.
+**Локальный доступ.** Клиент из того же сетевого пространства обращается к `127.0.0.1:9090`. В этом примере отдельный management-сервер использует HTTP. Если нужен TLS, настройте сертификат и ключ для management-сервера либо наследуйте действующую SSL-конфигурацию основного сервера.
+
+```yaml
+server:
+  port: 8080
+management:
+  server:
+    port: 9090
+    address: 127.0.0.1
+    ssl:
+      enabled: false
+```
+
+**Доступ из внутренней сети.** Удалённому Prometheus и HTTP-пробам kubelet по IP Pod нужен сервер, слушающий доступный извне адрес. Для Pod с IPv4 можно задать `management.server.address: 0.0.0.0` и направить клиентов на IP Pod и порт 9090. Ограничьте сетевой доступ и настройте авторизацию management-маршрутов. Для Prometheus дополнительно нужны registry и экспозиция соответствующего эндпоинта. [Настройка management-сервера](https://docs.spring.io/spring-boot/3.5/reference/actuator/monitoring.html).
 
 ---
 
@@ -1314,6 +1358,12 @@ spring:
 
 ## Q30. Как настроить CORS для Actuator?
 
+```text
+Браузерная панель https://admin.example.com делает GET и POST
+к Actuator на другом origin. Клиент отправляет запросы с credentials
+и использует Content-Type: application/json для POST.
+```
+
 У Actuator своя, независимая от основного приложения, CORS-конфигурация под префиксом `management.endpoints.web.cors`. Она нужна, когда к management-эндпоинтам обращаются из браузера со стороннего origin — типично для Spring Boot Admin или кастомной панели мониторинга. Без явной настройки CORS браузер заблокирует такие кросс-доменные запросы.
 
 ```yaml
@@ -1332,12 +1382,19 @@ management:
 
 ## Q31. (!) Как реализовать кастомный `HealthIndicator` с детальной диагностикой?
 
-Когда у сервиса есть зависимость, для которой нет встроенного индикатора (сторонний платёжный API, специфичная очередь, файловое хранилище), её проверку добавляют через кастомный `HealthIndicator`. Помимо статуса `UP`/`DOWN`, индикатор может приложить диагностические детали (`withDetail`) — URL, код ответа, latency, текст ошибки — что бесценно при разборе инцидента.
+```text
+Проверка делает GET /health платёжного API. Возможны ответы 200 и 503,
+ошибка соединения или истечение таймаута. Таймаут подключения 300 мс,
+таймаут чтения 500 мс. В диагностике нужны длительность и HTTP-код,
+если ответ получен. Тела ответов и секреты публиковать нельзя.
+```
+
+Когда у сервиса есть зависимость, для которой нет встроенного индикатора (сторонний платёжный API, специфичная очередь, файловое хранилище), её проверку добавляют через кастомный `HealthIndicator`. Помимо статуса `UP`/`DOWN`, индикатор может добавить через `withDetail` HTTP-код, длительность проверки и категорию сбоя.
 
 **Дисциплина для production-индикатора:**
-- проверка должна быть **быстрой и с таймаутом** — `/health` дёргается часто, медленный индикатор затормозит всю пробу;
-- любое исключение ловим и превращаем в `Health.down(e)`, а не даём ему «вылететь»;
-- детали с чувствительными данными показываем только при `show-details: when-authorized`.
+- Задайте таймауты клиента. Таймауты подключения и чтения ограничивают отдельные этапы, общий дедлайн при необходимости задаётся отдельно.
+- Сохраните HTTP-код и при ответах 4xx или 5xx. Стандартный обработчик ошибок `RestTemplate` отдаёт такие ответы через исключение.
+- Публикуйте безопасные детали. `show-details: when-authorized` управляет их видимостью.
 
 **Пример с проверкой внешнего API:**
 
@@ -1370,8 +1427,14 @@ public class PaymentApiHealthIndicator implements HealthIndicator {
                 .withDetail("status", response.getStatusCode().value())
                 .withDetail("latencyMs", Duration.ofNanos(System.nanoTime() - start).toMillis())
                 .build();
+        } catch (RestClientResponseException e) {
+            return Health.down()
+                .withDetail("status", e.getStatusCode().value())
+                .withDetail("latencyMs", Duration.ofNanos(System.nanoTime() - start).toMillis())
+                .build();
         } catch (RestClientException e) {
             return Health.down()
+                .withDetail("error", "payment API request failed")
                 .withDetail("latencyMs", Duration.ofNanos(System.nanoTime() - start).toMillis())
                 .build();
         }
@@ -1574,7 +1637,16 @@ scrape_configs:
 
 ## Q34. Как создать кастомный `@Endpoint` с операциями чтения и записи?
 
-`@Endpoint` — универсальная аннотация: один такой бин даёт эндпоинт сразу и по HTTP, и по JMX. Поведение задаётся тремя видами операций, которые маппятся на HTTP-методы предсказуемо: `@ReadOperation` → `GET`, `@WriteOperation` → `POST`, `@DeleteOperation` → `DELETE`. Параметр, помеченный `@Selector`, становится сегментом пути (`/actuator/features/{name}`), а остальные параметры write-операции читаются из тела запроса.
+```text
+Map<String, Boolean> features = {"newUI": false, "betaSearch": true}
+Map<String, Boolean> getAllFeatures()
+Boolean getFeature(String featureName)
+void toggleFeature(String featureName, boolean enabled)
+void removeFeature(String featureName)
+Требуется HTTP-управление флагами через Actuator.
+```
+
+`@Endpoint` описывает операции, которые Boot может экспонировать по HTTP и JMX. Поведение задаётся тремя видами операций, которые маппятся на HTTP-методы предсказуемо: `@ReadOperation` → `GET`, `@WriteOperation` → `POST`, `@DeleteOperation` → `DELETE`. Параметр, помеченный `@Selector`, становится сегментом пути (`/actuator/features/{name}`), а остальные параметры write-операции читаются из тела запроса.
 
 ```java
 @Component
@@ -1668,6 +1740,12 @@ public class CacheControlEndpoint {
 
 ## Q35. Как настроить `Liveness` и `Readiness` пробы для `Kubernetes`?
 
+```text
+Spring Boot 3.5 с Actuator слушает порт 8080. Отдельного management-порта нет.
+Нужно различить проверку работоспособности процесса и готовности принимать трафик
+после прогрева. Те же HTTP-проверки должны работать в Kubernetes и при локальном запуске.
+```
+
 `Spring Boot Actuator` из коробки умеет отдавать раздельные эндпоинты для двух проб Kubernetes — `/actuator/health/liveness` и `/actuator/health/readiness` — реализованные как преднастроенные health-группы. Под капотом за них отвечают `ApplicationAvailability` и состояния `LivenessState`/`ReadinessState`, которые приложение может менять в том числе программно (например, переводить readiness в `REFUSING_TRAFFIC` на время прогрева).
 
 **Включение Kubernetes probes:**
@@ -1677,25 +1755,14 @@ management:
   endpoint:
     health:
       probes:
-        enabled: true           # включить /actuator/health/liveness и /actuator/health/readiness
-      show-details: always
-  health:
-    livenessState:
-      enabled: true             # Liveness: приложение живо?
-    readinessState:
-      enabled: true             # Readiness: готово принимать трафик?
+        enabled: true
   endpoints:
     web:
       exposure:
         include: health
 ```
 
-**Автоматически при обнаружении Kubernetes-среды:**
-
-```
-Spring Boot автоматически активирует probes, если обнаруживает
-переменные окружения KUBERNETES_SERVICE_HOST или KUBERNETES_SERVICE_PORT.
-```
+При запуске в распознанной среде Kubernetes Spring Boot включает эти группы автоматически. Флаг в примере включает их и при локальном запуске.
 
 **Обязательный прогрев при старте.** Синхронный `ApplicationRunner` выполняется до автоматического перехода Boot в `ACCEPTING_TRAFFIC`. Если прогрев обязателен, дайте его ошибке прервать запуск. Если прогрев идёт асинхронно, добавьте его состояние отдельным индикатором в readiness-группу, поскольку переход Boot не ждёт фоновой задачи. Для изменения состояния уже работающего приложения предусмотрен `AvailabilityChangeEvent.publish(context, ReadinessState.REFUSING_TRAFFIC)`. [Spring Boot 3.5 Application Availability](https://docs.spring.io/spring-boot/3.5/reference/features/spring-application.html#features.spring-application.application-availability).
 
@@ -1941,6 +2008,13 @@ curl -H "Accept: application/json" http://localhost:8080/actuator/threaddump
 ---
 
 ## Q39. Как реализовать CompositeHealthContributor для группировки индикаторов?
+
+```text
+У платёжного сервиса уже есть проверки PaymentGatewayHealthIndicator,
+FraudDetectionHealthIndicator и PaymentDatabaseHealthIndicator.
+В общем health-ответе они должны появиться под родителем paymentSystem.
+Имена дочерних проверок: gateway, fraud, database.
+```
 
 `CompositeHealthContributor` собирает несколько индикаторов под одним родительским именем, создавая в `/health` вложенную структуру (`paymentSystem` → `gateway`, `fraud`, `database`). Это нужно, когда у вас есть логическая подсистема из нескольких зависимостей: вместо плоского списка из десятка компонентов получается осмысленная группировка, а статус подсистемы агрегируется автоматически по порядку статусов `StatusAggregator`.
 
@@ -2348,6 +2422,13 @@ Spring Boot App
 
 ## Q44. Как найти медленный этап запуска через ApplicationStartup и /actuator/startup?
 
+```text
+Spring Boot 3.5 запускает сервис 40 секунд. Нужна разбивка по шагам запуска.
+Отдельный сценарий диагностики: шаги уже накоплены, startup экспонирован
+по HTTP, GET и POST к /actuator/startup разрешены для клиента. Запросы
+выполняются последовательно: GET, POST, GET. Других обращений к эндпоинту и новых шагов между запросами нет.
+```
+
 `ApplicationStartup` записывает **шаги запуска** (`StartupStep`) с временем и тегами. По умолчанию реализация Spring Framework не сохраняет эти шаги, поэтому одного Actuator недостаточно. Для JSON-диагностики настройте `BufferingApplicationStartup` **до** вызова `run()` и откройте эндпоинт `startup`:
 
 ```java
@@ -2358,10 +2439,12 @@ app.run(args);
 
 ```properties
 management.endpoints.web.exposure.include=health,startup
-management.endpoint.startup.access=read-only
+management.endpoint.startup.access=unrestricted
 ```
 
-`GET /actuator/startup` возвращает снимок накопленных шагов, `POST /actuator/startup` возвращает их и **очищает буфер**. В Spring Boot 3.5 настройка read-only оставляет GET и отключает POST. Экспозиция открывает маршрут, а права на чтение определяет конфигурация безопасности. [Уровни доступа Actuator](https://docs.spring.io/spring-boot/3.5/reference/actuator/endpoints.html#actuator.endpoints.access). В ответе есть длительность шага, его имя, `id`/`parentId` и теги: так можно найти, например, дорогую инициализацию бина или сканирование пакетов. Буфер ограничен ёмкостью: когда она исчерпана, новые шаги не записываются. Эндпоинт по умолчанию не открыт по HTTP (обычно открыт только `health`); доступ к деталям запуска надо защищать как к диагностическим данным. [Spring Boot: Application Startup tracking](https://docs.spring.io/spring-boot/reference/features/spring-application.html), [Actuator startup API](https://docs.spring.io/spring-boot/api/rest/actuator/startup.html).
+`GET /actuator/startup` возвращает снимок накопленных шагов, `POST /actuator/startup` возвращает их и **очищает буфер**. Первый GET и следующий POST в условии возвращают один набор шагов, а последний GET возвращает пустой список событий. В примере `unrestricted` разрешает операции чтения и записи, если глобальный `max-permitted` их не ограничивает. При `read-only` доступен GET, а POST отсутствует среди операций. Экспозиция открывает маршрут. Авторизация и, если применяется, CSRF проверяются отдельно. [Уровни доступа Actuator](https://docs.spring.io/spring-boot/3.5/reference/actuator/endpoints.html#actuator.endpoints.access).
+
+В ответе есть длительность шага, его имя, `id`/`parentId` и теги: так можно найти, например, дорогую инициализацию бина или сканирование пакетов. Буфер ограничен ёмкостью: когда она исчерпана, новые шаги не записываются. Эндпоинт по умолчанию не открыт по HTTP (обычно открыт только `health`); доступ к деталям запуска надо защищать как к диагностическим данным. [Spring Boot: Application Startup tracking](https://docs.spring.io/spring-boot/reference/features/spring-application.html), [Actuator startup API](https://docs.spring.io/spring-boot/api/rest/actuator/startup.html).
 
 Для корреляции шагов с событиями JVM (GC, загрузка классов, аллокации) используйте `FlightRecorderApplicationStartup` и запись JFR. Он решает другую задачу и сам по себе не является источником JSON для `/actuator/startup`, которому нужен именно `BufferingApplicationStartup`. Метрики `application.started.time` и `application.ready.time` дают итоговые длительности, но не разбивку по шагам. Не путайте эту диагностику с **Kubernetes startup probe** из Q42: проба определяет, когда приложение готово пройти проверки, а не объясняет, почему старт затянулся. [Spring Boot reference](https://docs.spring.io/spring-boot/reference/features/spring-application.html), [Spring Boot metrics](https://docs.spring.io/spring-boot/reference/actuator/metrics.html).
 
