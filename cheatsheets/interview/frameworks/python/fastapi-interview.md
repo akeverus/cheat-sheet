@@ -47,6 +47,8 @@ FastAPI — ASGI-приложение на Starlette. `async def` path operation
 
 В стандартной конфигурации AnyIO доступно 40 токенов для таких вызовов. Это настраиваемый лимит одновременно выполняемой работы через `anyio.to_thread.run_sync`, а не лимит всех HTTP-запросов. При диагностике сопоставьте занятость лимитера с задержкой и таймаутами внешнего сервиса. Увеличение лимита может увеличить нагрузку на зависимость. [Starlette Thread Pool](https://starlette.dev/threadpool/) · [AnyIO Thread Limits](https://anyio.readthedocs.io/en/stable/threads.html#adjusting-the-default-maximum-worker-thread-count).
 
+**Таймаут и синхронный вызов.** Допустим, async-обработчик выносит вызов синхронного HTTP-клиента в `anyio.to_thread.run_sync`. В AnyIO 4 при отмене через cancel scope стандартный режим ждёт завершения синхронной функции. Если явно задать `abandon_on_cancel=True`, обработчик может прекратить ожидание, а вызов в потоке продолжится и его результат будет отброшен. Поэтому после таймаута обработчика внешний сервис всё ещё может выполнить операцию. Настройте таймаут в самом HTTP-клиенте и учитывайте возможность уже выполненного эффекта при повторе запроса. Если синхронная функция выполняет работу шагами, она может сама проверять отмену между шагами через `anyio.from_thread.check_cancelled()`. Такая проверка не прервёт уже начатое блокирующее чтение. [AnyIO — работа с потоками](https://anyio.readthedocs.io/en/stable/threads.html#reacting-to-cancellation-in-worker-threads).
+
 ## Q2. Что делает Depends и как устроен граф зависимостей?
 
 `Depends` объявляет входной ресурс/проверку в сигнатуре path operation. FastAPI разрешает зависимости рекурсивно, включая sub-dependencies, и может использовать их для авторизации, сессии БД, настроек и общих параметров. Типизацию удобно выражать через `Annotated`:
@@ -70,6 +72,45 @@ def orders(tenant: Annotated[str, Depends(current_tenant)]):
 
 **Общая зависимость для двух проверок.** Допустим, обе проверки доступа объявляют `Depends(load_account)` с одинаковыми параметрами зависимости. В одном запросе FastAPI может передать им один результат загрузки аккаунта. Если второй проверке нужен новый вызов `load_account`, укажите `Depends(load_account, use_cache=False)` именно у неё. Этот вызов обойдёт чтение из кеша. Если у `load_account` есть своя зависимость, например `Depends(get_session)`, её кеширование по-прежнему определяется её собственным объявлением. Повторный вызов функции также не гарантирует чтения более свежих данных: видимость изменений зависит, например, от снимка транзакции. [FastAPI Depends](https://fastapi.tiangolo.com/reference/dependencies/#fastapi.Depends).
 
+**Повторный вызов и обновление кеша.** Если первая проверка уже получила аккаунт из `load_account`, вторая проверка с `use_cache=False` вызовет функцию заново. В реализации FastAPI 0.121.0 запись для этого ключа уже существует, поэтому повторный вызов её не заменит. Третья проверка с обычным `Depends(load_account)` и тем же ключом получит результат первого вызова. Если же флаг установлен у первой проверки и запись ещё отсутствует, её результат заполнит кеш. Это поведение конкретной реализации. Если всем дальнейшим проверкам нужны обновлённые данные, передайте им новый результат явно. [FastAPI 0.121.0 — разрешение зависимостей](https://github.com/fastapi/fastapi/blob/0.121.0/fastapi/dependencies/utils.py#L599-L619).
+
+В этом примере счётчик заменяет загрузку аккаунта, чтобы было видно, сколько раз вызвана зависимость:
+
+```python
+from itertools import count
+
+from fastapi import Depends, FastAPI
+from fastapi.testclient import TestClient
+
+cache_app = FastAPI()
+calls = count(1)
+
+def load_account():
+    return next(calls)
+
+@cache_app.get("/cached-first")
+def cached_first(
+    first=Depends(load_account),
+    fresh=Depends(load_account, use_cache=False),
+    last=Depends(load_account),
+):
+    return [first, fresh, last]
+
+@cache_app.get("/fresh-first")
+def fresh_first(
+    first=Depends(load_account, use_cache=False),
+    last=Depends(load_account),
+):
+    return [first, last]
+
+with TestClient(cache_app) as client:
+    assert client.get("/cached-first").json() == [1, 2, 1]
+    assert client.get("/fresh-first").json() == [3, 3]
+    assert client.get("/cached-first").json() == [4, 5, 4]
+```
+
+Второй вызов в первом запросе вернул `2`, а обычная зависимость снова получила `1`. Во втором запросе первый вызов с `use_cache=False` заполнил пустой кеш значением `3`.
+
 ## Q3. Как закрыть ресурс в зависимости с yield?
 
 Для ресурса запроса (например, временного каталога или сессии) зависимость может `yield` объект, а после него выполнить cleanup. FastAPI оформляет это как контекстный менеджер и закрывает ресурс после использования dependency; для ошибок внутри path operation можно обработать исключение вокруг `yield`, но не скрывать его случайно.
@@ -88,6 +129,9 @@ WorkdirDep = Annotated[str, Depends(get_workdir)]
 ```
 
 С FastAPI **0.121.0** `Depends(scope="function")` завершает `yield`-dependency после handler, но **до** отправки ответа. Scope `"request"` по умолчанию завершает её **после** отправки ответа. Для `StreamingResponse`, который читает ресурс во время передачи тела, нужен ресурс, живущий до конца передачи; ранний `function` cleanup закроет его слишком рано. В FastAPI **0.106.0–0.117.x** обычный cleanup выполнялся перед отправкой ответа, поэтому поведение старого приложения проверяйте по установленной версии. Если зависимость перехватывает исключение из handler, его обычно нужно повторно поднять. Транзакцию завершайте явно по бизнес-исходу; закрытие сессии не означает commit. [Dependencies with yield](https://fastapi.tiangolo.com/tutorial/dependencies/dependencies-with-yield/), [история `yield` и scope](https://fastapi.tiangolo.com/advanced/advanced-dependencies/#dependencies-with-yield-and-scope).
+
+**Клиент оборвал поток.** Например, клиент закрыл скачивание, пока сервер ждал следующую порцию строк из БД. В Starlette 1.10.0 при HTTP ASGI spec 2.4+ `StreamingResponse` обнаруживает закрытое соединение по ошибке очередного `send`. Для более ранней версии ASGI spec Starlette параллельно слушает `http.disconnect` и отменяет задачу передачи. В первом случае разрыв сам по себе не прерывает ожидание следующей порции. Ограничьте время чтения из БД. В зависимости держите ресурс в контекстном менеджере или освобождайте его в `finally`: при ошибке передачи обычный код после `yield` может быть пропущен. Для интеграционной проверки оборвите реальное соединение посреди ответа и проверьте, что сессия вернулась в пул. [HTTP ASGI: закрытое соединение](https://asgi.readthedocs.io/en/latest/specs/www.html#disconnected-client-send-exception) · [Starlette 1.10.0: StreamingResponse](https://github.com/Kludex/starlette/blob/1.10.0/starlette/responses.py#L228-L265).
+
 
 **Порядок cleanup в графе.** Пусть `get_cursor` получает соединение из `get_connection`. Обе зависимости используют `yield`. При завершении сначала закрывается курсор, затем соединение, чтобы cleanup курсора мог использовать открытое соединение. Если курсор нужен только обработчику, у него может быть `scope="function"`, даже если соединение живёт до конца запроса. Если курсор используется при отправке потокового ответа, обеим зависимостям нужен `scope="request"`. FastAPI отклоняет обратную комбинацию, в которой зависимость с `scope="request"` опирается на подзависимость с `scope="function"`. [Scope подзависимостей](https://fastapi.tiangolo.com/tutorial/dependencies/dependencies-with-yield/#scope-for-sub-dependencies).
 **Граница транзакции при записи.** Пусть `POST /orders` возвращает 201, а `commit()` спрятан после `yield` в зависимости со стандартным scope `"request"`. Если БД отклонит коммит, клиент уже получит 201. Для этого маршрута завершите транзакцию в обработчике или сервисе до возврата ответа. Например, контекст `session.begin()` в SQLAlchemy 2.0 фиксирует транзакцию при успешном выходе из блока и откатывает её при исключении. В зависимости оставьте закрытие сессии. Если ответ потоковый, отдельно проверьте, какие ресурсы ещё нужны генератору тела. [Момент завершения зависимости FastAPI](https://fastapi.tiangolo.com/advanced/advanced-dependencies/#dependencies-with-yield-and-scope), [SQLAlchemy 2.0 — транзакции сессии](https://docs.sqlalchemy.org/en/20/orm/session_transaction.html).
@@ -117,6 +161,20 @@ def user(user_id: int):
 
 **Согласованность с OpenAPI.** Если маршрут объявляет модель с обязательным полем `email` и задаёт `response_model_exclude={"email"}`, поле исчезнет из фактического JSON, но останется в схеме ответа. Клиент, сгенерированный по OpenAPI, может ожидать обязательное поле, которого сервер не отправляет. Для публичного контракта задайте отдельную модель без `email`, как `UserOut` в примере. При изменении контракта проверьте и JSON ответа, и схему операции в `/openapi.json`. [FastAPI: response model include and exclude](https://fastapi.tiangolo.com/tutorial/response-model/#response-model-include-and-response-model-exclude).
 
+**Частичное обновление.** Пусть у `PATCH /profiles/{id}` свой контракт: если клиент пропустил поле `display_name`, имя остаётся прежним. Если он передал `null`, приложение очищает имя. Модель Pydantic 2 принимает оба запроса, а `model_dump(exclude_unset=True)` сохраняет различие между ними.
+
+```python
+class ProfilePatch(BaseModel):
+    display_name: str | None = None
+
+assert ProfilePatch.model_validate({}).model_dump(exclude_unset=True) == {}
+assert ProfilePatch.model_validate(
+    {"display_name": None}
+).model_dump(exclude_unset=True) == {"display_name": None}
+```
+
+В первом случае сервис не обновляет колонку. Во втором он записывает `NULL`, если это допускает бизнес-правило. `exclude_none=True` убрал бы явный `null` и потерял запрос на очистку. Объявление `display_name: str | None` без значения по умолчанию допускает `null`, но требует присутствия поля. Правило частичного обновления задаёт приложение. [FastAPI — частичное обновление](https://fastapi.tiangolo.com/tutorial/body-updates/#using-pydantics-exclude_unset-parameter), [Pydantic — сериализация](https://docs.pydantic.dev/latest/concepts/serialization/).
+
 ## Q5. Как разделить HTTPException и ошибку валидации?
 
 Неверные данные запроса FastAPI оформляет как `RequestValidationError`; стандартный обработчик возвращает HTTP **422** и описание ошибок по полям. Этот обработчик можно заменить, поэтому статус 422 — поведение по умолчанию, а не неизменяемый контракт. `HTTPException` используют для ожидаемого прикладного исхода (например, 404 при отсутствии ресурса) и задают статус/детали явно. Не превращайте любую ошибку БД в `HTTPException(400)`: внутренний сбой нужно зарегистрировать, а если ответ ещё не начат, клиенту можно вернуть безопасный 5xx.
@@ -130,6 +188,8 @@ if record is None:
 
 Для собственной формы ошибок регистрируют exception handler. Не отправляйте клиенту строковое представление `RequestValidationError` или внутреннего исключения без контроля: в нём могут быть детали реализации. Ошибка валидации **ответа** из Q4 означает сбой кода сервиса, её не следует выдавать за ошибочный запрос клиента. [Handling errors](https://fastapi.tiangolo.com/tutorial/handling-errors/), [response model](https://fastapi.tiangolo.com/tutorial/response-model/).
 
+
+**Согласование с OpenAPI.** Допустим, `GET /orders/{order_id}` принимает целочисленный ID, а общий обработчик `RequestValidationError` возвращает 400 с телом `{"code": "invalid_request"}`. Запрос `/orders/abc` получит именно этот ответ. В FastAPI 0.121.0 генератор OpenAPI работает отдельно от обработчика и может по-прежнему добавить стандартный 422. Даже добавление `responses={400: ...}` само по себе не убирает этот 422. Если контракт сервиса предусматривает только 400 для ошибок валидации, опишите схему его тела и скорректируйте автоматически добавленный 422 в OpenAPI для затронутых операций. Проверяйте отдельно фактический HTTP-ответ и контракт в `/openapi.json`. [Обработчики ошибок FastAPI](https://fastapi.tiangolo.com/tutorial/handling-errors/#override-request-validation-exceptions), [генератор OpenAPI в FastAPI 0.121.0](https://github.com/fastapi/fastapi/blob/0.121.0/fastapi/openapi/utils.py#L397-L417).
 
 **Ошибка после отправки ответа.** Маршрут вернул `202 Accepted`, а зарегистрированная через `BackgroundTasks` задача завершилась исключением. Клиент уже получил 202. Даже если обработчик ошибки сформирует 500, этот ответ не будет отправлен. Сбой фоновой задачи нужно фиксировать отдельно. Если клиенту важно знать результат работы, 202 может содержать идентификатор операции, по которому клиент позже проверит её статус. [Starlette Exceptions](https://starlette.dev/exceptions/) · [FastAPI Background Tasks](https://fastapi.tiangolo.com/tutorial/background-tasks/).
 
@@ -161,6 +221,36 @@ app = FastAPI(lifespan=lifespan)
 
 ## Q7. Как тестировать FastAPI с подменой зависимости?
 
+```python
+from contextlib import asynccontextmanager
+
+from fastapi import Depends, FastAPI, Request
+
+
+@asynccontextmanager
+async def lifespan(app):
+    app.state.ready = True
+    yield
+    app.state.ready = False
+
+
+app = FastAPI(lifespan=lifespan)
+
+
+def current_tenant():
+    return "example"
+
+
+@app.get("/orders")
+def orders(request: Request, tenant: str = Depends(current_tenant)):
+    return {"tenant": tenant, "ready": request.app.state.ready}
+
+
+# В синхронном тесте GET /orders должен использовать tenant "test".
+# Как подменить зависимость только на время теста, запустить lifespan
+# и проверить по ответу, что сработали и подмена, и startup?
+```
+
 `TestClient` позволяет тестировать HTTP-контракт без отдельного сетевого сервера. `app.dependency_overrides` — словарь, который заменяет конкретную dependency в графе, например сервис или DB session. После теста восстановите исходные overrides, иначе следующий тест унаследует подмену или потеряет свою настройку. Пример ниже использует `app` и `current_tenant` из Q2.
 
 ```python
@@ -172,12 +262,30 @@ try:
     with TestClient(app) as client:
         response = client.get("/orders")
         assert response.status_code == 200
+        assert response.json() == {"tenant": "test"}
 finally:
     app.dependency_overrides.clear()
     app.dependency_overrides.update(saved_overrides)
 ```
 
+Для первого листинга установите override для его функции `current_tenant` и выполните запрос внутри `with TestClient(app) as client`. Проверьте статус 200 и тело `{"tenant": "test", "ready": True}`. Поле `tenant` проверяет подмену, а `ready` показывает, что lifespan дошёл до `yield`. После выхода из контекста можно отдельно проверить `app.state.ready is False`. Восстановите overrides в `finally`, как в примере выше.
+
+В примере из Q2 маршрут отвечает 200 и с исходной зависимостью, и с подменой. Проверка тела отличает эти два случая: исходная зависимость возвращает tenant `"example"`, а подмена — `"test"`. Ключом словаря служит исходная функция, переданная в `Depends`.
+
+**Зависимость синхронного теста.** `fastapi.testclient.TestClient` использует реализацию Starlette. Для примеров с FastAPI 0.121.0 нужен `httpx`: эта версия FastAPI допускает Starlette от 0.40.0 до версии ниже 0.50.0. Поддержка `httpx2` появилась в Starlette 1.2.0. Для проекта на новой ветке выбирайте зависимость по документации установленной Starlette. Клиент `httpx.AsyncClient` в Q6 — отдельный ресурс приложения. [Зависимости FastAPI 0.121.0](https://github.com/fastapi/fastapi/blob/0.121.0/pyproject.toml#L45-L63), [Starlette 1.2.0](https://starlette.dev/release-notes/#120-may-28-2026).
+
 Контекстный менеджер `TestClient` запускает lifespan. Разделяемый объект `app` с изменяемым словарём overrides не используйте одновременно в параллельных тестах без изоляции. Отдельно проверьте ошибки и response model. Для реальной БД понадобится интеграционный тест, поскольку dependency override с fake не доказывает SQL и транзакции. Для самого async-теста используйте async-клиент с ASGI transport, а не синхронный `TestClient` внутри coroutine. HTTPX `ASGITransport` сам не запускает lifespan: если тесту нужны startup/shutdown-ресурсы, управляйте их циклом отдельно, например через `LifespanManager` из `asgi-lifespan`. [Testing](https://fastapi.tiangolo.com/tutorial/testing/), [dependency overrides](https://fastapi.tiangolo.com/advanced/testing-dependencies/), [testing lifespan](https://fastapi.tiangolo.com/advanced/testing-events/), [async tests](https://fastapi.tiangolo.com/advanced/async-tests/).
+
+**Проверка закрытия клиента из Q6.** Успешный запрос внутри `TestClient` подтверждает работу маршрута, но ничего не говорит об освобождении пула. Для приложения из Q6 можно сохранить ссылку на HTTP-клиент приложения и проверить его состояние после выхода из тестового контекста. [FastAPI — тестирование lifespan](https://fastapi.tiangolo.com/advanced/testing-events/).
+
+```python
+def test_lifespan_closes_client():
+    with TestClient(app):
+        upstream_client = app.state.client
+        assert not upstream_client.is_closed
+
+    assert upstream_client.is_closed
+```
 
 Чтобы проверить тело сгенерированного ответа 500, создайте `TestClient(app, raise_server_exceptions=False)`. По умолчанию клиент пробрасывает исключение приложения в тест, что удобно для поиска причины, но отличается от чтения HTTP-ответа. [TestClient API](https://fastapi.tiangolo.com/reference/testclient/), [HTTPX: ASGI startup/shutdown](https://www.python-httpx.org/advanced/transports/#asgi-startup-and-shutdown).
 
